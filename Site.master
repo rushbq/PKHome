@@ -1,0 +1,129 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="Site.master.cs" Inherits="Site" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%=Param_WebTitle %></title>
+
+    <asp:PlaceHolder ID="ph_pubCss" runat="server">
+        <link href="<%=cdnUrl %>plugin/google-icon/material-icons.css?family=Material+Icons" rel="stylesheet" />
+        <link href="<%=cdnUrl %>plugin/Materialize/v0.99.0/css/materialize.min.css" rel="stylesheet" />
+        <link href="<%=cdnUrl %>plugin/Materialize/v0.99.0/css/style-PKv1.css" rel="stylesheet" />
+    </asp:PlaceHolder>
+
+    <asp:ContentPlaceHolder ID="CssContent" runat="server">
+    </asp:ContentPlaceHolder>
+    <style>
+        /* 
+            功能:移除 collapsible-body 的間距
+            說明:0.99版會有padding,使用collection會有多餘空白,故針對指定選單移除此間距
+        */
+        .publicMenu .collapsible-body {
+            padding: 0px !important;
+        }
+
+        /*
+            功能:放大主選單字體
+        */
+        ul#mainMenu li a {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div class="page-flexbox-wrapper">
+            <!-- Nav header Start -->
+            <%--<div class="navbar-fixed">--%>
+            <nav class="nav-extended pkColor">
+                <div class="container">
+                    <div class="nav-wrapper">
+                        <a href="<%=webUrl %>" class="brand-logo center">
+                            <img src="<%=cdnUrl %>images/portal/top-pk-logo.png" alt="Pro'sKit" /></a>
+                        <ul class="right hide-on-med-and-down">
+                            <li><a class="dropdown-button" href="#!" data-activates="dropdown1"><%=LangName(Req_Lang) %><i class="material-icons right">arrow_drop_down</i></a></li>
+                        </ul>
+                    </div>
+                    <ul id="dropdown1" class="dropdown-content">
+                        <li><a href="<%=fn_Param.WebUrl %>tw">繁體中文</a></li>
+                        <li><a href="<%=fn_Param.WebUrl %>cn">简体中文</a></li>
+                    </ul>
+
+                    <!-- [選單] 主選單tab Start -->
+                    <div class="row">
+                        <div class="col s12">
+                            <div class="nav-content">
+                                <ul id="mainMenu" class="tabs tabs-transparent tabs-fixed-width">
+                                    <asp:Literal ID="lt_RootMenu" runat="server"></asp:Literal>
+                                    <!-- 固定item -->
+                                    <li class="tab"><a href="#tabClose" class="active"><i class="material-icons">nature_people</i></a></li>
+                                    <!-- 避免出現捲軸的item -->
+                                    <li class="tab"></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- [選單] 主選單tab End -->
+                </div>
+            </nav>
+            <%--</div>--%>
+
+            <!-- Nav header End -->
+            <!-- Body Start -->
+            <div id="main">
+                <!-- *** [選單] 子選單結構 Start *** -->
+                <div class="publicMenu">
+                    <div id="tabClose"></div>
+
+                    <asp:Literal ID="lt_SubMenus" runat="server"></asp:Literal>
+                </div>
+                <!-- *** [選單] 子選單結構 End *** -->
+
+
+                <section id="content">
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server">
+                    </asp:ContentPlaceHolder>
+                </section>
+            </div>
+            <!-- Body End -->
+            <!-- Bottom Content Start -->
+            <asp:ContentPlaceHolder ID="BottomContent" runat="server">
+            </asp:ContentPlaceHolder>
+            <!-- Bottom Content End -->
+            <!-- Footer Start -->
+            <footer class="page-footer pkColor">
+                <div class="footer-copyright">
+                    <div class="container">
+                        &copy; <%=DateTime.Now.Year %> Prokits Industries Co., LTD.
+                    </div>
+                </div>
+            </footer>
+            <!-- Footer End -->
+        </div>
+        <!-- Scripts Start -->
+        <asp:PlaceHolder runat="server">
+            <script src="<%=cdnUrl %>plugin/jQuery/jquery.min.js"></script>
+            <script src="<%=cdnUrl %>plugin/Materialize/v0.99.0/js/materialize.min.js"></script>
+            <script>
+                (function ($) {
+                    $(function () {
+                        /* 關閉選單 */
+                        $(".closeTab").click(function () {
+                            //將tab目標移至空白tab
+                            $('ul#mainMenu').tabs('select_tab', 'tabClose');
+                        });
+
+                    }); // end of document ready
+                })(jQuery); // end of jQuery name space
+            </script>
+        </asp:PlaceHolder>
+
+        <asp:ContentPlaceHolder ID="ScriptContent" runat="server">
+        </asp:ContentPlaceHolder>
+        <!-- Scripts End -->
+    </form>
+</body>
+</html>

@@ -1,0 +1,192 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Pro'sKit 外驗查檢表</title>
+    <style type="text/css">
+        /* CLIENT-SPECIFIC STYLES */
+        body, table, td, a {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+        /* RESET STYLES */
+        img {
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }
+
+        table {
+            border-collapse: collapse !important;
+        }
+
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        /* iOS BLUE LINKS */
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+        /* ANDROID CENTER FIX */
+        div[style*="margin: 16px 0;"] {
+            margin: 0 !important;
+        }
+    </style>
+</head>
+<body bgcolor="#f6f8f1" style="margin: 0; padding: 0; min-width: 100%!important; font-family: sans-serif, Helvetica,'Microsoft JhengHei', 'Microsoft YaHei',Verdana, Arial, PMingLiU; color: #434343;">
+
+    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="bodyTable" align="center" style="max-width: 1024px; width: 100%;">
+        <tr>
+            <td height="10" style="font-size: 10px; line-height: 10px;">&nbsp;</td>
+        </tr>
+        <tr>
+            <td align="center" valign="top">
+                <table bgcolor="#ffffff" border="0" cellpadding="0" cellspacing="0" width="1024" id="emailContainer" style="max-width: 1024px; width: 100%;">
+                    <tr>
+                        <td align="center" valign="top">
+                            <table border="0" cellpadding="20" cellspacing="0" width="100%" id="emailHeader">
+                                <tr>
+                                    <td bgcolor="#e4e4e4" style="padding: 10px 30px 10px 30px;">
+                                        <table border="0" align="left" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td height="44">
+                                                    <img src="http://cdn.prokits.com.tw/images/edm/edm-logo.png" border="0" alt="ProsKit Logo" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td bgcolor="#e4e4e4" align="right" style="font-size: 18px;">
+                                        <b>外驗查檢表</b><br />
+                                        #ModelNo#
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- container -->
+                    <tr>
+                        <td align="center" valign="top" style="border-bottom: solid 1px #f6f8f1;">
+                            <table border="0" cellpadding="20" cellspacing="0" width="100%" id="emailBody">
+                                <!-- ERP採購單資料 -->
+                                <tr>
+                                    <td valign="top" align="left" style="border-bottom: solid 1px #f6f8f1;">
+                                        <p>
+                                            <font style="font-size: 14px; background-color: #757575; color: #f6f8f1; padding: 5px">ERP採購單資料</font>
+                                        </p>
+                                        <div>
+                                            <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%; font-size: 14px;">
+                                                <tr>
+                                                    <th width="15%">品號</th>
+                                                    <td width="35%" style="color: #E53935"><b>#ModelNo#</b></td>
+                                                    <th width="15%">廠商</th>
+                                                    <td width="35%" style="color: #fb8c00"><b>#vendor#</b></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>單別/單號</th>
+                                                    <td>#erpID#</td>
+                                                    <th>採購日期</th>
+                                                    <td>#purDate#</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>公司別</th>
+                                                    <td>#corp#</td>
+                                                    <th>採購數量</th>
+                                                    <td>#purQty#</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- 查檢表欄位 section -->
+                                <tr>
+                                    <td valign="top" align="left" style="border-bottom: solid 1px #f6f8f1;">
+                                        <p>
+                                            <font style="font-size: 14px; background-color: #757575; color: #f6f8f1; padding: 5px">查檢表欄位</font>
+                                        </p>
+                                        <div>
+                                            <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%; font-size: 14px;">
+                                                <tr>
+                                                    <th width="15%">狀態</th>
+                                                    <td width="35%">#status#</td>
+                                                    <th width="15%">檢驗數量</th>
+                                                    <td width="35%">#checkQty#</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>預計驗貨日</th>
+                                                    <td>#estDate#</td>
+                                                    <th>實際驗貨日</th>
+                                                    <td>#actDate#</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>備註</th>
+                                                    <td colspan="3">#remark#</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- 檢驗報告 section -->
+                                <tr>
+                                    <td valign="top" align="left" style="border-bottom: solid 1px #f6f8f1;">
+                                        <p>
+                                            <font style="font-size: 14px; background-color: #757575; color: #f6f8f1; padding: 5px">檢驗報告下載</font>
+                                        </p>
+
+                                        #loopItems#
+                                    </td>
+                                </tr>
+								
+								<!-- 主管核准 section -->
+                                <tr>
+                                    <td valign="top" align="left" style="border-bottom: solid 1px #f6f8f1;">
+                                        <p>
+                                            <font style="font-size: 14px; background-color: #757575; color: #f6f8f1; padding: 5px">主管核准</font>
+                                        </p>
+										<div style="background-color: #e53935; border: 1px solid #e53935; text-align: center; margin: 10px;">
+                                        #approveItems#
+										</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- footer -->
+                    <tr>
+                        <td align="center" valign="top" bgcolor="#f2f2f2">
+                            <table border="0" cellpadding="20" cellspacing="0" width="100%" id="emailFooter">
+                                <tr>
+                                    <td align="center" style="font-size: 14px;">
+                                        <font color="#757575">Copyright © #今年# Prokits Industries Co., LTD.</font>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

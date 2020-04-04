@@ -1,0 +1,140 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="Site_S_UI.master.cs" Inherits="Site_S_UI" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%=Param_WebTitle %></title>
+
+    <asp:PlaceHolder ID="ph_pubCss" runat="server">
+        <link href="<%=fn_Param.CDNUrl %>plugin/google-icon/material-icons.css?family=Material+Icons" rel="stylesheet" />
+        <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-2.4.0/materialize-color.css" rel="stylesheet" />
+        <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-2.4.0/semantic.min.css" rel="stylesheet" />
+        <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-2.4.0/_override.css?v=20191020" rel="stylesheet" />
+        <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-2.4.0/responsive-semantic-ui.css" rel="stylesheet" />
+
+    </asp:PlaceHolder>
+
+    <asp:ContentPlaceHolder ID="CssContent" runat="server">
+    </asp:ContentPlaceHolder>
+    <style>
+        /* header自訂背景色 */
+        .pkColor {
+            background-color: #005758 !important;
+        }
+
+        /* 頁面內容撐滿, 讓footer置底 */
+        .page-flexbox-wrapper {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        /* body 與 header 邊界 */
+        .myBody {
+            margin-top: 3.7em;
+            min-height: 550px;
+            flex: 1 1 auto;
+        }
+
+        /* 自訂footer 邊界與間距 */
+        .ui.footer {
+            margin: 5em 0em 0em;
+            padding: 1em 0em;
+        }
+    </style>
+</head>
+<body class="pushable">
+    <div class="pusher">
+        <form id="form1" runat="server">
+            <div class="page-flexbox-wrapper">
+                <!-- Header Start -->
+                <div class="ui fixed inverted borderless menu pkColor">
+                    <div class="header item">
+                        <img src="<%=fn_Param.CDNUrl %>images/portal/link-icon/brand-web.png" alt="Pro'sKit" />
+                    </div>
+                    <div class="header item">
+                        <%=Page.Title %>
+                    </div>
+                    <div class="right menu">
+                        <asp:Literal ID="lt_headerMenu" runat="server"></asp:Literal>
+
+                        <div id="weblink" class="ui floating labeled dropdown icon item">
+                            <i class="world icon"></i>
+                            <div class="menu">
+                                <div class="header">網站連結</div>
+                                <div class="ui icon search input">
+                                    <i class="search icon"></i>
+                                    <input type="text" placeholder="Search websites..." />
+                                </div>
+                                <div class="divider"></div>
+                                <a class="item" href="https://portal.prokits.com.tw/" target="_blank">
+                                    <span class="description">Portal</span>
+                                    寶工企業入口
+                                </a>
+                                <a class="item" href="https://productcenter.prokits.com.tw/" target="_blank">
+                                    <span class="description">ProductCenter</span>
+                                    產品中心
+                                </a>
+                                <a class="item" href="https://pkef.prokits.com.tw/" target="_blank">
+                                    <span class="description">PKEF</span>
+                                    內部系統整合
+                                </a>
+                                <a class="item" href="http://report.prokits.com.tw/" target="_blank">
+                                    <span class="description">ReportCenter</span>
+                                    報表中心
+                                </a>
+                                <a class="item" href="http://flow.prokits.com.tw:8086/NaNaWeb/" target="_blank">
+                                    <span class="description">BPM</span>
+                                    BPM流程系統
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Header End -->
+
+                <!-- Body Start -->
+                <div class="myBody">
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server">
+                    </asp:ContentPlaceHolder>
+                </div>
+                <!-- Body End -->
+
+                <!-- Bottom Content Start -->
+                <asp:ContentPlaceHolder ID="BottomContent" runat="server">
+                </asp:ContentPlaceHolder>
+                <!-- Bottom Content End -->
+                <!-- Footer Start -->
+                <div class="ui inverted footer vertical segment pkColor">
+                    <div class="ui container">
+                        &copy; <%=DateTime.Now.Year %> Prokits Industries Co., LTD.
+                    </div>
+                </div>
+                <!-- Footer End -->
+            </div>
+
+            <!-- Scripts Start -->
+            <asp:PlaceHolder runat="server">
+                <script src="<%=fn_Param.CDNUrl %>plugin/jQuery/jquery-3.3.1.min.js"></script>
+                <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-2.4.0/semantic.min.js"></script>
+                <script>
+                    $(function () {
+                        $('#weblink').dropdown({
+                            // you can use any ui transition
+                            transition: 'horizontal flip'
+                        });
+                    });
+                </script>
+            </asp:PlaceHolder>
+
+            <asp:ContentPlaceHolder ID="ScriptContent" runat="server">
+            </asp:ContentPlaceHolder>
+            <!-- Scripts End -->
+        </form>
+    </div>
+</body>
+</html>
