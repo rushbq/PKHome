@@ -2143,7 +2143,7 @@ namespace Menu3000Data.Controllers
         #region *** 客戶返利 S ***
 
         /// <summary>
-        /// 客戶返利統計(CustRebate)
+        /// 客戶返利統計(CustRebate) - SZ/SH
         /// </summary>
         /// <param name="CompID">公司別</param>
         /// <param name="inputYear">年</param>
@@ -2153,7 +2153,7 @@ namespace Menu3000Data.Controllers
         /// <returns></returns>
         /// <remarks>
         /// 必填:CompID / inputYear / inputMonth(當月)
-        /// SQL View:已指定ProUnion
+        /// SQL View:已指定資料庫
         /// </remarks>
         public IQueryable<CustRebateItem> GetCustRebateList(string CompID, string inputYear, string inputMonth
             , Dictionary<string, string> search, out string ErrMsg)
@@ -2162,6 +2162,27 @@ namespace Menu3000Data.Controllers
             List<CustRebateItem> dataList = new List<CustRebateItem>();
             StringBuilder sql = new StringBuilder();
             string dbName = GetDBName(CompID);
+            string _View_PaperCost = "";
+            string _View_SalesOrder = "";
+            string _View_SalesReback = "";
+
+            //取得對應的View
+            switch (CompID.ToUpper())
+            {
+                case "SZ":
+                    _View_PaperCost = "SZ_PaperCost";
+                    _View_SalesOrder = "SZ_SalesOrder";
+                    _View_SalesReback = "SZ_SalesReback";
+                    break;
+
+                default:
+                    _View_PaperCost = "SH_PaperCost";
+                    _View_SalesOrder = "SH_SalesOrder";
+                    _View_SalesReback = "SH_SalesReback";
+                    break;
+
+            }
+
 
             //----- 資料取得 -----
             using (SqlCommand cmd = new SqlCommand())
@@ -2173,7 +2194,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" ;WITH TblSO AS (");
                 sql.AppendLine("     SELECT Base.TG001, Base.TG002, Base.TG003, Base.TG004");
                 sql.AppendLine("     , Base.TH037, Base.TH038, Base.TH004, Base.TH013");
-                sql.AppendLine("     FROM [PKSYS].dbo.SZ_SalesOrder Base");
+                sql.AppendLine("     FROM [PKSYS].dbo.{0} Base".FormatThis(_View_SalesOrder));
                 sql.AppendLine("     WHERE (LEFT(Base.TG003, 4) = @paramYear)");
                 sql.AppendLine(" )");
                 /* 銷退單資料 (全年)
@@ -2181,7 +2202,7 @@ namespace Menu3000Data.Controllers
                 */
                 sql.AppendLine(" , TblSOReback AS (");
                 sql.AppendLine("     SELECT Reb.TI001, Reb.TI002, Reb.TI003, Reb.TI004, Reb.TJ033, Reb.TJ034");
-                sql.AppendLine("     FROM [PKSYS].dbo.SZ_SalesReback Reb");
+                sql.AppendLine("     FROM [PKSYS].dbo.{0} Reb".FormatThis(_View_SalesReback));
                 sql.AppendLine("     WHERE (LEFT(Reb.TI003, 4) = @paramYear)");
                 sql.AppendLine(" )");
 
@@ -2212,7 +2233,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" , TblCost_Range AS (");
                 sql.AppendLine("    SELECT myCost.CustID AS CustID, SUM(myCost.PaperCost) AS Cost");
                 sql.AppendLine("    FROM [PKEF].dbo.Rebate_Data DT");
-                sql.AppendLine("     INNER JOIN SZ_PaperCost myCost ON DT.DataYear = myCost.SaleYear COLLATE Chinese_Taiwan_Stroke_BIN");
+                sql.AppendLine("     INNER JOIN {0} myCost ON DT.DataYear = myCost.SaleYear COLLATE Chinese_Taiwan_Stroke_BIN".FormatThis(_View_PaperCost));
                 sql.AppendLine("      AND DT.CustID = myCost.CustID COLLATE Chinese_Taiwan_Stroke_BIN");
                 sql.AppendLine("    WHERE (DT.DataYear = @paramYear)");
                 sql.AppendLine("    GROUP BY myCost.CustID");

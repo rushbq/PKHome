@@ -21,7 +21,26 @@ public partial class myRebate_Search : SecurityCheck
             {
                 #region --權限--
                 //[權限判斷] Start
-                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3731"); ;
+                bool isPass = false;
+                string getCorpUid = fn_Param.GetCorpUID(Req_CompID);
+
+                switch (getCorpUid)
+                {
+                    case "3":
+                        //上海寶工
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3732");
+                        break;
+
+                    case "2":
+                        //深圳寶工
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3731");
+                        break;
+
+                    default:
+                        //TW
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3733");
+                        break;
+                }
 
                 if (!isPass)
                 {
