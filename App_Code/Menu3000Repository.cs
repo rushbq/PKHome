@@ -1769,7 +1769,7 @@ namespace Menu3000Data.Controllers
                 sql.Append(" 	, ISNULL(TblData.Cnt, 0) AS ItemCnt");
                 sql.Append(" 	FROM YearWeekRange YWR");
                 sql.Append(" 	 INNER JOIN TblData ON (YWR.seq + 1) = TblData.myWeek");
-                sql.Append(" 	 LEFT JOIN Customer Cust ON TblData.CustID = Cust.MA001 AND DBS = DBC   ");
+                sql.Append(" 	 LEFT JOIN Customer Cust ON TblData.CustID = Cust.MA001 AND DBS = DBC");
                 sql.Append(" ) AS P");
                 sql.Append(" PIVOT");
                 sql.Append(" (");
