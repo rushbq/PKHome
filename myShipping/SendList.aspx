@@ -183,6 +183,7 @@
                 <div class="item">上海資材部</div>
                 <div class="item">深圳業務部</div>
                 <div class="item">深圳電子商務部</div>
+                <div class="item">台灣營業部</div>
             </div>
         </div>
         <div class="actions">

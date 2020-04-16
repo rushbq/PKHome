@@ -6665,7 +6665,8 @@ namespace Menu3000Data.Controllers
 
                     sql.AppendLine(" SELECT TblERP.*");
                     sql.AppendLine(" , Base.Data_ID");
-                    sql.AppendLine(" , Base.BoxCnt, ISNULL(Ft.Freight, Base.Freight) AS Freight");
+                    sql.AppendLine(" , Base.BoxCnt");
+                    sql.AppendLine(" , (CASE WHEN ISNULL(Base.Freight, 0) = 0 THEN ISNULL(Ft.Freight, 0) ELSE Base.Freight END) AS Freight");
                     sql.AppendLine(" , Base.SendNo, Base.Remark");
                     sql.AppendLine(" , RefShip.Class_ID AS ShipID, RefShip.Class_Name_zh_TW AS ShipName");
                     sql.AppendLine(" , RefCust.Class_ID AS CustType, RefCust.Class_Name_zh_TW AS CustTypeName");
@@ -6686,7 +6687,7 @@ namespace Menu3000Data.Controllers
                     sql.AppendLine("  LEFT JOIN Shipment_RefClass RefCust ON Base.CustType = RefCust.Class_ID");
                     sql.AppendLine("  LEFT JOIN Shipment_RefClass RefProd ON Base.ProdType = RefProd.Class_ID");
                     sql.AppendLine("  LEFT JOIN Shipment_RefClass Ref_Send ON Base.SendType = Ref_Send.Class_ID");
-                    sql.AppendLine("  LEFT JOIN Shipment_Local_Freight Ft ON Ft.ShipNo = ISNULL(ISNULL(TblBBC_Mall.ShipmentNo, TblBBC_twSales.ShipNo), '')");
+                    sql.AppendLine("  LEFT JOIN Shipment_Local_Freight Ft ON Ft.ShipNo = (CASE WHEN ISNULL(Base.ShipNo, '') = '' THEN ISNULL(ISNULL(TblBBC_Mall.ShipmentNo, TblBBC_twSales.ShipNo), '') ELSE Base.ShipNo END)");
                     sql.AppendLine(" WHERE (TblERP.RowIdx >= @startRow) AND (TblERP.RowIdx <= @endRow)");
                     sql.AppendLine(" ORDER BY TblERP.RowIdx");
 

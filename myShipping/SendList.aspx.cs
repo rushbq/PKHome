@@ -286,7 +286,7 @@ public partial class myShipping_SendList : SecurityCheck
         {
             default:
                 //條件:部門代號(SZ)
-                search.Add("DeptRange", "'280','304','314','317'");
+                search.Add("DeptRange", "'280','304','314','317','106'");
                 break;
         }
 
