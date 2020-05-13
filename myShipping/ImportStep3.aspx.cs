@@ -19,15 +19,44 @@ public partial class myShipping_ImportStep3 : SecurityCheck
         {
             try
             {
+                //** 檢查必要參數 **
+                if (string.IsNullOrEmpty(Req_CompID))
+                {
+                    Response.Redirect("{0}Error/參數錯誤".FormatThis(fn_Param.WebUrl));
+                    return;
+                }
+
                 #region --權限--
                 //[權限判斷] Start
-                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701"); ;
+                /* 
+                 * 使用公司別代號，判斷對應的MENU ID
+                 */
+                bool isPass = false;
+                string getCorpUid = fn_Param.GetCorpUID(Req_CompID);
+
+                switch (getCorpUid)
+                {
+                    case "2":
+                        //深圳寶工
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701");
+                        break;
+
+                    default:
+                        //SH
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3702");
+                        break;
+                }
 
                 if (!isPass)
                 {
                     Response.Redirect("{0}Error/您無使用權限".FormatThis(fn_Param.WebUrl));
                     return;
                 }
+
+                //取得公司別
+                string _corpName = fn_Param.GetCorpName(getCorpUid);
+                lt_CorpName.Text = _corpName;
+                Page.Title += "-" + _corpName;
 
                 //[權限判斷] End
                 #endregion
@@ -63,7 +92,7 @@ public partial class myShipping_ImportStep3 : SecurityCheck
 
 
         //----- 原始資料:取得所有資料 -----
-        var query = _data.GetShipImportList(search, out ErrMsg).Take(1)
+        var query = _data.GetShipImportList(search, Req_CompID, out ErrMsg).Take(1)
             .Select(fld => new
             {
                 TraceID = fld.TraceID,
@@ -94,7 +123,7 @@ public partial class myShipping_ImportStep3 : SecurityCheck
 
 
     #region -- 按鈕事件 --
-   
+
     /// <summary>
     /// 下一步
     /// </summary>
@@ -117,7 +146,7 @@ public partial class myShipping_ImportStep3 : SecurityCheck
         };
 
         //轉流單轉入
-        if (!_data.UpdateShipImport_A(baseData,  out ErrMsg))
+        if (!_data.UpdateShipImport_A(baseData, Req_CompID, out ErrMsg))
         {
             string msg = "轉流單轉入失敗 (Step3);" + ErrMsg;
 

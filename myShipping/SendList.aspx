@@ -13,8 +13,9 @@
                     <i class="right angle icon divider"></i>
                     <div class="section">發貨/運費維護統計</div>
                     <i class="right angle icon divider"></i>
-                    <div class="active section">
-                        發貨資料傳送
+                    <div class="active section red-text text-darken-2">
+                        發貨資料傳送 - 
+                        <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
             </div>
@@ -179,10 +180,9 @@
         <div class="content">
             <p>下一步將會以目前的查詢條件, 將發貨資料寄到以下部門Email.</p>
             <div class="ui bulleted list">
-                <div class="item">深圳營業部</div>
-                <div class="item">上海資材部</div>
-                <div class="item">深圳業務部</div>
-                <div class="item">深圳電子商務部</div>
+                <div class="item">上海業務一部</div>
+                <div class="item">上海業務二部</div>
+                <div class="item">上海營業部</div>
                 <div class="item">台灣營業部</div>
             </div>
         </div>
@@ -191,7 +191,7 @@
                 取消
             </div>
             <asp:LinkButton ID="lbtn_SendMail" runat="server" OnClick="lbtn_SendMail_Click" CssClass="ui positive right labeled icon button">開始傳送<i class="chevron right icon"></i></asp:LinkButton>
-          
+
         </div>
     </div>
     <!-- 詢問框 End -->

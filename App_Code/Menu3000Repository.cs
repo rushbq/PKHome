@@ -933,14 +933,25 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, Base.TG003 AS SO_Date, Base.TG004 AS CustID");
                 sql.AppendLine("  , CAST((Base.TG045 + Base.TG046) AS money) AS TotalPrice");
-                sql.AppendLine("  , (CASE WHEN DT.TH007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END) AS StockType");
+                sql.AppendLine("  , 'SH' AS StockType");
                 sql.AppendLine("  , Base.TG066 AS ContactWho");
                 sql.AppendLine("  , 'A' AS DataType");
                 sql.AppendLine(" FROM [{0}].dbo.COPTG Base WITH(NOLOCK)".FormatThis(dbName));
                 sql.AppendLine("  INNER JOIN [{0}].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002".FormatThis(dbName));
                 sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046");
-                sql.Append(", (CASE WHEN DT.TH007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END)");
+
+                //指定銷貨單別
+                switch (CompID)
+                {
+                    case "SH":
+                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        break;
+
+                    default:
+                        break;
+                }
+
+                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046, DT.TH007");
 
                 sql.AppendLine(" UNION ALL");
                 /*
@@ -952,7 +963,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID");
                 sql.AppendLine("  , CAST(SUM(Base.TG013) AS money) AS TotalPrice");
-                sql.AppendLine("  , (CASE WHEN Base.TG007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END) AS StockType");
+                sql.AppendLine("  , 'SH' AS StockType");
                 sql.AppendLine("  , OrdBase.TF015 AS ContactWho");
                 sql.AppendLine("  , 'B' AS DataType");
                 sql.AppendLine(" FROM [{0}].dbo.INVTG Base WITH(NOLOCK)".FormatThis(dbName));
@@ -965,7 +976,8 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  , TblBase.*");
                 sql.AppendLine("  , RTRIM(Cust.MA002) AS CustName");
                 sql.AppendLine("  , (CASE WHEN TblBase.StockType = 'SH' THEN '上海' ELSE '深圳' END) AS StockName");
-                sql.AppendLine("  , ShipBase.Data_ID, ISNULL(ShipBase.CompID, 'SZ') CompID");
+                /* CompID無資料時,帶入目前的ReqCompID */
+                sql.AppendLine("  , ShipBase.Data_ID, ISNULL(ShipBase.CompID, '{0}') CompID".FormatThis(CompID));
                 sql.AppendLine("  , ShipBase.ShipDate, ShipBase.ShipComp, ShipBase.ShipWay");
                 sql.AppendLine(" , (");
                 sql.AppendLine("  CASE WHEN ISNULL(ShipBase.ShipWho, TblBase.ContactWho) = '' THEN");
@@ -980,10 +992,12 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  , (SELECT COUNT(*) FROM [PKEF].dbo.ShipFreightRel WHERE (ShipBase.Data_ID = Rel_ID)) AS IsReled");
                 sql.AppendLine(" FROM TblBase");
                 sql.AppendLine("  INNER JOIN [{0}].dbo.COPMA Cust WITH(NOLOCK) ON TblBase.CustID = Cust.MA001".FormatThis(dbName));
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreight ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
+                sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreight ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN AND ShipBase.CompID = @CompID");
                 sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreightDetail ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
                 sql.AppendLine("  LEFT JOIN [PKEF].dbo.Logistics ShipComp ON ShipBase.ShipComp = ShipComp.Data_ID");
                 sql.AppendLine(" WHERE (1=1)");
+                /* CompID無資料時,帶入目前的ReqCompID */
+                sql.AppendLine(" AND (ISNULL(ShipBase.CompID, '{0}') = '{0}')".FormatThis(CompID));
 
                 /* Search */
                 #region >> filter <<
@@ -1184,6 +1198,7 @@ namespace Menu3000Data.Controllers
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("CompID", CompID);
                 cmd.CommandTimeout = 90;   //單位:秒
 
                 using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
@@ -1388,14 +1403,23 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, Base.TG003 AS SO_Date, Base.TG004 AS CustID");
                 sql.AppendLine("  , CAST((Base.TG045 + Base.TG046) AS money) AS TotalPrice");
-                sql.AppendLine("  , (CASE WHEN DT.TH007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END) AS StockType");
+                sql.AppendLine("  , 'SH' AS StockType");
                 sql.AppendLine("  , Base.TG066 AS ContactWho");
                 sql.AppendLine("  , 'A' AS DataType");
                 sql.AppendLine(" FROM [{0}].dbo.COPTG Base WITH(NOLOCK)".FormatThis(dbName));
                 sql.AppendLine("  INNER JOIN [{0}].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002".FormatThis(dbName));
                 sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
+                //指定銷貨單別
+                switch (CompID)
+                {
+                    case "SH":
+                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        break;
+
+                    default:
+                        break;
+                }
                 sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046");
-                sql.Append(", (CASE WHEN DT.TH007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END)");
 
                 sql.AppendLine(" UNION ALL");
                 /*
@@ -1407,7 +1431,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID");
                 sql.AppendLine("  , CAST(SUM(Base.TG013) AS money) AS TotalPrice");
-                sql.AppendLine("  , (CASE WHEN Base.TG007 IN ('A01','Z11') THEN 'SH' ELSE 'SZ' END) AS StockType");
+                sql.AppendLine("  , 'SH' AS StockType");
                 sql.AppendLine("  , OrdBase.TF015 AS ContactWho");
                 sql.AppendLine("  , 'B' AS DataType");
                 sql.AppendLine(" FROM [{0}].dbo.INVTG Base WITH(NOLOCK)".FormatThis(dbName));
@@ -1420,7 +1444,8 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  , TblBase.*");
                 sql.AppendLine("  , RTRIM(Cust.MA002) AS CustName");
                 sql.AppendLine("  , (CASE WHEN TblBase.StockType = 'SH' THEN '上海' ELSE '深圳' END) AS StockName");
-                sql.AppendLine("  , ShipBase.Data_ID, ISNULL(ShipBase.CompID, 'SZ') CompID");
+                /* CompID無資料時,帶入目前的ReqCompID */
+                sql.AppendLine("  , ShipBase.Data_ID, ISNULL(ShipBase.CompID, '{0}') CompID".FormatThis(CompID));
                 sql.AppendLine("  , ShipBase.ShipDate, ShipBase.ShipComp, ShipBase.ShipWay");
                 sql.AppendLine("  , (CASE WHEN TblBase.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblBase.ContactWho) END) AS ShipWho");
                 sql.AppendLine("  , ShipBase.Remark");
@@ -1434,7 +1459,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreight ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
                 sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreightDetail ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
                 sql.AppendLine("  LEFT JOIN [PKEF].dbo.Logistics ShipComp ON ShipBase.ShipComp = ShipComp.Data_ID");
-                sql.AppendLine(" WHERE (1=1)");
+                sql.AppendLine(" WHERE (ShipBase.CompID = @CompID)");
 
                 /* Search */
                 #region >> filter <<
@@ -1490,6 +1515,7 @@ namespace Menu3000Data.Controllers
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("CompID", CompID);
                 cmd.CommandTimeout = 90;   //單位:秒
 
                 using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
@@ -1585,6 +1611,16 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  INNER JOIN [{0}].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002".FormatThis(dbName));
                 sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
                 sql.AppendLine("  AND SUBSTRING(Base.TG003,1,4) BETWEEN YEAR(GETDATE()-365) and YEAR(GETDATE())");
+                //指定銷貨單別
+                switch (CompID)
+                {
+                    case "SH":
+                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        break;
+
+                    default:
+                        break;
+                }
                 sql.AppendLine(" GROUP BY Base.TG001, Base.TG002");
 
                 sql.AppendLine(" UNION ALL");
@@ -1617,11 +1653,12 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" FROM TblBase");
                 sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreight ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
                 sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreightDetail ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
-                sql.AppendLine(" WHERE (1=1)");
+                sql.AppendLine(" WHERE (ShipBase.CompID = @CompID)");
                 sql.AppendLine(" GROUP BY ROLLUP(YEAR(ShipBase.ShipDate), MONTH(ShipBase.ShipDate))");
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("CompID", CompID);
                 cmd.CommandTimeout = 60;   //單位:秒
 
                 using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
@@ -1727,7 +1764,7 @@ namespace Menu3000Data.Controllers
                 sql.Append(" , TblData AS (");
                 sql.Append("  SELECT COUNT(*) AS Cnt, DATEPART(wk, ShipBase.ShipDate) AS myWeek, ShipBase.CustID");
                 sql.Append("  FROM [PKEF].dbo.ShipFreight ShipBase");
-                sql.Append("  WHERE (YEAR(ShipBase.ShipDate) = @year)");
+                sql.Append("  WHERE (YEAR(ShipBase.ShipDate) = @year) AND (ShipBase.CompID = @CompID)");
 
                 #region >> filter <<
 
@@ -1783,6 +1820,7 @@ namespace Menu3000Data.Controllers
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("CompID", CompID);
                 cmd.CommandTimeout = 60;   //單位:秒
 
                 using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
@@ -2011,7 +2049,7 @@ namespace Menu3000Data.Controllers
         /// <param name="search"></param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
-        public IQueryable<ShipImportData> GetShipImportList(Dictionary<string, string> search, out string ErrMsg)
+        public IQueryable<ShipImportData> GetShipImportList(Dictionary<string, string> search, string compID, out string ErrMsg)
         {
             //----- 宣告 -----
             List<ShipImportData> dataList = new List<ShipImportData>();
@@ -2027,7 +2065,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("   , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Create_Who)) AS Create_Name");
                 sql.AppendLine("   , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Update_Who)) AS Update_Name");
                 sql.AppendLine(" FROM Ship_ImportData Base");
-                sql.AppendLine(" WHERE (1 = 1) ");
+                sql.AppendLine(" WHERE (1 = 1) AND (Base.CompID = @CompID)");
 
                 /* Search */
                 #region >> filter <<
@@ -2069,6 +2107,7 @@ namespace Menu3000Data.Controllers
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("CompID", compID);
 
                 using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
                 {
@@ -3690,7 +3729,8 @@ namespace Menu3000Data.Controllers
             sql.AppendLine("  , ISNULL(Base.PlanType, 0) AS PlanType, (RefPlanType.Class_Name_{0}) AS PlanTypeName".FormatThis(fieldLang));
             sql.AppendLine("  , ISNULL(Base.CustType, 0) AS CustType, (RefCustType.Class_Name_{0}) AS CustTypeName".FormatThis(fieldLang));
             sql.AppendLine("  , Base.RefCustID, Base.RefMallID");
-            sql.AppendLine("  , (SELECT TOP 1 RTRIM(MA002) + ' (' + RTRIM(MA001) + ')' FROM PKSYS.dbo.Customer WITH(NOLOCK) WHERE (DBS = DBC) AND (MA001 = Base.RefCustID)) AS RefCustName");
+            //sql.AppendLine("  , (SELECT TOP 1 RTRIM(MA002) + ' (' + RTRIM(MA001) + ')' FROM PKSYS.dbo.Customer WITH(NOLOCK) WHERE (DBS = DBC) AND (MA001 = Base.RefCustID)) AS RefCustName");
+            sql.AppendLine("  , RTRIM(Cust.MA001) + ' - ' + RTRIM(Cust.MA002) AS RefCustName");
             sql.AppendLine("  , (SELECT Class_Name_{0} FROM Cust_Complaint_RefMall WHERE (Class_Type = @CC_Type) AND (Class_ID = Base.RefMallID)) AS RefMallName".FormatThis(fieldLang));
             sql.AppendLine("  , Base.ModelNo, Base.Qty, Base.Remark, Base.Remark_Check, Base.IsWarranty");
             sql.AppendLine("  , Base.FlowStatus, RefFlow.Class_Name_{0} AS FlowStatusName".FormatThis(fieldLang));
@@ -3720,6 +3760,7 @@ namespace Menu3000Data.Controllers
             sql.AppendLine("  LEFT JOIN Cust_Complaint_RefClass RefCustType ON Base.CustType = RefCustType.Class_ID AND RefCustType.Class_Type = 2");
             sql.AppendLine("  LEFT JOIN Cust_Complaint_RefClass RefFlow ON Base.FlowStatus = RefFlow.Class_ID AND RefFlow.Class_Type = 1");
             sql.AppendLine("  LEFT JOIN Cust_Complaint_RefClass RefPlanType ON Base.PlanType = RefPlanType.Class_ID AND RefPlanType.Class_Type = 11");
+            sql.AppendLine("  LEFT JOIN PKSYS.dbo.Customer Cust WITH(NOLOCK) ON (DBS = DBC) AND (MA001 = Base.RefCustID)");
             sql.AppendLine(" WHERE (Base.CC_Type = @CC_Type)");
 
             /* Search */
@@ -3747,9 +3788,10 @@ namespace Menu3000Data.Controllers
                             sql.Append(" OR Base.ModelNo LIKE '%' + UPPER(@keyword) + '%'");
                             sql.Append(" OR Base.ShipNo LIKE '%' + UPPER(@keyword) + '%'");
                             sql.Append(" OR Base.RefCustID LIKE '%' + UPPER(@keyword) + '%'");
-                            sql.Append(" OR Base.RefCustID IN (");
-                            sql.Append(" (SELECT RTRIM(MA001) FROM PKSYS.dbo.Customer WITH(NOLOCK) WHERE (DBS = DBC) AND (MA002 LIKE '%' + UPPER(@keyword) + '%'))");
-                            sql.Append(" )");
+                            sql.Append(" OR Cust.MA002 LIKE '%' + UPPER(@keyword) + '%'");
+                            //sql.Append(" OR Base.RefCustID IN (");
+                            //sql.Append(" (SELECT RTRIM(MA001) FROM PKSYS.dbo.Customer WITH(NOLOCK) WHERE (DBS = DBC) AND (MA002 LIKE '%' + UPPER(@keyword) + '%'))");
+                            //sql.Append(" )");
                             sql.Append(")");
 
                             break;
@@ -4952,6 +4994,8 @@ namespace Menu3000Data.Controllers
                                 Price_PurchaseRebate = item.Field<double?>("Price_PurchaseRebate"),
                                 Price_Promo = item.Field<double?>("Price_Promo"),
                                 Price_Freight = item.Field<double?>("Price_Freight"),
+                                Profit = item.Field<double?>("Profit"),
+                                Profit_Percent = item.Field<double?>("Profit_Percent"),
                                 Create_Time = item.Field<DateTime?>("Create_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
                                 Update_Time = item.Field<DateTime?>("Update_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
                                 Create_Name = item.Field<string>("Create_Name"),
@@ -4997,6 +5041,7 @@ namespace Menu3000Data.Controllers
             sql.AppendLine("  , Base.setYear, Base.setMonth");
             sql.AppendLine("  , Base.Price_Income, Base.Price_SalesRebate, Base.Price_Cost, Base.Price_Profit");
             sql.AppendLine("  , Base.Price_Purchase, Base.Price_Back, Base.Price_PurchaseRebate, Base.Price_Promo, Base.Price_Freight");
+            sql.AppendLine("  , Base.Profit, Base.Profit_Percent");
             sql.AppendLine("  , Base.Create_Time, Base.Update_Time");
             sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Base.Create_Who COLLATE Chinese_Taiwan_Stroke_BIN)) AS Create_Name");
             sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Base.Update_Who COLLATE Chinese_Taiwan_Stroke_BIN)) AS Update_Name");
@@ -7754,7 +7799,7 @@ namespace Menu3000Data.Controllers
         /// </summary>
         /// <param name="instance"></param>
         /// <returns></returns>
-        public bool CreateShipImport(ShipImportData instance, out string ErrMsg)
+        public bool CreateShipImport(ShipImportData instance, string compID, out string ErrMsg)
         {
             //----- 宣告 -----
             StringBuilder sql = new StringBuilder();
@@ -7764,10 +7809,10 @@ namespace Menu3000Data.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" INSERT INTO Ship_ImportData( ");
-                sql.AppendLine("  Data_ID, TraceID, Status, Upload_File");
+                sql.AppendLine("  Data_ID, TraceID, Status, Upload_File, CompID");
                 sql.AppendLine("  , Create_Who, Create_Time");
                 sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @Data_ID, @TraceID, 10, @Upload_File");
+                sql.AppendLine("  @Data_ID, @TraceID, 10, @Upload_File, @CompID");
                 sql.AppendLine("  , @Create_Who, GETDATE()");
                 sql.AppendLine(" );");
 
@@ -7778,6 +7823,7 @@ namespace Menu3000Data.Controllers
                 cmd.Parameters.AddWithValue("TraceID", instance.TraceID);
                 cmd.Parameters.AddWithValue("Upload_File", instance.Upload_File);
                 cmd.Parameters.AddWithValue("Create_Who", instance.Create_Who);
+                cmd.Parameters.AddWithValue("CompID", compID);
 
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
             }
@@ -8468,11 +8514,13 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  Data_ID, RefType, RefMall, setYear, setMonth");
                 sql.AppendLine("  , Price_Income, Price_SalesRebate, Price_Cost, Price_Profit");
                 sql.AppendLine("  , Price_Purchase, Price_Back, Price_PurchaseRebate, Price_Freight");
+                sql.AppendLine("  , Profit, Profit_Percent");
                 sql.AppendLine("  , Create_Who, Create_Time");
                 sql.AppendLine(" ) VALUES (");
                 sql.AppendLine("  @Data_ID, @RefType, @RefMall, @setYear, @setMonth");
                 sql.AppendLine("  , @Price_Income, @Price_SalesRebate, @Price_Cost, @Price_Profit");
                 sql.AppendLine("  , @Price_Purchase, @Price_Back, @Price_PurchaseRebate, @Price_Freight");
+                sql.AppendLine("  , @Profit, @Profit_Percent");
                 sql.AppendLine("  , @Create_Who, GETDATE()");
                 sql.AppendLine(" );");
 
@@ -8491,6 +8539,8 @@ namespace Menu3000Data.Controllers
                 cmd.Parameters.AddWithValue("Price_Back", instance.Price_Back);
                 cmd.Parameters.AddWithValue("Price_PurchaseRebate", instance.Price_PurchaseRebate);
                 cmd.Parameters.AddWithValue("Price_Freight", instance.Price_Freight);
+                cmd.Parameters.AddWithValue("Profit", instance.Profit);
+                cmd.Parameters.AddWithValue("Profit_Percent", instance.Profit_Percent);
                 cmd.Parameters.AddWithValue("Create_Who", instance.Create_Who);
 
 
@@ -9167,9 +9217,10 @@ namespace Menu3000Data.Controllers
         /// [發貨匯入] 物流單轉入 (A)
         /// </summary>
         /// <param name="instance"></param>
+        /// <param name="compID">SH/SZ</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
-        public bool UpdateShipImport_A(ShipImportData instance, out string ErrMsg)
+        public bool UpdateShipImport_A(ShipImportData instance, string compID, out string ErrMsg)
         {
             try
             {
@@ -9182,7 +9233,7 @@ namespace Menu3000Data.Controllers
                     cmd.Parameters.AddWithValue("ERP_sDate", instance.erpSDate);
                     cmd.Parameters.AddWithValue("ERP_eDate", instance.erpEDate);
                     cmd.Parameters.AddWithValue("Creater", instance.Update_Who);
-                    cmd.Parameters.AddWithValue("CompanyID", "SZ");
+                    cmd.Parameters.AddWithValue("CompanyID", compID);
                     cmd.CommandTimeout = 120;
 
                     //取得回傳值, 輸出參數
@@ -9561,6 +9612,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine("  , Price_Income = @Price_Income, Price_SalesRebate = @Price_SalesRebate, Price_Cost = @Price_Cost");
                 sql.AppendLine("  , Price_Profit = @Price_Profit, Price_Purchase = @Price_Purchase, Price_Back = @Price_Back");
                 sql.AppendLine("  , Price_PurchaseRebate = @Price_PurchaseRebate, Price_Freight = @Price_Freight");
+                sql.AppendLine("  , Profit = @Profit, Profit_Percent = @Profit_Percent");
                 sql.AppendLine(" , Update_Who = @Update_Who, Update_Time = GETDATE()");
                 sql.AppendLine(" WHERE (Data_ID = @DataID);");
                 cmd.CommandText = sql.ToString();
@@ -9576,6 +9628,8 @@ namespace Menu3000Data.Controllers
                 cmd.Parameters.AddWithValue("Price_Back", instance.Price_Back);
                 cmd.Parameters.AddWithValue("Price_PurchaseRebate", instance.Price_PurchaseRebate);
                 cmd.Parameters.AddWithValue("Price_Freight", instance.Price_Freight);
+                cmd.Parameters.AddWithValue("Profit", instance.Profit);
+                cmd.Parameters.AddWithValue("Profit_Percent", instance.Profit_Percent);
                 cmd.Parameters.AddWithValue("Update_Who", instance.Update_Who);
 
                 //execute

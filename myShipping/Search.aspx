@@ -13,8 +13,9 @@
                     <i class="right angle icon divider"></i>
                     <div class="section">發貨/運費維護統計</div>
                     <i class="right angle icon divider"></i>
-                    <div class="active section">
-                        發貨明細表
+                    <div class="active section red-text text-darken-2">
+                        發貨明細表 - 
+                        <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
             </div>
@@ -64,9 +65,9 @@
                         </asp:DropDownList>
                     </div>
                     <div class="three wide field">
-                        <label>排序欄位</label>
+                        <label class="green-text">排序欄位</label>
                         <asp:DropDownList ID="sort_SortField" runat="server">
-                            <asp:ListItem Value="">系統預設</asp:ListItem>
+                            <asp:ListItem Value="">系統預設 (單據日)</asp:ListItem>
                             <asp:ListItem Value="A">單別+單號</asp:ListItem>
                             <asp:ListItem Value="B">發貨日期</asp:ListItem>
                         </asp:DropDownList>
@@ -108,7 +109,7 @@
                         </asp:DropDownList>
                     </div>
                     <div class="three wide field">
-                        <label>排序方式</label>
+                        <label class="green-text">排序方式</label>
                         <asp:DropDownList ID="sort_SortWay" runat="server">
                             <asp:ListItem Value="A">遞增(小到大)</asp:ListItem>
                             <asp:ListItem Value="B" Selected="True">遞減(大到小)</asp:ListItem>

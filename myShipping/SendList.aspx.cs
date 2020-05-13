@@ -21,18 +21,44 @@ public partial class myShipping_SendList : SecurityCheck
         {
             if (!IsPostBack)
             {
+                //** 檢查必要參數 **
+                if (string.IsNullOrEmpty(Req_CompID))
+                {
+                    Response.Redirect("{0}Error/參數錯誤".FormatThis(fn_Param.WebUrl));
+                    return;
+                }
+
                 #region --權限--
                 //[權限判斷] Start
                 /* 
                  * 使用公司別代號，判斷對應的MENU ID
                  */
-                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701"); ;
+                bool isPass = false;
+                string getCorpUid = fn_Param.GetCorpUID(Req_CompID);
+
+                switch (getCorpUid)
+                {
+                    case "2":
+                        //深圳寶工
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701");
+                        break;
+
+                    default:
+                        //SH
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3702");
+                        break;
+                }
 
                 if (!isPass)
                 {
                     Response.Redirect("{0}Error/您無使用權限".FormatThis(fn_Param.WebUrl));
                     return;
                 }
+
+                //取得公司別
+                string _corpName = fn_Param.GetCorpName(getCorpUid);
+                lt_CorpName.Text = _corpName;
+                Page.Title += "-" + _corpName;
 
                 //[權限判斷] End
                 #endregion
@@ -282,13 +308,8 @@ public partial class myShipping_SendList : SecurityCheck
         Dictionary<string, string> search = new Dictionary<string, string>();
 
         //----- 原始資料:條件篩選 ----- 
-        switch (Req_CompID)
-        {
-            default:
-                //條件:部門代號(SZ)
-                search.Add("DeptRange", "'280','304','314','317','106'");
-                break;
-        }
+        //條件:部門代號
+        search.Add("DeptRange", "'261','262','230','106'");
 
         //[資料取得] - 部門Email
         var query = _data.GetDeptMailList(search);
@@ -355,7 +376,7 @@ public partial class myShipping_SendList : SecurityCheck
 
                 //Get Html
                 StringBuilder html = new StringBuilder();
-                
+
                 //Html模版路徑(From CDN)
                 string url = "{0}PKHome/ShipFreight/SendListEmail.html?v=1.0".FormatThis(fn_Param.CDNUrl);
 

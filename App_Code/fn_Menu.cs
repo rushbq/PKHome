@@ -39,7 +39,7 @@ public class fn_Menu
         menu += "<a class=\"item {2}\" href=\"{0}/?tab=4\">週統計</a>".FormatThis(url, "", tabID.Equals("4") ? "active" : "");
 
         //舊版程式
-        menu += "<a class=\"item\" href=\"{0}\" target=\"_blank\">歷史明細</a>".FormatThis("http://ef.prokits.com.tw/employee/prounion/DailySalesGrid.asp");
+        menu += "<a class=\"item\" href=\"{0}\" target=\"_blank\">歷史明細(深圳)</a>".FormatThis("http://ef.prokits.com.tw/employee/prounion/DailySalesGrid.asp");
 
         return menu;
     }

@@ -130,6 +130,8 @@
                                     <th class="right aligned">採購返利</th>
                                     <th class="right aligned">TC運費</th>
                                     <th class="right aligned">促銷費用</th>
+                                    <th class="right aligned">平台月毛利</th>
+                                    <th class="right aligned">平台月毛利率(%)</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -176,6 +178,12 @@
                             </td>
                             <td class="right aligned">
                                 <%#Eval("Price_Promo") %>
+                            </td>
+                            <td class="right aligned">
+                                <%#Eval("Profit") %>
+                            </td>
+                            <td class="right aligned">
+                                <%#Eval("Profit_Percent") %>
                             </td>
 
                             <td class="left aligned collapsing">

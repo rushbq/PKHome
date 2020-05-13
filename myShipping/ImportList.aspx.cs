@@ -20,12 +20,33 @@ public partial class myShipping_ImportList : SecurityCheck
         {
             if (!IsPostBack)
             {
+                //** 檢查必要參數 **
+                if (string.IsNullOrEmpty(Req_CompID))
+                {
+                    Response.Redirect("{0}Error/參數錯誤".FormatThis(fn_Param.WebUrl));
+                    return;
+                }
+
                 #region --權限--
                 //[權限判斷] Start
                 /* 
                  * 使用公司別代號，判斷對應的MENU ID
                  */
-                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701"); ;
+                bool isPass = false;
+                string getCorpUid = fn_Param.GetCorpUID(Req_CompID);
+
+                switch (getCorpUid)
+                {
+                    case "2":
+                        //深圳寶工
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701");
+                        break;
+
+                    default:
+                        //SH
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3702");
+                        break;
+                }
 
                 if (!isPass)
                 {
@@ -33,9 +54,14 @@ public partial class myShipping_ImportList : SecurityCheck
                     return;
                 }
 
+                //取得公司別
+                string _corpName = fn_Param.GetCorpName(getCorpUid);
+                lt_CorpName.Text = _corpName;
+                Page.Title += "-" + _corpName;
+
                 //[權限判斷] End
                 #endregion
-                
+
                 #region --Request參數--
                 //[取得/檢查參數] - Req_sDate
                 if (!string.IsNullOrWhiteSpace(Req_sDate))
@@ -85,7 +111,7 @@ public partial class myShipping_ImportList : SecurityCheck
         //----- 原始資料:條件篩選 -----
 
         #region >> 條件篩選 <<
-        
+
         //[取得/檢查參數] - Date
         if (!string.IsNullOrWhiteSpace(Req_sDate))
         {
@@ -103,7 +129,7 @@ public partial class myShipping_ImportList : SecurityCheck
         #endregion
 
         //----- 原始資料:取得所有資料 -----
-        var query = _data.GetShipImportList(search, out ErrMsg);
+        var query = _data.GetShipImportList(search, Req_CompID, out ErrMsg);
 
 
         //----- 資料整理:取得總筆數 -----
@@ -155,7 +181,7 @@ public partial class myShipping_ImportList : SecurityCheck
 
                 //取得資料:狀態
                 Int32 _flow = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "Status"));
-                
+
                 PlaceHolder ph_KeepGo = (PlaceHolder)e.Item.FindControl("ph_KeepGo");
                 ph_KeepGo.Visible = !_flow.Equals(30);
 
@@ -202,7 +228,7 @@ public partial class myShipping_ImportList : SecurityCheck
         //執行查詢
         Response.Redirect(filterUrl(), false);
     }
-    
+
     #endregion
 
 
@@ -217,7 +243,7 @@ public partial class myShipping_ImportList : SecurityCheck
         //Params
         string _sDate = filter_sDate.Text;
         string _eDate = filter_eDate.Text;
-        
+
         //url string
         StringBuilder url = new StringBuilder();
 
@@ -341,7 +367,7 @@ public partial class myShipping_ImportList : SecurityCheck
         }
     }
     private int _Req_PageIdx;
-    
+
 
     /// <summary>
     /// 取得傳遞參數 - sDate

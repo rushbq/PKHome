@@ -111,6 +111,16 @@
                             <asp:TextBox ID="tb_Price_Freight" runat="server" MaxLength="10" placeholder="" autocomplete="off" type="number" step="any">0</asp:TextBox>
                         </div>
                     </div>
+                    <div class="four fields">
+                        <div class="field">
+                            <label>平台月毛利</label>
+                            <asp:TextBox ID="tb_Profit" runat="server" MaxLength="10" placeholder="" autocomplete="off" type="number" step="any">0</asp:TextBox>
+                        </div>
+                        <div class="field">
+                            <label>平台月毛利率(%)</label>
+                            <asp:TextBox ID="tb_Profit_Percent" runat="server" MaxLength="10" placeholder="" autocomplete="off" type="number" step="any">0</asp:TextBox>
+                        </div>
+                    </div>
                     <div class="ui two column grid">
                         <div class="column">
                             <a href="<%=Page_SearchUrl %>" class="ui small button"><i class="undo icon"></i>返回列表</a>

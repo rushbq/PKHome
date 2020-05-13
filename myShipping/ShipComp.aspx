@@ -11,8 +11,9 @@
                 <div class="ui small breadcrumb">
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
-                    <div class="active section">
-                        貨運公司維護
+                    <div class="active section red-text text-darken-2">
+                        貨運公司維護 - 
+                        <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
             </div>

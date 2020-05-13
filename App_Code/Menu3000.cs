@@ -582,6 +582,8 @@ namespace Menu3000Data.Models
         public double? Price_PurchaseRebate { get; set; }
         public double? Price_Promo { get; set; }
         public double? Price_Freight { get; set; }
+        public double? Profit { get; set; }
+        public double? Profit_Percent { get; set; }
         public string Create_Who { get; set; }
         public string Create_Time { get; set; }
         public string Update_Time { get; set; }

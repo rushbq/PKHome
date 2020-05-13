@@ -166,6 +166,9 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
         tb_Price_PurchaseRebate.Text = query.Price_PurchaseRebate.ToString();
         tb_Price_Freight.Text = query.Price_Freight.ToString();
         lt_Price_Promo.Text = query.Price_Promo.ToString();
+        tb_Profit.Text = query.Profit.ToString();
+        tb_Profit_Percent.Text = query.Profit_Percent.ToString();
+
         //維護資訊
         info_Creater.Text = query.Create_Name;
         info_CreateTime.Text = query.Create_Time;
@@ -219,6 +222,8 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
             string _priceF = tb_Price_Back.Text;
             string _priceG = tb_Price_PurchaseRebate.Text;
             string _priceH = tb_Price_Freight.Text;
+            string _profit = tb_Profit.Text;
+            string _profit_Percent = tb_Profit_Percent.Text;
 
             var data = new ECDItem_Month
             {
@@ -235,6 +240,8 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
                 Price_Back = string.IsNullOrWhiteSpace(_priceF) ? 0 : Convert.ToDouble(_priceF),
                 Price_PurchaseRebate = string.IsNullOrWhiteSpace(_priceG) ? 0 : Convert.ToDouble(_priceG),
                 Price_Freight = string.IsNullOrWhiteSpace(_priceH) ? 0 : Convert.ToDouble(_priceH),
+                Profit = string.IsNullOrWhiteSpace(_profit) ? 0 : Convert.ToDouble(_profit),
+                Profit_Percent = string.IsNullOrWhiteSpace(_profit_Percent) ? 0 : Convert.ToDouble(_profit_Percent),
                 Create_Who = fn_Param.CurrentUser
             };
 
@@ -298,6 +305,8 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
         string _priceF = tb_Price_Back.Text;
         string _priceG = tb_Price_PurchaseRebate.Text;
         string _priceH = tb_Price_Freight.Text;
+        string _profit = tb_Profit.Text;
+        string _profit_Percent = tb_Profit_Percent.Text;
 
         var data = new ECDItem_Month
         {
@@ -314,6 +323,8 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
             Price_Back = string.IsNullOrWhiteSpace(_priceF) ? 0 : Convert.ToDouble(_priceF),
             Price_PurchaseRebate = string.IsNullOrWhiteSpace(_priceG) ? 0 : Convert.ToDouble(_priceG),
             Price_Freight = string.IsNullOrWhiteSpace(_priceH) ? 0 : Convert.ToDouble(_priceH),
+            Profit = string.IsNullOrWhiteSpace(_profit) ? 0 : Convert.ToDouble(_profit),
+            Profit_Percent = string.IsNullOrWhiteSpace(_profit_Percent) ? 0 : Convert.ToDouble(_profit_Percent),
             Update_Who = fn_Param.CurrentUser
         };
 

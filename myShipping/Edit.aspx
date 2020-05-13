@@ -12,8 +12,9 @@
                     <i class="right angle icon divider"></i>
                     <div class="section">發貨/運費維護統計</div>
                     <i class="right angle icon divider"></i>
-                    <div class="active section">
-                        發貨明細維護
+                    <div class="active section red-text text-darken-2">
+                        發貨明細維護 - 
+                        <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
             </div>
