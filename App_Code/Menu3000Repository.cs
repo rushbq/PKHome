@@ -944,7 +944,7 @@ namespace Menu3000Data.Controllers
                 switch (CompID)
                 {
                     case "SH":
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        sql.Append(" AND (Base.TG001 IN ('2341','2342','2343','2345','2361','23B2','23B3','23B6','2380','2381','2382','2383'))");
                         break;
 
                     default:
@@ -1413,7 +1413,7 @@ namespace Menu3000Data.Controllers
                 switch (CompID)
                 {
                     case "SH":
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        sql.Append(" AND (Base.TG001 IN ('2341','2342','2343','2345','2361','23B2','23B3','23B6','2380','2381','2382','2383'))");
                         break;
 
                     default:
@@ -1615,7 +1615,7 @@ namespace Menu3000Data.Controllers
                 switch (CompID)
                 {
                     case "SH":
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','2361','23B2','23B3','23B6'))");
+                        sql.Append(" AND (Base.TG001 IN ('2341','2342','2343','2345','2361','23B2','23B3','23B6','2380','2381','2382','2383'))");
                         break;
 
                     default:

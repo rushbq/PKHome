@@ -182,7 +182,6 @@ public class Ashx_GetData : IHttpHandler
                             html.Append("</tr>");
 
 
-
                         }
 
                         //*** 填入Html ***

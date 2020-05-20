@@ -238,7 +238,7 @@ namespace Menu4000Data.Controllers
                 #endregion
 
                 sql.AppendLine(" SELECT");
-                sql.AppendLine("  ROW_NUMBER() OVER(PARTITION BY Order_FID, Order_SID ORDER BY OrderPreDate, Order_FID, Order_SID, OrderSno ASC) AS RowNumber");
+                sql.AppendLine("  ROW_NUMBER() OVER(PARTITION BY Order_FID, Order_SID ORDER BY Order_FID, Order_SID, OrderSno ASC) AS RowNumber");
                 sql.AppendLine("  , TblBase.*");
                 sql.AppendLine("  , TblPur.PUR_FID, TblPur.PUR_SID, TblPur.PurConfirm, TblPur.PurPreDate, TblPur.PurSupplierID, TblPur.PurSupplier");
                 sql.AppendLine("  , ISNULL(TblPur.PurQty, 0) AS PurQty, ISNULL(TblPur.GetInQty, 0) AS GetInQty, ISNULL(TblPur.unGetInQty, 0) AS unGetInQty");
@@ -498,28 +498,30 @@ namespace Menu4000Data.Controllers
 
 
                 //Order By
-                bool customSort = false;
-                if (search != null)
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrEmpty(fld.Value));
+                //使用預交日排序,會造成排序錯亂,而使Group header未正確顯示(20200514)
+                //bool customSort = false;
+                //if (search != null)
+                //{
+                //    //過濾空值
+                //    var thisSearch = search.Where(fld => !string.IsNullOrEmpty(fld.Value));
 
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        if (item.Key.Equals("menuID") && item.Value.Equals("190"))
-                        {
-                            customSort = true;
-                            sql.AppendLine(" ORDER BY TblBase.OrderPreDate ASC");
-                        }
+                //    //查詢內容
+                //    foreach (var item in thisSearch)
+                //    {
+                //        if (item.Key.Equals("menuID") && item.Value.Equals("190"))
+                //        {
+                //            customSort = true;
+                //            sql.AppendLine(" ORDER BY TblBase.OrderPreDate ASC");
+                //        }
 
-                    }
-                }
+                //    }
+                //}
 
-                if (false == customSort)
-                {
-                    sql.AppendLine(" ORDER BY TblBase.Order_FID, TblBase.Order_SID, TblBase.OrderSno, 1");
-                }
+                //if (false == customSort)
+                //{
+                //    sql.AppendLine(" ORDER BY TblBase.Order_FID, TblBase.Order_SID, TblBase.OrderSno, 1");
+                //}
+                sql.AppendLine(" ORDER BY TblBase.Order_FID, TblBase.Order_SID, TblBase.OrderSno, 1");
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
