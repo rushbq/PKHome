@@ -128,7 +128,12 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
             myDT.Columns["PreIN_A01"].SetOrdinal(34);
             myDT.Columns["PreSet_A01"].SetOrdinal(35);
             myDT.Columns["PreGet_A01"].SetOrdinal(36);
-            myDT.Columns["Class_ID"].SetOrdinal(37);
+            myDT.Columns["SZ_StockQty_A01"].SetOrdinal(37);
+            myDT.Columns["SZ_PreSell_A01"].SetOrdinal(38);
+            myDT.Columns["SZ_PreIN_A01"].SetOrdinal(39);
+            myDT.Columns["SZ_PreSet_A01"].SetOrdinal(40);
+            myDT.Columns["SZ_PreGet_A01"].SetOrdinal(41);
+            myDT.Columns["Class_ID"].SetOrdinal(42);
 
             #endregion
 
@@ -138,41 +143,46 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
             myDT.Columns["ModelNo"].ColumnName = "品號";
             myDT.Columns["ModelName"].ColumnName = "品名";
             myDT.Columns["Class_ID"].ColumnName = "類別";
-            myDT.Columns["StockQty_01"].ColumnName = "01庫存";
+            myDT.Columns["StockQty_01"].ColumnName = "01庫存(台灣)";
             myDT.Columns["PreSell_01"].ColumnName = "01預計銷";
             myDT.Columns["PreIN_01"].ColumnName = "01預計進";
             myDT.Columns["PreSet_01"].ColumnName = "01預計生";
             myDT.Columns["PreGet_01"].ColumnName = "01預計領";
-            myDT.Columns["StockQty_20"].ColumnName = "20庫存";
+            myDT.Columns["StockQty_20"].ColumnName = "20庫存(台灣)";
             myDT.Columns["PreSell_20"].ColumnName = "20預計銷";
             myDT.Columns["PreIN_20"].ColumnName = "20預計進";
             myDT.Columns["PreSet_20"].ColumnName = "20預計生";
             myDT.Columns["PreGet_20"].ColumnName = "20預計領";
-            myDT.Columns["StockQty_21"].ColumnName = "21庫存";
+            myDT.Columns["StockQty_21"].ColumnName = "21庫存(台灣)";
             myDT.Columns["PreSell_21"].ColumnName = "21預計銷";
             myDT.Columns["PreIN_21"].ColumnName = "21預計進";
             myDT.Columns["PreSet_21"].ColumnName = "21預計生";
             myDT.Columns["PreGet_21"].ColumnName = "21預計領";
-            myDT.Columns["StockQty_22"].ColumnName = "22庫存";
+            myDT.Columns["StockQty_22"].ColumnName = "22庫存(台灣)";
             myDT.Columns["PreSell_22"].ColumnName = "22預計銷";
             myDT.Columns["PreIN_22"].ColumnName = "22預計進";
             myDT.Columns["PreSet_22"].ColumnName = "22預計生";
             myDT.Columns["PreGet_22"].ColumnName = "22預計領";
-            myDT.Columns["StockQty_12"].ColumnName = "12庫存";
+            myDT.Columns["StockQty_12"].ColumnName = "12庫存(上海)";
             myDT.Columns["PreSell_12"].ColumnName = "12預計銷";
             myDT.Columns["PreIN_12"].ColumnName = "12預計進";
             myDT.Columns["PreSet_12"].ColumnName = "12預計生";
             myDT.Columns["PreGet_12"].ColumnName = "12預計領";
-            myDT.Columns["StockQty_128"].ColumnName = "128庫存";
+            myDT.Columns["StockQty_128"].ColumnName = "128庫存(上海)";
             myDT.Columns["PreSell_128"].ColumnName = "128預計銷";
             myDT.Columns["PreIN_128"].ColumnName = "128預計進";
             myDT.Columns["PreSet_128"].ColumnName = "128預計生";
             myDT.Columns["PreGet_128"].ColumnName = "128預計領";
-            myDT.Columns["StockQty_A01"].ColumnName = "A01庫存";
+            myDT.Columns["StockQty_A01"].ColumnName = "A01庫存(上海)";
             myDT.Columns["PreSell_A01"].ColumnName = "A01預計銷";
             myDT.Columns["PreIN_A01"].ColumnName = "A01預計進";
             myDT.Columns["PreSet_A01"].ColumnName = "A01預計生";
             myDT.Columns["PreGet_A01"].ColumnName = "A01預計領";
+            myDT.Columns["SZ_StockQty_A01"].ColumnName = "A01庫存(SZ)";
+            myDT.Columns["SZ_PreSell_A01"].ColumnName = "A01預計銷(SZ)";
+            myDT.Columns["SZ_PreIN_A01"].ColumnName = "A01預計進(SZ)";
+            myDT.Columns["SZ_PreSet_A01"].ColumnName = "A01預計生(SZ)";
+            myDT.Columns["SZ_PreGet_A01"].ColumnName = "A01預計領(SZ)";
             #endregion
 
         }

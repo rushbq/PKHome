@@ -545,7 +545,7 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" 		SELECT SUM(TA015 - TA017) AS PreSet");
                 sql.AppendLine(" 		 , RTRIM(TA006) AS ModelNo");
                 sql.AppendLine(" 		 , TA020 AS StockType");
-                sql.AppendLine(" 		FROM [prokit2].dbo.MOCTA WITH(NOLOCK)");
+                sql.AppendLine(" 		FROM [{0}].dbo.MOCTA WITH(NOLOCK)".FormatThis(dbName));
                 sql.AppendLine(" 		WHERE (TA013 <> 'V') AND (TA011 IN ('1', '2', '3'))");
                 sql.AppendLine(" 		 AND (TA020 IN ('01', '20', '22', '21', '12', '128', 'A01'))");
                 sql.AppendLine(" 		GROUP BY TA006, TA020");
@@ -569,8 +569,8 @@ namespace Menu3000Data.Controllers
                 sql.AppendLine(" 		SELECT SUM(TB004 - TB005) AS PreGet");
                 sql.AppendLine(" 		 , RTRIM(TA006) AS ModelNo");
                 sql.AppendLine(" 		 , TA020 AS StockType");
-                sql.AppendLine(" 		FROM [prokit2].dbo.MOCTA AS A WITH(NOLOCK)");
-                sql.AppendLine(" 		 INNER JOIN [prokit2].dbo.MOCTB AS B WITH(NOLOCK) ON A.TA001 = B.TB001 AND A.TA002 = B.TB002 AND A.TA006 = B.TB003");
+                sql.AppendLine(" 		FROM [{0}].dbo.MOCTA AS A WITH(NOLOCK)".FormatThis(dbName));
+                sql.AppendLine(" 		 INNER JOIN [{0}].dbo.MOCTB AS B WITH(NOLOCK) ON A.TA001 = B.TB001 AND A.TA002 = B.TB002 AND A.TA006 = B.TB003".FormatThis(dbName));
                 sql.AppendLine(" 		WHERE (A.TA013 <> 'V') AND (A.TA011 IN ('1', '2', '3'))");
                 sql.AppendLine(" 		 AND (A.TA020 IN ('01', '20', '22', '21', '12', '128', 'A01'))");
                 sql.AppendLine(" 		GROUP BY TA006, TA020");

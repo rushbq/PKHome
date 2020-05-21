@@ -72,13 +72,14 @@
                     <thead>
                         <tr>
                             <th class="grey-bg lighten-3" rowspan="2">品號</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">01倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">20倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">21倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">22倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">12倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">128倉</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="5">A01倉</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="5">台灣-01倉</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="5">台灣-20倉</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="5">台灣-21倉</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="5">台灣-22倉</th>
+                            <th class="blue-bg lighten-3 center aligned" colspan="5">上海-12倉</th>
+                            <th class="blue-bg lighten-3 center aligned" colspan="5">上海-128倉</th>
+                            <th class="blue-bg lighten-3 center aligned" colspan="5">上海-A01倉</th>
+                            <th class="orange-bg lighten-2 center aligned" colspan="5">深圳-A01倉</th>
                         </tr>
                         <tr>
                             <th class="grey-bg lighten-3 right aligned numFmt">01庫存</th>
@@ -111,6 +112,12 @@
                             <th class="grey-bg lighten-3 right aligned numFmt">預計進</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計生</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計領</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">A01庫存</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計銷</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計進</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計生</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計領</th>
+                            <!-- SZ -->
                             <th class="grey-bg lighten-3 right aligned numFmt">A01庫存</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計銷</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計進</th>
@@ -249,6 +256,11 @@
                          { data: "PreIN_A01", className: "right aligned" },
                          { data: "PreSet_A01", className: "right aligned" },
                          { data: "PreGet_A01", className: "right aligned" },
+                         { data: "SZ_StockQty_A01", className: "right aligned warning" },
+                         { data: "SZ_PreSell_A01", className: "right aligned" },
+                         { data: "SZ_PreIN_A01", className: "right aligned" },
+                         { data: "SZ_PreSet_A01", className: "right aligned" },
+                         { data: "SZ_PreGet_A01", className: "right aligned" },
                      ],
                      //自訂欄位格式
                      "columnDefs": [

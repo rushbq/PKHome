@@ -110,6 +110,7 @@
                             <asp:PlaceHolder ID="ph_headerSH" runat="server">
                                 <th class="grey-bg lighten-3 center aligned" colspan="5">12倉</th>
                                 <th class="grey-bg lighten-3 center aligned" colspan="5">128倉</th>
+                                <th class="grey-bg lighten-3 center aligned" colspan="5">A01倉</th>
                             </asp:PlaceHolder>
                             <asp:PlaceHolder ID="ph_headerSZ" runat="server">
                                 <th class="grey-bg lighten-3 center aligned" colspan="5">A01倉</th>
@@ -147,6 +148,11 @@
                                 <th class="grey-bg lighten-3 right aligned">預計生</th>
                                 <th class="grey-bg lighten-3 right aligned">預計領</th>
                                 <th class="grey-bg lighten-3 right aligned">128庫存</th>
+                                <th class="grey-bg lighten-3 right aligned">預計銷</th>
+                                <th class="grey-bg lighten-3 right aligned">預計進</th>
+                                <th class="grey-bg lighten-3 right aligned">預計生</th>
+                                <th class="grey-bg lighten-3 right aligned">預計領</th>
+                                <th class="grey-bg lighten-3 right aligned">A01庫存</th>
                                 <th class="grey-bg lighten-3 right aligned">預計銷</th>
                                 <th class="grey-bg lighten-3 right aligned">預計進</th>
                                 <th class="grey-bg lighten-3 right aligned">預計生</th>
@@ -221,6 +227,12 @@
                                     <td class="right aligned"><%#Eval("PreIN_128") %></td>
                                     <td class="right aligned"><%#Eval("PreSet_128") %></td>
                                     <td class="right aligned"><%#Eval("PreGet_128") %></td>
+                                    <!-- A01 -->
+                                    <td class="right aligned warning"><%#Eval("StockQty_A01") %></td>
+                                    <td class="right aligned"><%#Eval("PreSell_A01") %></td>
+                                    <td class="right aligned"><%#Eval("PreIN_A01") %></td>
+                                    <td class="right aligned"><%#Eval("PreSet_A01") %></td>
+                                    <td class="right aligned"><%#Eval("PreGet_A01") %></td>
                                 </asp:PlaceHolder>
                                 <asp:PlaceHolder ID="ph_BodySZ" runat="server">
                                     <!-- A01 -->
@@ -233,41 +245,62 @@
 
                                 <!-- Total -->
                                 <asp:PlaceHolder ID="ph_TotalTW" runat="server">
-                                    <td class="right aligned warning">
-                                        <%#Convert.ToInt32(Eval("StockQty_01"))+Convert.ToInt32(Eval("StockQty_20"))+Convert.ToInt32(Eval("StockQty_21"))+Convert.ToInt32(Eval("StockQty_22"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("StockQty_01"))+Convert.ToInt32(Eval("StockQty_20"))+Convert.ToInt32(Eval("StockQty_21"))+Convert.ToInt32(Eval("StockQty_22"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreSell_01"))+Convert.ToInt32(Eval("PreSell_20"))+Convert.ToInt32(Eval("PreSell_21"))+Convert.ToInt32(Eval("PreSell_22"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreSell_01"))+Convert.ToInt32(Eval("PreSell_20"))+Convert.ToInt32(Eval("PreSell_21"))+Convert.ToInt32(Eval("PreSell_22"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreIN_01"))+Convert.ToInt32(Eval("PreIN_20"))+Convert.ToInt32(Eval("PreIN_21"))+Convert.ToInt32(Eval("PreIN_22"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreIN_01"))+Convert.ToInt32(Eval("PreIN_20"))+Convert.ToInt32(Eval("PreIN_21"))+Convert.ToInt32(Eval("PreIN_22"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreSet_01"))+Convert.ToInt32(Eval("PreSet_20"))+Convert.ToInt32(Eval("PreSet_21"))+Convert.ToInt32(Eval("PreSet_22"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreSet_01"))+Convert.ToInt32(Eval("PreSet_20"))+Convert.ToInt32(Eval("PreSet_21"))+Convert.ToInt32(Eval("PreSet_22"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreGet_01"))+Convert.ToInt32(Eval("PreGet_20"))+Convert.ToInt32(Eval("PreGet_21"))+Convert.ToInt32(Eval("PreGet_22"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreGet_01"))+Convert.ToInt32(Eval("PreGet_20"))+Convert.ToInt32(Eval("PreGet_21"))+Convert.ToInt32(Eval("PreGet_22"))%>
+                                        </strong>
                                     </td>
                                 </asp:PlaceHolder>
                                 <asp:PlaceHolder ID="ph_TotalSH" runat="server">
-                                    <td class="right aligned warning">
-                                        <%#Convert.ToInt32(Eval("StockQty_12"))+Convert.ToInt32(Eval("StockQty_128"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("StockQty_12")) + Convert.ToInt32(Eval("StockQty_128")) + Convert.ToInt32(Eval("StockQty_A01"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreSell_12"))+Convert.ToInt32(Eval("PreSell_128"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreSell_12")) + Convert.ToInt32(Eval("PreSell_128")) + Convert.ToInt32(Eval("PreSell_A01"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreIN_12"))+Convert.ToInt32(Eval("PreIN_128"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreIN_12")) + Convert.ToInt32(Eval("PreIN_128")) + Convert.ToInt32(Eval("PreIN_A01"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreSet_12"))+Convert.ToInt32(Eval("PreSet_128"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreSet_12")) + Convert.ToInt32(Eval("PreSet_128")) + Convert.ToInt32(Eval("PreSet_A01"))%>
+                                        </strong>
                                     </td>
-                                    <td class="right aligned">
-                                        <%#Convert.ToInt32(Eval("PreGet_12"))+Convert.ToInt32(Eval("PreGet_128"))%>
+                                    <td class="right aligned positive">
+                                        <strong>
+                                            <%#Convert.ToInt32(Eval("PreGet_12")) + Convert.ToInt32(Eval("PreGet_128")) + Convert.ToInt32(Eval("PreGet_A01"))%>
+                                        </strong>
                                     </td>
                                 </asp:PlaceHolder>
+
                                 <asp:PlaceHolder ID="ph_TotalSZ" runat="server">
-                                    <td class="right aligned warning"><%#Eval("StockQty_A01") %></td>
+                                    <td class="right aligned positive"><%#Eval("StockQty_A01") %></td>
                                     <td class="right aligned"><%#Eval("PreSell_A01") %></td>
                                     <td class="right aligned"><%#Eval("PreIN_A01") %></td>
                                     <td class="right aligned"><%#Eval("PreSet_A01") %></td>
