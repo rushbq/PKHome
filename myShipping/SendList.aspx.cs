@@ -309,7 +309,7 @@ public partial class myShipping_SendList : SecurityCheck
 
         //----- 原始資料:條件篩選 ----- 
         //條件:部門代號
-        search.Add("DeptRange", "'261','262','230','106'");
+        search.Add("DeptRange", "'280','261','262','230','106'");
 
         //[資料取得] - 部門Email
         var query = _data.GetDeptMailList(search);

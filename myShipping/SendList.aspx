@@ -183,6 +183,7 @@
                 <div class="item">上海業務一部</div>
                 <div class="item">上海業務二部</div>
                 <div class="item">上海營業部</div>
+                <div class="item">上海資材部</div>
                 <div class="item">台灣營業部</div>
             </div>
         </div>
