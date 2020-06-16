@@ -114,6 +114,7 @@ public class Ashx_OutputExcel : IHttpHandler
                         case "SH":
                             html.Append(" <th rowspan=\"2\">12倉庫存</th>");
                             html.Append(" <th rowspan=\"2\">14倉庫存</th>");
+                            html.Append(" <th rowspan=\"2\">A01倉庫存</th>");
                             break;
 
                         default:
@@ -239,6 +240,10 @@ public class Ashx_OutputExcel : IHttpHandler
                                 //SH:14倉庫存
                                 html.Append("<td>{0}</td>".FormatThis(
                                     DT.Rows[row]["StockQty_14"]));
+
+                                //SH:A01倉庫存
+                                html.Append("<td>{0}</td>".FormatThis(
+                                    DT.Rows[row]["StockQty_A01"]));
 
                                 break;
 

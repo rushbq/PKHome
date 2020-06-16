@@ -792,11 +792,28 @@ namespace Menu2000Data.Controllers
 
                                 break;
 
-                            case "CloseWho":
-                                //結案人
-                                sql.Append(" AND (Base.Update_Who = @Update_Who)");
+                            case "procWho":
+                                //處理人員
+                                switch (type.ToUpper())
+                                {
+                                    case "WHO":
+                                        //依派工人員
+                                        sql.Append(" AND (Assign.Who = @Who)");
 
-                                cmd.Parameters.AddWithValue("Update_Who", item.Value);
+                                        break;
+
+                                    default:
+                                        //依類別
+                                        sql.AppendLine(" AND (Base.Data_ID IN (");
+                                        sql.AppendLine("  SELECT Parent_ID");
+                                        sql.AppendLine("  FROM MK_Help_Assigned");
+                                        sql.AppendLine("  WHERE Who = @Who");
+                                        sql.AppendLine(" ))");
+
+                                        break;
+                                }
+
+                                cmd.Parameters.AddWithValue("Who", item.Value);
 
                                 break;
                         }

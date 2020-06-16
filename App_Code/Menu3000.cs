@@ -650,7 +650,6 @@ namespace Menu3000Data.Models
     #endregion
 
 
-
     #region -- 出貨明細 --
 
     public class ShipData_Item
@@ -871,6 +870,136 @@ namespace Menu3000Data.Models
 
     #endregion
 
+
+    #region -- 應收帳款 --
+    public class ARData_Base
+    {
+        public int SeqNo { get; set; }
+        public Guid Data_ID { get; set; }
+        public string TraceID { get; set; }
+        public string CustID { get; set; }
+        public string CustName { get; set; }
+        public string CustFullName { get; set; }
+        public string DBS { get; set; }
+        public string erp_sDate { get; set; }
+        public string erp_eDate { get; set; }
+
+        /// <summary>
+        /// 10:填寫中 / 20:已寄送
+        /// </summary>
+        public Int16 Status { get; set; }
+        public string StatusName { get; set; }
+
+        public string Send_Time { get; set; }
+        public string Create_Who { get; set; }
+        public string Create_Name { get; set; }
+        public string Create_Time { get; set; }
+        public string Update_Who { get; set; }
+        public string Update_Name { get; set; }
+        public string Update_Time { get; set; }
+        public string ZipCode { get; set; }
+        public string Addr { get; set; }
+        public string AddrRemark { get; set; }
+        public string Fax { get; set; }
+        public string Tel { get; set; }
+        /// <summary>
+        /// 報錯時的訊息
+        /// </summary>
+        public string ErrMessage { get; set; }
+
+        /// <summary>
+        /// 報錯時間
+        /// </summary>
+        public string ErrTime { get; set; }
+    }
+
+
+    public class ARData_Items
+    {
+        public string Erp_AR_ID { get; set; }
+    }
+
+
+    public class ARData_Addressbook
+    {
+        public string Email { get; set; }
+    }
+
+
+    public class ARData_Details
+    {
+        public Int64 SerialNo { get; set; }
+        public string AR_Fid { get; set; }
+        public string AR_Sid { get; set; }
+        public string CustID { get; set; }
+        public string CustName { get; set; }
+        /// <summary>
+        /// 憑證號碼
+        /// </summary>
+        public string AT_Fid { get; set; }
+        public string AT_Sid { get; set; }
+        public string AT_Tid { get; set; }
+        /// <summary>
+        /// 付款條件
+        /// </summary>
+        public string TermID { get; set; }
+        public string TermName { get; set; }
+        public string ArDate { get; set; }
+        public string BillNo { get; set; }
+        public string PreGetDay { get; set; }
+        public string Currency { get; set; }
+
+        /// <summary>
+        /// TA029 = 應收金額
+        /// </summary>
+        public double Price { get; set; }
+
+        /// <summary>
+        /// TA042 = 本幣營業稅額
+        /// </summary>
+        public double TaxPrice { get; set; }
+
+        /// <summary>
+        /// TA031 = 已收金額
+        /// </summary>
+        public double GetPrice { get; set; }
+
+    }
+
+
+    public class ARData_PriceInfo
+    {
+        /// <summary>
+        /// 前期未收款
+        /// </summary>
+        public double PrePrice { get; set; }
+
+        /// <summary>
+        /// 前期未收款筆數
+        /// </summary>
+        public int PreCnt { get; set; }
+
+        /// <summary>
+        /// 本期應收總額
+        /// </summary>
+        public double TotalPrice { get; set; }
+
+        /// <summary>
+        /// 本幣未稅金額
+        /// </summary>
+        public double TotalPrice_NoTax { get; set; }
+
+        /// <summary>
+        /// 本幣稅額
+        /// </summary>
+        public double TotalTaxPrice { get; set; }
+        public int Cnt { get; set; }
+
+        public double AllPrice { get; set; }
+    }
+
+
+    #endregion
 
     /// <summary>
     /// 類別

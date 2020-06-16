@@ -113,6 +113,7 @@ public class Ashx_GetData : IHttpHandler
                         int _stockQtyMain = Convert.ToInt32(DT.Rows[row]["StockQty_Main"]);
                         int _stockQty11 = Convert.ToInt32(DT.Rows[row]["StockQty_11"]);
                         int _stockQty14 = Convert.ToInt32(DT.Rows[row]["StockQty_14"]);
+                        int _stockQtyA01 = Convert.ToInt32(DT.Rows[row]["StockQty_A01"]);                            
                         int _shortQty = Convert.ToInt32(DT.Rows[row]["ShortQty"]);
                         int _unStockQty = Convert.ToInt32(DT.Rows[row]["unStockQty"]);
                         int _preInQty = Convert.ToInt32(DT.Rows[row]["PreInQty"]);
@@ -240,6 +241,11 @@ public class Ashx_GetData : IHttpHandler
                                     //SH:14倉庫存
                                     html.Append("<div class=\"grey-text text-darken-2\">14：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
                                         _stockQty14
+                                        , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
+
+                                    //SH:A01倉庫存
+                                    html.Append("<div class=\"grey-text text-darken-2\">A01：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
+                                        _stockQtyA01
                                         , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
 
                                     break;

@@ -104,7 +104,7 @@ public partial class myMarketingHelp_Chart : SecurityCheck
         //呼叫並回傳資料
         var getUsers = _user.GetUsers(null, _dept);
         //選單設定root
-        ddl.Items.Add(new ListItem("結案人員", ""));
+        ddl.Items.Add(new ListItem("處理人員", ""));
         //選單設定選項
         foreach (var item in getUsers)
         {

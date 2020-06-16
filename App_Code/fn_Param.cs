@@ -76,6 +76,22 @@ public class fn_Param
     private static string _ApiUrl;
 
     /// <summary>
+    /// Select PDF 元件金鑰
+    /// </summary>
+    public static string PDF_Key
+    {
+        get
+        {
+            return System.Web.Configuration.WebConfigurationManager.AppSettings["PDF_Key"];
+        }
+        set
+        {
+            _PDF_Key = value;
+        }
+    }
+    private static string _PDF_Key;
+
+    /// <summary>
     /// Ref網址
     /// </summary>
     public static string RefUrl

@@ -152,6 +152,11 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
                 sql.AppendLine("         WHERE(MC002 = '14') AND(MC001 = INVMB.MB001)");
                 sql.AppendLine("     ), 0) AS INT) AS StockQty_14 "); //SH:14倉庫存
+                sql.AppendLine("	, CAST(ISNULL((");
+                sql.AppendLine("         SELECT MC007");
+                sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
+                sql.AppendLine("         WHERE(MC002 = 'A01') AND(MC001 = INVMB.MB001)");
+                sql.AppendLine("     ), 0) AS INT) AS StockQty_A01 "); //SH:A01倉庫存
                 sql.AppendLine("	, INVMB.MB025 AS ProdProperty"); //品號屬性
                 sql.AppendLine("	, CONVERT(VARCHAR(10), CAST(COPTD.TD013 AS DATE), 111) AS OrderPreDate"); //訂單預交日
                 sql.AppendLine("	, CAST(ISNULL(INVMC.MC004, 0) AS INT) AS SafeQty_Main"); //主要倉安全存量

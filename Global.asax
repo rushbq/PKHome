@@ -392,6 +392,35 @@
                 , { "rootID", "3000" }});
 
 
+        //應收帳款對帳
+        routes.MapPageRoute("ARInformList", "{lang}/{rootID}/ARInform/{CompID}", "~/myARdata/Search.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+        routes.MapPageRoute("ARInformS1", "{lang}/{rootID}/ARInform/{CompID}/Step1", "~/myARdata/Step1.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+        routes.MapPageRoute("ARInformS2", "{lang}/{rootID}/ARInform/{CompID}/Step2/{id}", "~/myARdata/Step2.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+        routes.MapPageRoute("ARInformS3", "{lang}/{rootID}/ARInform/{CompID}/Step3/{id}", "~/myARdata/Step3.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+        routes.MapPageRoute("ARInformS4", "{lang}/{rootID}/ARInform/{CompID}/Step4/{id}", "~/myARdata/Step4.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+
+
+
         //--- 生產採購(4000) --- 
         //到貨狀況
         routes.MapPageRoute("OpcsSearch", "{lang}/{rootID}/OpcsStatus/{CompID}", "~/myOpcsStatus/Search.aspx", false,

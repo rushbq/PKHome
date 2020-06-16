@@ -18,6 +18,27 @@ public class GetData_Customer : IHttpHandler
     {
         //[接收參數] 查詢字串
         string searchVal = context.Request["q"];
+        string corp = context.Request["corp"];
+        string dbs = context.Request["dbs"];
+
+        //dbs轉corp
+        if (!string.IsNullOrWhiteSpace(dbs))
+        {
+            switch (dbs.ToUpper())
+            {
+                case "TW":
+                    corp = "1";
+                    break;
+
+                case "SZ":
+                    corp = "2";
+                    break;
+
+                case "SH":
+                    corp = "3";
+                    break;
+            }
+        }
 
 
         //----- 宣告:資料參數 -----
@@ -29,6 +50,11 @@ public class GetData_Customer : IHttpHandler
         if (!string.IsNullOrEmpty(searchVal))
         {
             search.Add((int)Common.CustSearch.Keyword, searchVal);
+        }
+        
+        if (!string.IsNullOrEmpty(corp))
+        {
+            search.Add((int)Common.CustSearch.Corp, corp);
         }
 
         //----- 原始資料:取得所有資料 -----

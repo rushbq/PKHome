@@ -41,7 +41,7 @@ public class GetData_ChartData_MKHelp : IHttpHandler
         }
         if (!string.IsNullOrWhiteSpace(_who))
         {
-            search.Add("CloseWho", _who);
+            search.Add("procWho", _who);
         }
 
         //----- 原始資料:取得所有資料 -----
