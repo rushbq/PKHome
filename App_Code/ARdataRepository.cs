@@ -382,7 +382,7 @@ namespace ARData.Controllers
                 sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY Base.TA002) AS SerialNo");
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
-                sql.AppendLine(" WHERE (TA025 = 'N')");
+                sql.AppendLine(" WHERE (TA025 = 'Y') AND (TA027 = 'N')");
                 //--排除重複
                 sql.AppendLine(" AND (RTRIM(Base.TA001)+'-'+RTRIM(Base.TA002) NOT IN (");
                 sql.AppendLine(" 	SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
@@ -520,7 +520,7 @@ namespace ARData.Controllers
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.ACRTB DT ON Base.TA001 = DT.TB001 AND Base.TA002 = DT.TB002");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
-                sql.AppendLine(" WHERE (TA025 = 'N')");
+                sql.AppendLine(" WHERE (TA025 = 'Y') AND (TA027 = 'N')");
                 sql.AppendLine(" AND (RTRIM(Base.TA001)+'-'+RTRIM(Base.TA002) IN (");
                 sql.AppendLine("     SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
                 sql.AppendLine("     FROM [PKExcel].dbo.AR_Data subBase");
@@ -624,7 +624,7 @@ namespace ARData.Controllers
                 sql.AppendLine("     , TA004 AS CustID");
                 sql.AppendLine("     FROM [##dbName##].dbo.ACRTA");
                 sql.AppendLine("     LEFT JOIN [PKExcel].dbo.AR_Data Base ON TA004 = Base.CustID COLLATE Chinese_Taiwan_Stroke_BIN AND TA003 < Base.erp_sDate");
-                sql.AppendLine("     WHERE (TA025 = 'N') AND (Base.Data_ID = @parentID)");
+                sql.AppendLine("     WHERE (TA025 = 'Y') AND (TA027 = 'N') AND (Base.Data_ID = @parentID)");
                 sql.AppendLine("     GROUP BY TA004");
                 sql.AppendLine(" )");
                 sql.AppendLine(" , TblWishGet AS (");
@@ -634,7 +634,7 @@ namespace ARData.Controllers
                 sql.AppendLine("     , COUNT(*) AS Cnt");
                 sql.AppendLine("     , TA004 AS CustID");
                 sql.AppendLine("     FROM [##dbName##].dbo.ACRTA");
-                sql.AppendLine("     WHERE (TA025 = 'N')");
+                sql.AppendLine("     WHERE (TA025 = 'Y') AND (TA027 = 'N')");
                 sql.AppendLine("     AND (RTRIM(TA001)+'-'+RTRIM(TA002) IN (");
                 sql.AppendLine("         SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
                 sql.AppendLine("         FROM [PKExcel].dbo.AR_DataItems subItems");

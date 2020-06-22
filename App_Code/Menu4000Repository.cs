@@ -41,90 +41,162 @@ namespace Menu4000Data.Controllers
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" DECLARE @CheckDate AS VARCHAR(10)");
                 sql.AppendLine(" SET @CheckDate = CONVERT(VARCHAR(10), GETDATE() - 365, 112)");
-                sql.AppendLine(" ; WITH TblTotal AS(");
 
-                /* 計算全部未出數量 */
-                sql.AppendLine("      SELECT SUM(TotalQty) AS TotalQty, Tbl_Total.TD004 AS ModelNo");
-                sql.AppendLine("      FROM");
-                sql.AppendLine("      (");
-                sql.AppendLine("          SELECT SUM(TD008 + TD024 - TD009) AS TotalQty, TD004");
-                sql.AppendLine("          FROM [{0}].dbo.COPTD WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("          WHERE (TD021 = 'Y') AND (TD016 = 'N')");
-                //[系統條件] 1年內//
-                sql.AppendLine("          AND (COPTD.CREATE_DATE >= @CheckDate)");
-                sql.AppendLine("          GROUP BY TD004");
-                sql.AppendLine("          UNION ALL");
-                sql.AppendLine("          SELECT (MOCTB.TB004 - MOCTB.TB005) AS TotalQty, MOCTB.TB003");
-                sql.AppendLine("          FROM [{0}].dbo.MOCTA WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("              INNER JOIN [{0}].dbo.MOCTB WITH(NOLOCK) ON MOCTA.TA001 = MOCTB.TB001 AND MOCTA.TA002 = MOCTB.TB002".FormatThis(dbName));
-                sql.AppendLine("          WHERE (MOCTA.TA011 IN ('1', '2', '3'))");
-                sql.AppendLine("              AND (MOCTB.TB011 IN ('1', '2'))");
-                sql.AppendLine("              AND (MOCTB.TB018 = 'Y')");
-                sql.AppendLine("              AND (MOCTB.TB004 - MOCTB.TB005 > 0)");
-                //[系統條件] 1年內//
-                sql.AppendLine("          AND (MOCTA.CREATE_DATE >= @CheckDate)");
-
-                //判斷公司別
+                /* 製令待領(未出數量計算用) */
+                sql.AppendLine(" ;WITH TblWait AS (");
+                sql.AppendLine(" 	SELECT p.ModelNo");
+                sql.AppendLine(" 	 , p.[01] AS waitQty_01, p.[20] AS waitQty_20, p.[22] AS waitQty_22");
+                sql.AppendLine(" 	 , p.[12] AS waitQty_12, p.[14] AS waitQty_14, p.[A01] AS waitQty_A01");
+                sql.AppendLine(" 	FROM (");
+                sql.AppendLine(" 		SELECT ISNULL(SUM(MOCTB.TB004 - MOCTB.TB005), 0) AS Qty");
+                sql.AppendLine(" 		 , RTRIM(MOCTB.TB003) AS ModelNo");
+                sql.AppendLine(" 		 , MOCTB.TB009 AS StockType");
+                sql.AppendLine(" 		FROM [#dbname#].dbo.MOCTA WITH (NOLOCK)");
+                sql.AppendLine(" 			INNER JOIN [#dbname#].dbo.MOCTB ON (MOCTB.TB001 = MOCTA.TA001) AND (MOCTB.TB002 = MOCTA.TA002)");
+                sql.AppendLine(" 		WHERE (MOCTB.TB009 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine(" 			AND (MOCTB.TB018 = 'Y')");
+                sql.AppendLine(" 			AND (MOCTB.TB011 IN ('1', '2'))");
+                sql.AppendLine(" 			AND (MOCTB.TB004 - MOCTB.TB005 > 0)");
+                sql.AppendLine(" 			AND (MOCTA.TA011 IN ('1', '2', '3'))");
+                //判斷公司別,新增條件
                 switch (CompID)
                 {
                     case "TW":
                         sql.Append(" AND (MOCTA.TA001 IN ('510', '513', '520', '524', '525'))");
                         break;
                 }
+                sql.AppendLine(" 		GROUP BY MOCTB.TB003, MOCTB.TB009");
+                sql.AppendLine(" 	) t ");
+                sql.AppendLine(" 	PIVOT (");
+                sql.AppendLine(" 		SUM(Qty)");
+                sql.AppendLine(" 		FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine(" 	) p");
+                sql.AppendLine(" )");
 
-                sql.AppendLine("      ) AS Tbl_Total");
-                sql.AppendLine("      GROUP BY Tbl_Total.TD004");
-                sql.AppendLine("  )");
-                sql.AppendLine(" , TblunStock AS (");
-                /* 計算待入庫 */
-                sql.AppendLine("     SELECT MOCTA.TA006 AS ModelNo");
-                sql.AppendLine("      , (SUM(MOCTA.TA015 - MOCTA.TA017) - SUM(MOCTB.TB004 - MOCTB.TB005)) AS unStockQty");
-                sql.AppendLine("     FROM [{0}].dbo.MOCTA WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("      INNER JOIN [{0}].dbo.MOCTB ON(MOCTB.TB001 = MOCTA.TA001) AND (MOCTB.TB002 = MOCTA.TA002) AND (MOCTB.TB003 = MOCTA.TA006)".FormatThis(dbName));
-                sql.AppendLine("     WHERE (MOCTA.TA013 <> 'V')");
-                sql.AppendLine("         AND (MOCTA.TA011 IN ('1', '2', '3'))");
+                /* 待入庫 */
+                sql.AppendLine(", TblunStock AS (");
+                sql.AppendLine("    SELECT p.ModelNo");
+                sql.AppendLine("     , p.[01] AS unStkQty_01, p.[20] AS unStkQty_20, p.[22] AS unStkQty_22");
+                sql.AppendLine("     , p.[12] AS unStkQty_12, p.[14] AS unStkQty_14, p.[A01] AS unStkQty_A01");
+                sql.AppendLine("    FROM (");
+                sql.AppendLine("        SELECT ISNULL(SUM(MOCTA.TA015 - MOCTA.TA017) - SUM(MOCTB.TB004 - MOCTB.TB005), 0) AS Qty");
+                sql.AppendLine("         , RTRIM(MOCTA.TA006) AS ModelNo");
+                sql.AppendLine("         , MOCTB.TB009 AS StockType");
+                sql.AppendLine("        FROM [#dbname#].dbo.MOCTA WITH (NOLOCK)");
+                sql.AppendLine("            INNER JOIN [#dbname#].dbo.MOCTB ON (MOCTB.TB001 = MOCTA.TA001) AND (MOCTB.TB002 = MOCTA.TA002) AND (MOCTB.TB003 = MOCTA.TA006)");
+                sql.AppendLine("        WHERE (MOCTB.TB009 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine("            AND (MOCTA.TA013 <> 'V')");
+                sql.AppendLine("            AND (MOCTA.TA011 IN ('1', '2', '3'))");
                 //[系統條件] 1年內//
-                sql.AppendLine("         AND (MOCTA.CREATE_DATE >= @CheckDate)");
-                //判斷公司別
+                sql.AppendLine("            AND (MOCTA.CREATE_DATE >= @CheckDate)");
+                //判斷公司別,新增條件
                 switch (CompID)
                 {
                     case "TW":
                         sql.Append(" AND (MOCTA.TA001 IN('520', '513', '521', '525', '526', '527'))");
                         break;
                 }
+                sql.AppendLine("        GROUP BY MOCTA.TA006, MOCTB.TB009");
+                sql.AppendLine("    ) t ");
+                sql.AppendLine("    PIVOT (");
+                sql.AppendLine("        SUM(Qty)");
+                sql.AppendLine("        FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine("    ) p");
+                sql.AppendLine(")");
 
-                sql.AppendLine("     GROUP BY MOCTA.TA006");
-                sql.AppendLine(" )");
-                sql.AppendLine(" , TblPreIn AS (");
-                /* 計算預計進 */
-                sql.AppendLine("     SELECT TD004 AS ModelNo");
-                sql.AppendLine("      , SUM(TD008 - TD015) AS PreInQty");
-                sql.AppendLine("     FROM [{0}].dbo.PURTD WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("     WHERE (TD016 = 'N') AND (TD018 = 'Y')");
-                //判斷公司別
+
+                /* 庫存 */
+                sql.AppendLine(", TblStock AS (");
+                sql.AppendLine("    SELECT p.ModelNo");
+                sql.AppendLine("     , p.[01] AS StkQty_01, p.[20] AS StkQty_20, p.[22] AS StkQty_22");
+                sql.AppendLine("     , p.[12] AS StkQty_12, p.[14] AS StkQty_14, p.[A01] AS StkQty_A01");
+                sql.AppendLine("    FROM(");
+                sql.AppendLine("        SELECT ISNULL(SUM(MC007), 0) AS StkQty");
+                sql.AppendLine("         , RTRIM(MC001) AS ModelNo");
+                sql.AppendLine("         , MC002 AS StockType");
+                sql.AppendLine("        FROM [#dbname#].dbo.INVMC WITH (NOLOCK)");
+                sql.AppendLine("        WHERE (MC002 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine("        GROUP BY MC001, MC002");
+                sql.AppendLine("    ) t");
+                sql.AppendLine("    PIVOT (");
+                sql.AppendLine("        SUM(StkQty)");
+                sql.AppendLine("        FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine("    ) p");
+                sql.AppendLine(")");
+
+
+                /* 預計銷(未出數量計算用) */
+                sql.AppendLine(", TblPreSell AS (");
+                sql.AppendLine("    SELECT p.ModelNo");
+                sql.AppendLine("     , p.[01] AS PreSell_01, p.[20] AS PreSell_20, p.[22] AS PreSell_22");
+                sql.AppendLine("     , p.[12] AS PreSell_12, p.[14] AS PreSell_14, p.[A01] AS PreSell_A01");
+                sql.AppendLine("    FROM (");
+                sql.AppendLine("        SELECT ISNULL(SUM(TD008 + TD024 - TD009), 0) AS PreSell");
+                sql.AppendLine("         , RTRIM(TD004) AS ModelNo");
+                sql.AppendLine("         , TD007 AS StockType");
+                sql.AppendLine("        FROM [#dbname#].dbo.COPTD WITH (NOLOCK)");
+                sql.AppendLine("        WHERE (TD021 = 'Y') AND (TD016 = 'N') AND (TD007 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine("        GROUP BY TD004, TD007");
+                sql.AppendLine("    ) t");
+                sql.AppendLine("    PIVOT (");
+                sql.AppendLine("        SUM(PreSell)");
+                sql.AppendLine("        FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine("    ) p");
+                sql.AppendLine(")");
+
+
+                /* 預計進 */
+                sql.AppendLine(", TblPreIn AS (");
+                sql.AppendLine("	SELECT p.ModelNo");
+                sql.AppendLine("	 , p.[01] AS PreIN_01, p.[20] AS PreIN_20, p.[22] AS PreIN_22");
+                sql.AppendLine("	 , p.[12] AS PreIN_12, p.[14] AS PreIN_14, p.[A01] AS PreIN_A01");
+                sql.AppendLine("	FROM (");
+                sql.AppendLine("		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PreIN");
+                sql.AppendLine("		 , RTRIM(TD004) AS ModelNo");
+                sql.AppendLine("		 , TD007 AS StockType");
+                sql.AppendLine("		FROM [#dbname#].dbo.PURTD WITH (NOLOCK)");
+                sql.AppendLine("		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('01', '20', '22', '12', '14', 'A01'))");
+                //判斷公司別,新增條件
                 switch (CompID)
                 {
                     case "TW":
                         sql.Append(" AND (TD001 IN ('3301', '3302', '3304', '3307','3322'))");
                         break;
                 }
-                sql.AppendLine("     GROUP BY TD004");
-                sql.AppendLine(" )");
-                sql.AppendLine(" , TblPlanIn AS (");
-                /* 計算計劃進 */
-                sql.AppendLine("     SELECT TD004 AS ModelNo");
-                sql.AppendLine("      , SUM(TD008 - TD015) AS PlanInQty");
-                sql.AppendLine("     FROM [{0}].dbo.PURTD WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("     WHERE (TD016 = 'N') AND (TD018 = 'N') AND (TD007 = @StockType)");
-                sql.AppendLine("     GROUP BY TD004");
-                sql.AppendLine(" )");
+                sql.AppendLine("		GROUP BY TD004, TD007");
+                sql.AppendLine("	) t ");
+                sql.AppendLine("	PIVOT (");
+                sql.AppendLine("		SUM(PreIN)");
+                sql.AppendLine("		FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine("	) p");
+                sql.AppendLine(")");
+
+
+                /* 計劃進 */
+                sql.AppendLine(", TblPlanIn AS (");
+                sql.AppendLine("	SELECT p.ModelNo");
+                sql.AppendLine("	 , p.[01] AS PlanIN_01, p.[20] AS PlanIN_20, p.[22] AS PlanIN_22");
+                sql.AppendLine("	 , p.[12] AS PlanIN_12, p.[14] AS PlanIN_14, p.[A01] AS PlanIN_A01");
+                sql.AppendLine("	FROM (");
+                sql.AppendLine("		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PlanIN");
+                sql.AppendLine("		 , RTRIM(TD004) AS ModelNo");
+                sql.AppendLine("		 , TD007 AS StockType");
+                sql.AppendLine("		FROM [#dbname#].dbo.PURTD WITH (NOLOCK)");
+                sql.AppendLine("		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine("		GROUP BY TD004, TD007");
+                sql.AppendLine("	) t ");
+                sql.AppendLine("	PIVOT (");
+                sql.AppendLine("		SUM(PlanIN)");
+                sql.AppendLine("		FOR StockType IN ([01], [20], [22], [12], [14], [A01])");
+                sql.AppendLine("	) p");
+                sql.AppendLine(")");
+
 
                 #region ** TblBase **
                 sql.AppendLine(" , TblBase AS (");
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("     RTRIM(COPTC.TC001) AS Order_FID");
                 sql.AppendLine("     , RTRIM(COPTC.TC002) AS Order_SID");
-                sql.AppendLine("     , RTRIM(UPPER(COPTC.TC004)) AS OldCustID");
                 sql.AppendLine("     , RTRIM(UPPER(COPTC.TC004)) AS CustID");
                 sql.AppendLine("    , COPTC.TC008 AS Currency"); //幣別
                 sql.AppendLine("    , COPTC.TC013 AS TradeConditional"); //交易條件
@@ -137,26 +209,6 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("    , COPTD.TD016 AS OrderStatus"); //訂單結案碼(生管出貨狀態)
                 sql.AppendLine("    , ISNULL(COPTH.TH020, 'N') AS ShipStatus"); //銷貨單確認碼:Y=已出貨(BLUE), 其他=未出貨(RED)(出貨狀態)
                 sql.AppendLine("    , CAST(ISNULL(INVMC.MC007, 0) AS INT) AS StockQty_Main"); //主要倉庫存(依變數)
-                sql.AppendLine("    , CAST(ISNULL((");
-                sql.AppendLine("        SELECT MC007");
-                sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("         WHERE(MC002 = '11') AND(MC001 = INVMB.MB001)");
-                sql.AppendLine("      ), 0) AS INT) AS StockQty_11 "); //TW 11倉庫存
-                sql.AppendLine("	, CAST(ISNULL((");
-                sql.AppendLine("         SELECT MC007");
-                sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("         WHERE(MC002 = '20') AND(MC001 = INVMB.MB001)");
-                sql.AppendLine("     ), 0) AS INT) AS StockQty_20 "); //TW:20倉庫存
-                sql.AppendLine("	, CAST(ISNULL((");
-                sql.AppendLine("         SELECT MC007");
-                sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("         WHERE(MC002 = '14') AND(MC001 = INVMB.MB001)");
-                sql.AppendLine("     ), 0) AS INT) AS StockQty_14 "); //SH:14倉庫存
-                sql.AppendLine("	, CAST(ISNULL((");
-                sql.AppendLine("         SELECT MC007");
-                sql.AppendLine("         FROM [{0}].dbo.INVMC WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("         WHERE(MC002 = 'A01') AND(MC001 = INVMB.MB001)");
-                sql.AppendLine("     ), 0) AS INT) AS StockQty_A01 "); //SH:A01倉庫存
                 sql.AppendLine("	, INVMB.MB025 AS ProdProperty"); //品號屬性
                 sql.AppendLine("	, CONVERT(VARCHAR(10), CAST(COPTD.TD013 AS DATE), 111) AS OrderPreDate"); //訂單預交日
                 sql.AppendLine("	, CAST(ISNULL(INVMC.MC004, 0) AS INT) AS SafeQty_Main"); //主要倉安全存量
@@ -170,21 +222,21 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("    , ISNULL(Stock.StockValue, '') AS StockValue");
                 sql.AppendLine("    , ISNULL(Box.BoxValue, '') AS BoxValue");
 
-                sql.AppendLine(" FROM [{0}].dbo.COPTC WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("   INNER JOIN [{0}].dbo.COPTD WITH (NOLOCK)ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002".FormatThis(dbName));
-                sql.AppendLine("   INNER JOIN [{0}].dbo.INVMB WITH(NOLOCK) ON COPTD.TD004 = INVMB.MB001".FormatThis(dbName));
+                sql.AppendLine(" FROM [#dbname#].dbo.COPTC WITH(NOLOCK)");
+                sql.AppendLine("   INNER JOIN [#dbname#].dbo.COPTD WITH (NOLOCK)ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002");
+                sql.AppendLine("   INNER JOIN [#dbname#].dbo.INVMB WITH(NOLOCK) ON COPTD.TD004 = INVMB.MB001");
                 //PURMA 廠商基本資料檔(帶出主供應商)
-                sql.AppendLine("    LEFT JOIN [{0}].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001".FormatThis(dbName));
+                sql.AppendLine("    LEFT JOIN [#dbname#].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001");
                 //INVMC 品號庫別檔
-                sql.AppendLine("    LEFT JOIN [{0}].dbo.INVMC WITH(NOLOCK) ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 = @StockType".FormatThis(dbName));
+                sql.AppendLine("    LEFT JOIN [#dbname#].dbo.INVMC WITH(NOLOCK) ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 = @StockType");
                 //COPTH 銷貨單單身檔
-                sql.AppendLine("    LEFT JOIN [{0}].dbo.COPTH WITH(NOLOCK) ON COPTD.TD001 = COPTH.TH014 AND COPTD.TD002 = COPTH.TH015 AND COPTD.TD003 = COPTH.TH016".FormatThis(dbName));
+                sql.AppendLine("    LEFT JOIN [#dbname#].dbo.COPTH WITH(NOLOCK) ON COPTD.TD001 = COPTH.TH014 AND COPTD.TD002 = COPTH.TH015 AND COPTD.TD003 = COPTH.TH016");
                 //PKSYS資材理貨
                 sql.AppendLine("    LEFT JOIN OpcsStatus_Rel_Stock Stock ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Stock.ErpID");
                 //PKSYS包裝資料
                 sql.AppendLine("    LEFT JOIN OpcsStatus_Rel_Box Box ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Box.ErpID");
                 //--Base 基本條件
-                sql.AppendLine(" WHERE (COPTC.TC027 = 'Y') AND (COPTD.TD013 >= CONVERT(VARCHAR(10), GETDATE() - 60, 112))");
+                sql.AppendLine(" WHERE (COPTC.TC027 = 'Y') --AND (COPTD.TD013 >= CONVERT(VARCHAR(10), GETDATE() - 60, 112))");
                 sql.AppendLine(" )");
 
                 #endregion
@@ -207,13 +259,13 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("  , RTRIM(PURTC.TC004) AS PurSupplierID"); //採購廠商ID
                 sql.AppendLine("  , RTRIM(PURMA.MA002) AS PurSupplier"); //採購廠商
                 //PURTD 採購單單身檔
-                sql.AppendLine(" FROM [{0}].dbo.PURTD WITH (NOLOCK)".FormatThis(dbName));
+                sql.AppendLine(" FROM [#dbname#].dbo.PURTD WITH (NOLOCK)");
                 //PURTC 採購單單頭檔
-                sql.AppendLine(" LEFT JOIN [{0}].dbo.PURTC WITH (NOLOCK) ON PURTC.TC001 = PURTD.TD001 AND PURTC.TC002 = PURTD.TD002".FormatThis(dbName));
+                sql.AppendLine(" LEFT JOIN [#dbname#].dbo.PURTC WITH (NOLOCK) ON PURTC.TC001 = PURTD.TD001 AND PURTC.TC002 = PURTD.TD002");
                 //PURTH 進貨單單身檔
-                sql.AppendLine(" LEFT JOIN [{0}].dbo.PURTH WITH (NOLOCK) ON PURTH.TH011 = PURTD.TD001 AND PURTH.TH012 = PURTD.TD002 AND PURTH.TH013 = PURTD.TD003".FormatThis(dbName));
+                sql.AppendLine(" LEFT JOIN [#dbname#].dbo.PURTH WITH (NOLOCK) ON PURTH.TH011 = PURTD.TD001 AND PURTH.TH012 = PURTD.TD002 AND PURTH.TH013 = PURTD.TD003");
                 //PURMA 採購廠商
-                sql.AppendLine(" LEFT JOIN [{0}].dbo.PURMA WITH (NOLOCK) ON PURMA.MA001 = PURTC.TC004".FormatThis(dbName));
+                sql.AppendLine(" LEFT JOIN [#dbname#].dbo.PURMA WITH (NOLOCK) ON PURMA.MA001 = PURTC.TC004");
                 //[系統條件] 1年內//
                 sql.AppendLine(" WHERE (PURTD.CREATE_DATE >= @CheckDate)");
                 sql.AppendLine(" )");
@@ -249,42 +301,73 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("  , ISNULL(TblPur.PurQty, 0) AS PurQty, ISNULL(TblPur.GetInQty, 0) AS GetInQty, ISNULL(TblPur.unGetInQty, 0) AS unGetInQty");
                 sql.AppendLine("  , TblMake.Make_FID, TblMake.Make_SID, TblMake.FinishDate, TblMake.MakeStatus, TblMake.MakeConfirm");
                 sql.AppendLine("  , RTRIM(COPMA.MA002) AS CustName");
-                //不足量,判斷公司別
-                switch (CompID)
-                {
-                    case "TW":
-                        sql.AppendLine("  , (TblBase.StockQty_Main + TblBase.StockQty_11 - ISNULL(TblTotal.TotalQty, 0) + ISNULL(TblunStock.unStockQty, 0)) AS ShortQty"); //不足量(01+11倉 - 全部未出數量)
-                        break;
-
-                    default:
-                        sql.AppendLine("  , (TblBase.StockQty_Main + TblBase.StockQty_14 - ISNULL(TblTotal.TotalQty, 0) + ISNULL(TblunStock.unStockQty, 0)) AS ShortQty"); //不足量(12+14倉 - 全部未出數量)
-                        break;
-                }
                 sql.AppendLine("  , (");
                 sql.AppendLine("     SELECT TOP 1 MG200 FROM [{0}].dbo.COPMG WITH(NOLOCK)".FormatThis(dbName));
-                sql.AppendLine("     WHERE (MG001 = TblBase.OldCustID) AND (MG002 = TblBase.ModelNo)");
+                sql.AppendLine("     WHERE (MG001 = TblBase.CustID) AND (MG002 = TblBase.ModelNo)");
                 sql.AppendLine("  ) AS ProdRemark"); //產品特別注意事項
                 sql.AppendLine("  , ISNULL(CopRemk.REMK, ISNULL(ORDERRemk.REMK, '')) AS OrderRemark"); //客戶注意事項
-                sql.AppendLine("  , CAST(ISNULL(TblunStock.unStockQty, 0) AS INT) AS unStockQty"); //生產待入庫
-                sql.AppendLine("  , CAST(ISNULL(TblPreIn.PreInQty, 0) AS INT) AS PreInQty"); //預計進
-                sql.AppendLine("  , CAST(ISNULL(TblPlanIn.PlanInQty, 0) AS INT) AS PlanInQty"); //計劃進
-                sql.AppendLine("  , CAST(ISNULL(TblTotal.TotalQty, 0) AS INT) AS TotalQty"); //全部未出數量
                 sql.AppendLine("  , CAST(ISNULL(MOCTG.TG011, 0) AS INT) AS MakeStockQty"); //入庫數量
 
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) AS StkQty01");    //庫存(01)
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) AS StkQty20");    //庫存(20)
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) AS StkQty22");    //庫存(22)
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) AS StkQty12");    //庫存(12)
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) AS StkQty14");    //庫存(14)
+                sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) AS StkQtyA01");    //庫存(A01)
+
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_01, 0) AS INT) AS PreInQty01");    //預計進(01)
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_20, 0) AS INT) AS PreInQty20");    //預計進(20)
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_22, 0) AS INT) AS PreInQty22");    //預計進(22)
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_12, 0) AS INT) AS PreInQty12");    //預計進(12)
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_14, 0) AS INT) AS PreInQty14");    //預計進(14)
+                sql.AppendLine(" , CAST(ISNULL(TblPreIn.PreIN_A01, 0) AS INT) AS PreInQtyA01");    //預計進(A01)
+
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_01, 0) AS INT) AS PlanInQty01");    //計劃進(01)
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_20, 0) AS INT) AS PlanInQty20");    //計劃進(20)
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_22, 0) AS INT) AS PlanInQty22");    //計劃進(22)
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_12, 0) AS INT) AS PlanInQty12");    //計劃進(12)
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_14, 0) AS INT) AS PlanInQty14");    //計劃進(14)
+                sql.AppendLine(" , CAST(ISNULL(TblPlanIn.PlanIn_A01, 0) AS INT) AS PlanInQtyA01");    //計劃進(A01)
+
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) AS unStockQty01");    //生產待入庫(01)
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) AS unStockQty20");    //生產待入庫(20)
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) AS unStockQty22");    //生產待入庫(22)
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) AS unStockQty12");    //生產待入庫(12)
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) AS unStockQty14");    //生產待入庫(14)
+                sql.AppendLine(" , CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) AS unStockQtyA01");    //生產待入庫(A01)
+
+                /* 計算全部未出數量(預計銷 + 製令待領) */
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) AS INT) AS unOutQty01");    //未出數量(01)
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) AS INT) AS unOutQty20");    //未出數量(20)
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) AS INT) AS unOutQty22");    //未出數量(22)
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) AS INT) AS unOutQty12");    //未出數量(12)
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) AS INT) AS unOutQty14");    //未出數量(14)
+                sql.AppendLine(", CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) AS INT) AS unOutQtyA01 ");    //未出數量(A01)
+
+                /* 不足量(庫存 + 生產待入庫 - 全部未出數量) */
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) AS INT)) AS ShortQty01");    //不足量(01)
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) AS INT)) AS ShortQty20");    //不足量(20)
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) AS INT)) AS ShortQty22");    //不足量(22)
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) AS INT)) AS ShortQty12");    //不足量(12)
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) AS INT)) AS ShortQty14");    //不足量(14)
+                sql.AppendLine(" , (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) AS INT)) AS ShortQtyA01");    //不足量(A01)
+
                 sql.AppendLine(" FROM TblBase");
-                sql.AppendLine("  LEFT JOIN TblTotal ON TblBase.ModelNo = TblTotal.ModelNo");
+                sql.AppendLine("  LEFT JOIN TblStock ON TblBase.ModelNo = TblStock.ModelNo");
                 sql.AppendLine("  LEFT JOIN TblunStock ON TblBase.ModelNo = TblunStock.ModelNo");
+                sql.AppendLine("  LEFT JOIN TblWait ON TblBase.ModelNo = TblWait.ModelNo");
+                sql.AppendLine("  LEFT JOIN TblPreSell ON TblBase.ModelNo = TblPreSell.ModelNo");
                 sql.AppendLine("  LEFT JOIN TblPreIn ON TblBase.ModelNo = TblPreIn.ModelNo");
                 sql.AppendLine("  LEFT JOIN TblPlanIn ON TblBase.ModelNo = TblPlanIn.ModelNo");
                 sql.AppendLine("  LEFT JOIN TblPur ON TblBase.Order_FID = TblPur.Ref_FID AND TblBase.Order_SID = TblPur.Ref_SID AND TblBase.OrderSno = TblPur.Ref_OrderSno AND TblBase.ModelNo = TblPur.ModelNo");
                 sql.AppendLine("  LEFT JOIN TblMake ON TblBase.Order_FID = TblMake.Ref_FID AND TblBase.Order_SID = TblMake.Ref_SID AND TblBase.OrderSno = TblMake.Ref_OrderSno AND TblBase.ModelNo = TblMake.ModelNo");
                 //客戶
-                sql.AppendLine("  LEFT JOIN [{0}].dbo.COPMA WITH (NOLOCK) ON TblBase.CustID = COPMA.MA001".FormatThis(dbName));
+                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.COPMA WITH (NOLOCK) ON TblBase.CustID = COPMA.MA001");
                 //EF 訂單備註(DB = PKANALYZER)
-                sql.AppendLine("  LEFT JOIN [{0}].dbo.CopRemk ON CopRemk.TC001 = TblBase.Order_FID AND CopRemk.TC002 = TblBase.Order_SID".FormatThis(dbName));
-                sql.AppendLine("  LEFT JOIN [{0}].dbo.ORDERRemk ON ORDERRemk.MA001 = TblBase.CustID".FormatThis(dbName));
+                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.CopRemk ON CopRemk.TC001 = TblBase.Order_FID AND CopRemk.TC002 = TblBase.Order_SID");
+                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.ORDERRemk ON ORDERRemk.MA001 = TblBase.CustID");
                 //MOCTG 生產入庫單身檔(筆數過多,放在最外層JOIN)
-                sql.AppendLine("  LEFT JOIN [{0}].dbo.MOCTG WITH (NOLOCK) ON TblBase.ModelNo = MOCTG.TG004 AND TblMake.Make_FID = MOCTG.TG014 AND TblMake.Make_SID = MOCTG.TG015 AND TblBase.StockType = MOCTG.TG010".FormatThis(dbName));
+                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.MOCTG WITH (NOLOCK) ON TblBase.ModelNo = MOCTG.TG004 AND TblMake.Make_FID = MOCTG.TG014 AND TblMake.Make_SID = MOCTG.TG015 AND TblBase.StockType = MOCTG.TG010");
 
                 //Where
                 sql.AppendLine(" WHERE (1=1)");
@@ -408,10 +491,30 @@ namespace Menu4000Data.Controllers
                                 switch (item.Value)
                                 {
                                     case "A":
-                                        sql.Append(" AND ((TblBase.StockQty_Main + TblBase.StockQty_11 - ISNULL(TblTotal.TotalQty, 0)) <= -1)");
+                                        //不足量 <= -1
+                                        switch (CompID)
+                                        {
+                                            case "TW":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+
+                                            case "SH":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+                                        }
+
                                         break;
                                 }
                                 break;
+
 
                             case "PurStatus":
                                 //--採購下單狀態(固定參數PurStatus)
@@ -423,8 +526,26 @@ namespace Menu4000Data.Controllers
 
                                     case "B":
                                         sql.Append(" AND (TblBase.ProdProperty IN ('P','S'))");
-                                        sql.Append(" AND (((TblBase.StockQty_Main + TblBase.StockQty_11 - ISNULL(TblTotal.TotalQty, 0)) + ISNULL(TblPreIn.PreInQty, 0)) <= -1)");
                                         sql.Append(" AND LEFT(TblBase.Main_SupplierID, 1) = '{0}'".FormatThis(GetSupplierFirstID(CompID)));
+                                        //不足量+預計進 <= -1
+                                        switch (CompID)
+                                        {
+                                            case "TW":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) + ISNULL(TblPreIn.PreIN_01, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) + ISNULL(TblPreIn.PreIN_20, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) + ISNULL(TblPreIn.PreIN_22, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+
+                                            case "SH":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) + ISNULL(TblPreIn.PreIN_12, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) + ISNULL(TblPreIn.PreIN_14, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) + ISNULL(TblPreIn.PreIN_A01, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+                                        }
                                         break;
                                 }
                                 break;
@@ -456,8 +577,28 @@ namespace Menu4000Data.Controllers
                                         sql.Append("       OR (TblBase.ProdProperty = 'M')");
                                         sql.Append("     )");
                                         sql.Append("     AND (TblMake.MakeStatus IN ('1','2','3') OR (TblMake.MakeStatus IS NULL))");
-                                        sql.Append("     AND (TblBase.StockQty_Main + TblBase.StockQty_11 - ISNULL(TblTotal.TotalQty, 0)) <= -1");
                                         sql.Append("     AND (TblBase.unShip_OrderQty > 0)");
+
+                                        //不足量 <= -1
+                                        switch (CompID)
+                                        {
+                                            case "TW":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+
+                                            case "SH":
+                                                sql.Append(" AND (");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) AS INT)) <= -1");
+                                                sql.Append(" )");
+                                                break;
+                                        }
+
                                         sql.Append(" )");
 
                                         break;
@@ -527,6 +668,10 @@ namespace Menu4000Data.Controllers
                 //    sql.AppendLine(" ORDER BY TblBase.Order_FID, TblBase.Order_SID, TblBase.OrderSno, 1");
                 //}
                 sql.AppendLine(" ORDER BY TblBase.Order_FID, TblBase.Order_SID, TblBase.OrderSno, 1");
+
+
+                //** replace dbname ##
+                sql.Replace("#dbname#", dbName);
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();

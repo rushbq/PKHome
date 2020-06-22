@@ -109,20 +109,54 @@ public class Ashx_GetData : IHttpHandler
                         string _Order_FID = DT.Rows[row]["Order_FID"].ToString();
                         string _Order_SID = DT.Rows[row]["Order_SID"].ToString();
                         int _unShip_OrderQty = Convert.ToInt32(DT.Rows[row]["unShip_OrderQty"]);
-                        int _totalQty = Convert.ToInt32(DT.Rows[row]["TotalQty"]);
                         int _stockQtyMain = Convert.ToInt32(DT.Rows[row]["StockQty_Main"]);
-                        int _stockQty11 = Convert.ToInt32(DT.Rows[row]["StockQty_11"]);
-                        int _stockQty14 = Convert.ToInt32(DT.Rows[row]["StockQty_14"]);
-                        int _stockQtyA01 = Convert.ToInt32(DT.Rows[row]["StockQty_A01"]);                            
-                        int _shortQty = Convert.ToInt32(DT.Rows[row]["ShortQty"]);
-                        int _unStockQty = Convert.ToInt32(DT.Rows[row]["unStockQty"]);
-                        int _preInQty = Convert.ToInt32(DT.Rows[row]["PreInQty"]);
                         int _safeQty_Main = Convert.ToInt32(DT.Rows[row]["SafeQty_Main"]);
                         int _purQty = Convert.ToInt32(DT.Rows[row]["PurQty"]);
                         int _getInQty = Convert.ToInt32(DT.Rows[row]["GetInQty"]);
                         int _unGetInQty = Convert.ToInt32(DT.Rows[row]["unGetInQty"]);
                         string _modelName = DT.Rows[row]["ModelName"].ToString();
                         string _orderRemark = DT.Rows[row]["OrderRemark"].ToString();
+
+                        /*分倉資料*/
+                        int _StkQty01 = Convert.ToInt32(DT.Rows[row]["StkQty01"]);
+                        int _StkQty20 = Convert.ToInt32(DT.Rows[row]["StkQty20"]);
+                        int _StkQty22 = Convert.ToInt32(DT.Rows[row]["StkQty22"]);
+                        int _StkQty12 = Convert.ToInt32(DT.Rows[row]["StkQty12"]);
+                        int _StkQty14 = Convert.ToInt32(DT.Rows[row]["StkQty14"]);
+                        int _StkQtyA01 = Convert.ToInt32(DT.Rows[row]["StkQtyA01"]);
+                        int _PreInQty01 = Convert.ToInt32(DT.Rows[row]["PreInQty01"]);
+                        int _PreInQty20 = Convert.ToInt32(DT.Rows[row]["PreInQty20"]);
+                        int _PreInQty22 = Convert.ToInt32(DT.Rows[row]["PreInQty22"]);
+                        int _PreInQty12 = Convert.ToInt32(DT.Rows[row]["PreInQty12"]);
+                        int _PreInQty14 = Convert.ToInt32(DT.Rows[row]["PreInQty14"]);
+                        int _PreInQtyA01 = Convert.ToInt32(DT.Rows[row]["PreInQtyA01"]);
+                        int _PlanInQty01 = Convert.ToInt32(DT.Rows[row]["PlanInQty01"]);
+                        int _PlanInQty20 = Convert.ToInt32(DT.Rows[row]["PlanInQty20"]);
+                        int _PlanInQty22 = Convert.ToInt32(DT.Rows[row]["PlanInQty22"]);
+                        int _PlanInQty12 = Convert.ToInt32(DT.Rows[row]["PlanInQty12"]);
+                        int _PlanInQty14 = Convert.ToInt32(DT.Rows[row]["PlanInQty14"]);
+                        int _PlanInQtyA01 = Convert.ToInt32(DT.Rows[row]["PlanInQtyA01"]);
+                        int _unStockQty01 = Convert.ToInt32(DT.Rows[row]["unStockQty01"]);
+                        int _unStockQty20 = Convert.ToInt32(DT.Rows[row]["unStockQty20"]);
+                        int _unStockQty22 = Convert.ToInt32(DT.Rows[row]["unStockQty22"]);
+                        int _unStockQty12 = Convert.ToInt32(DT.Rows[row]["unStockQty12"]);
+                        int _unStockQty14 = Convert.ToInt32(DT.Rows[row]["unStockQty14"]);
+                        int _unStockQtyA01 = Convert.ToInt32(DT.Rows[row]["unStockQtyA01"]);
+                        int _unOutQty01 = Convert.ToInt32(DT.Rows[row]["unOutQty01"]);
+                        int _unOutQty20 = Convert.ToInt32(DT.Rows[row]["unOutQty20"]);
+                        int _unOutQty22 = Convert.ToInt32(DT.Rows[row]["unOutQty22"]);
+                        int _unOutQty12 = Convert.ToInt32(DT.Rows[row]["unOutQty12"]);
+                        int _unOutQty14 = Convert.ToInt32(DT.Rows[row]["unOutQty14"]);
+                        int _unOutQtyA01 = Convert.ToInt32(DT.Rows[row]["unOutQtyA01"]);
+                        int _ShortQty01 = Convert.ToInt32(DT.Rows[row]["ShortQty01"]);
+                        int _ShortQty20 = Convert.ToInt32(DT.Rows[row]["ShortQty20"]);
+                        int _ShortQty22 = Convert.ToInt32(DT.Rows[row]["ShortQty22"]);
+                        int _ShortQty12 = Convert.ToInt32(DT.Rows[row]["ShortQty12"]);
+                        int _ShortQty14 = Convert.ToInt32(DT.Rows[row]["ShortQty14"]);
+                        int _ShortQtyA01 = Convert.ToInt32(DT.Rows[row]["ShortQtyA01"]);
+
+
+
                         ErrMsg = "{0}-{1},error on 前一筆或下一筆".FormatThis(_Order_FID + _Order_SID, _OrderSno);
 
                         //判斷是否為各單的第一筆,填入OPCS資訊
@@ -214,93 +248,232 @@ public class Ashx_GetData : IHttpHandler
                         }
 
 
-                        //[4] - 全部未出數量
+                        //[4] - 全部未出數量(分倉)
                         if (CheckColShow(4, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned\"><a href=\"{1}\" target=\"_blank\" class=\"{2}\">{0}</a></td>".FormatThis(
-                                _totalQty
-                                , GetEfUrl(_CompID) + "opcsstatusGrid.asp?s_TD004=" + HttpUtility.UrlEncode(modelNo)
-                                , _totalQty > (_stockQtyMain + _stockQty11) ? "red-text" : "green-text"
-                            ));
-                        }
-
-
-                        //[5] - 庫存 Start ------
-                        if (CheckColShow(5, allCol, deptRel))
-                        {
-                            html.Append("<td>");
-                            html.Append("<div class=\"grey-text text-darken-2\">{2}：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
-                                      _stockQtyMain
-                                      , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)
-                                      , stockMainHeader(_CompID)));
+                            html.Append("<td class=\"grey-text text-darken-2\"><a href=\"{0}\" target=\"_blank\">".FormatThis(
+                                GetEfUrl(_CompID) + "opcsstatusGrid.asp?s_TD004=" + HttpUtility.UrlEncode(modelNo)
+                                ));
 
                             //判斷公司別(注意與表頭的欄位對應)
                             switch (_CompID)
                             {
                                 case "SH":
-                                    //SH:14倉庫存
-                                    html.Append("<div class=\"grey-text text-darken-2\">14：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
-                                        _stockQty14
-                                        , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQty12
+                                        , _unOutQty12 > _StkQty12 ? "red-text" : "green-text"));
 
-                                    //SH:A01倉庫存
-                                    html.Append("<div class=\"grey-text text-darken-2\">A01：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
-                                        _stockQtyA01
-                                        , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQty14
+                                        , _unOutQty14 > _StkQty14 ? "red-text" : "green-text"));
+
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQtyA01
+                                        , _unOutQtyA01 > _StkQtyA01 ? "red-text" : "green-text"));
 
                                     break;
 
                                 default:
-                                    //TW:11倉庫存
-                                    html.Append("<div class=\"grey-text text-darken-2\">11：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
-                                        _stockQty11
-                                        , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
-                                    //TW:20倉庫存
-                                    html.Append("<div class=\"grey-text text-darken-2\">20：&nbsp;<a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></div>".FormatThis(
-                                       DT.Rows[row]["StockQty_20"]
-                                       , GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)));
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQty01
+                                        , _unOutQty01 > _StkQty01 ? "red-text" : "green-text"));
+
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQty20
+                                        , _unOutQty20 > _StkQty20 ? "red-text" : "green-text"));
+
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(
+                                        _unOutQty22
+                                        , _unOutQty22 > _StkQty22 ? "red-text" : "green-text"));
+
+                                    break;
+
+
+                            }
+                            html.Append("</a></td>");
+                        }
+
+                        //[5] - 庫存(分倉) Start ------
+                        if (CheckColShow(5, allCol, deptRel))
+                        {
+                            html.Append("<td class=\"grey-text text-darken-2\"><a href=\"{0}\" target=\"_blank\">".FormatThis(
+                            GetEfUrl(_CompID) + "INVMCGrid3.asp?MC001=" + HttpUtility.UrlEncode(modelNo)
+                            ));
+
+                            //判斷公司別(注意與表頭的欄位對應)
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQty12));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQty14));
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQty01));
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQty20));
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_StkQty22));
 
                                     break;
                             }
-                            html.Append("</td>");
+
+                            html.Append("</a></td>");
                         }
 
                         //庫存 End ------
 
 
-                        //[6] - 不足量
+                        //[6] - 不足量(分倉)
                         if (CheckColShow(6, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned {1}\">{0}</td>".FormatThis(
-                            _shortQty
-                            , _shortQty < 0 ? "red-text" : "green-text"
-                            ));
+                            html.Append("<td class=\"grey-text text-darken-2\">");
+
+                            //判斷公司別
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQty12, _ShortQty12 < 0 ? "red-text" : "green-text"));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQty14, _ShortQty14 < 0 ? "red-text" : "green-text"));
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQtyA01, _ShortQtyA01 < 0 ? "red-text" : "green-text"));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQty01, _ShortQty01 < 0 ? "red-text" : "green-text"));
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQty20, _ShortQty20 < 0 ? "red-text" : "green-text"));
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"{1}\">{0}</span></div>".FormatThis(_ShortQty22, _ShortQty22 < 0 ? "red-text" : "green-text"));
+
+                                    break;
+                            }
+
+                            html.Append("</td>");
                         }
 
 
-                        //[7] - 待入庫
+                        //[7] - 待入庫(分倉)
                         if (CheckColShow(7, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned\">{0}</td>".FormatThis(_unStockQty));
+                            html.Append("<td class=\"grey-text text-darken-2\">");
+
+                            //判斷公司別(注意與表頭的欄位對應)
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQty12));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQty14));
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQty01));
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQty20));
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_unStockQty22));
+
+                                    break;
+                            }
+
+                            html.Append("</a></td>");
                         }
 
 
-                        //[8] - 預計進
+                        //[8] - 預計進(分倉)
                         if (CheckColShow(8, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned {2}\" title=\"{3}\"><a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></td>".FormatThis(
-                                _preInQty
-                                , GetEfUrl(_CompID) + "opcsstatus_in_detail.asp?TD004=" + HttpUtility.UrlEncode(modelNo)
-                                , (_shortQty + _unStockQty + _preInQty) < 0 ? "yellow-bg lighten-2" : ""
-                                , (_shortQty + _unStockQty + _preInQty) < 0 ? HttpUtility.HtmlEncode("(不足量 + 待入庫 + 預計進) < 0") : ""
-                                ));
+                            html.Append("<td class=\"grey-text text-darken-2\"><a href=\"{0}\" target=\"_blank\">".FormatThis(
+                                GetEfUrl(_CompID) + "opcsstatus_in_detail.asp?TD004=" + HttpUtility.UrlEncode(modelNo)
+                            ));
+
+                            //判斷公司別(注意與表頭的欄位對應)
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQty12));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQty14));
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQty01));
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQty20));
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PreInQty22));
+
+                                    break;
+                            }
+
+                            html.Append("</a></td>");
+
+                            //html.Append("<td class=\"right aligned {2}\" title=\"{3}\"><a href=\"{1}\" target=\"_blank\" class=\"green-text\">{0}</a></td>".FormatThis(
+                            //    _preInQty
+                            //    , GetEfUrl(_CompID) + "opcsstatus_in_detail.asp?TD004=" + HttpUtility.UrlEncode(modelNo)
+                            //    , (_shortQty + _unStockQty + _preInQty) < 0 ? "yellow-bg lighten-2" : ""
+                            //    , (_shortQty + _unStockQty + _preInQty) < 0 ? HttpUtility.HtmlEncode("(不足量 + 待入庫 + 預計進) < 0") : ""
+                            //    ));
                         }
 
 
-                        //[9] - 計劃進
+                        //[9] - 計劃進(分倉)
                         if (CheckColShow(9, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned\">{0}</td>".FormatThis(DT.Rows[row]["PlanInQty"]));
+                            html.Append("<td class=\"grey-text text-darken-2\">");
+
+                            //判斷公司別(注意與表頭的欄位對應)
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<div>12：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQty12));
+                                    //SH:14倉
+                                    html.Append("<div>14：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQty14));
+                                    //SH:A01倉
+                                    html.Append("<div>A01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<div>01：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQty01));
+                                    //TW:20倉
+                                    html.Append("<div>20：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQty20));
+                                    //TW:22倉
+                                    html.Append("<div>22：&nbsp;<span class=\"green-text\">{0}</span></div>".FormatThis(_PlanInQty22));
+
+                                    break;
+                            }
+
+                            html.Append("</a></td>");
                         }
 
 
@@ -321,11 +494,12 @@ public class Ashx_GetData : IHttpHandler
                         //[12] - 安全存量
                         if (CheckColShow(12, allCol, deptRel))
                         {
-                            html.Append("<td class=\"right aligned {1}\" title=\"{2}\">{0}</td>".FormatThis(
-                                _safeQty_Main
-                                , _safeQty_Main - _totalQty > 0 ? "yellow-bg lighten-2" : ""
-                                , _safeQty_Main - _totalQty > 0 ? HttpUtility.HtmlEncode("(安全存量 - 全部未出數量) > 0") : ""
-                                ));
+                            html.Append("<td class=\"right aligned\">{0}</td>".FormatThis(_safeQty_Main));
+                            //html.Append("<td class=\"right aligned {1}\" title=\"{2}\">{0}</td>".FormatThis(
+                            //    _safeQty_Main
+                            //    , _safeQty_Main - _totalQty > 0 ? "yellow-bg lighten-2" : ""
+                            //    , _safeQty_Main - _totalQty > 0 ? HttpUtility.HtmlEncode("(安全存量 - 全部未出數量) > 0") : ""
+                            //    ));
                         }
 
 
