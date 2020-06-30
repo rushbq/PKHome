@@ -20,8 +20,8 @@
                 </div>
             </div>
             <div class="right menu">
+                <a href="<%=FuncPath() %>/CustList/" class="item"><i class="list icon"></i>待收款客戶</a>
                 <a href="<%=FuncPath() %>/Step1/" class="item"><i class="plus icon"></i>新增</a>
-
             </div>
         </div>
     </div>

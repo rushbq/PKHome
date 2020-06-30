@@ -98,7 +98,8 @@ public partial class myARdata_PDF_Html : System.Web.UI.Page
             lt_Addr.Text = data.Addr;
             lt_AddrRemark.Text = data.AddrRemark;
             lt_today.Text = DateTime.Today.ToShortDateString();
-
+            lt_Fax.Text = data.Fax;
+            lt_Tel.Text = data.Tel;
 
             //載入單身資料
             LookupData_Detail(_dbs, _dataID);

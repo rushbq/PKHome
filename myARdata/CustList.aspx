@@ -1,4 +1,4 @@
-﻿<%@ Page Title="發送對帳單Step2" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Step2.aspx.cs" Inherits="myARdata_ImportStep2" %>
+﻿<%@ Page Title="對帳客戶清單" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="CustList.aspx.cs" Inherits="myARdata_CustList" %>
 
 <%@ Import Namespace="PKLib_Method.Methods" %>
 <%@ Register Src="Ascx_StepMenu.ascx" TagName="Ascx_Menu" TagPrefix="ucMenu" %>
@@ -15,7 +15,7 @@
                     <div class="section">應收帳款對帳</div>
                     <i class="right angle icon divider"></i>
                     <div class="active section red-text text-darken-2">
-                        發送對帳單 - 
+                        對帳客戶清單 - 
                         <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
@@ -36,54 +36,37 @@
                 </div>
             </asp:PlaceHolder>
             <!-- Steps menu -->
-            <ucMenu:Ascx_Menu ID="Ascx_Menu1" runat="server" nowIndex="2" />
+            <ucMenu:Ascx_Menu ID="Ascx_Menu1" runat="server" nowIndex="1" />
             <!-- 資料區 Start -->
             <div id="formData" class="ui small form attached green segment">
                 <!-- 基本資料 S -->
                 <div class="two fields">
                     <div class="field">
-                        <label>追蹤碼</label>
-                        <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
-                    </div>
-                    <div class="field">
                         <label>資料庫</label>
                         <asp:Label ID="lb_DBS" runat="server" CssClass="ui blue basic large label"></asp:Label>
                     </div>
-                </div>
-                <div class="two fields">
                     <div class="field">
-                        <label>客戶</label>
-                        <asp:Label ID="lb_Cust" runat="server" CssClass="ui green basic large label"></asp:Label>
-                    </div>
-                    <div class=" field">
                         <label>單據日查詢區間</label>
                         <asp:Label ID="lb_sDate" runat="server" CssClass="ui basic large label"></asp:Label>
                         ~<asp:Label ID="lb_eDate" runat="server" CssClass="ui basic large label"></asp:Label>
+                        <asp:HiddenField ID="hf_sDate" runat="server" />
+                        <asp:HiddenField ID="hf_eDate" runat="server" />
                     </div>
                 </div>
                 <!-- 基本資料 E -->
                 <!-- 列表 S -->
                 <div class="fields">
                     <div class="sixteen wide field">
-                        <asp:ListView ID="lvDataList" runat="server" ItemPlaceholderID="ph_Items">
+                        <asp:ListView ID="lvDataList" runat="server" ItemPlaceholderID="ph_Items" OnItemCommand="lvDataList_ItemCommand">
                             <LayoutTemplate>
                                 <table id="listTable" class="ui celled striped table" style="width: 100%">
                                     <thead>
                                         <tr>
-                                            <th class="no-sort center aligned collapsing">
-                                                <div class="ui checkbox">
-                                                    <input type="checkbox" id="cbx_All" />
-                                                    <label for="cbx_All"></label>
-                                                </div>
-                                                <div>
-                                                    (已勾選: <strong class="orange-text text-darken-4" id="countCbx">0</strong> )
-                                                </div>
+                                            <th>客戶代號</th>
+                                            <th>客戶名稱</th>
+                                            <th class="no-sort no-search">付款條件</th>
+                                            <th class="no-sort center aligned">直接新增
                                             </th>
-                                            <th>結帳單號</th>
-                                            <th>結帳日期</th>
-                                            <th>預計收款日</th>
-                                            <th class="no-sort">原幣應收帳款</th>
-                                            <th class="no-sort">原幣未收帳款</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -94,25 +77,17 @@
                             <ItemTemplate>
                                 <tr>
                                     <td class="center aligned">
-                                        <div class="ui checkbox">
-                                            <input type="checkbox" id="cbx_<%#Eval("SerialNo") %>" class="myCbx" value="<%#Eval("AR_Fid") %>-<%#Eval("AR_Sid") %>" />
-                                            <label for="cbx_<%#Eval("SerialNo") %>"></label>
-                                        </div>
+                                        <%#Eval("CustID") %>
                                     </td>
                                     <td>
-                                        <%#Eval("AR_Fid") %>-<%#Eval("AR_Sid") %>
+                                        <%#Eval("CustName") %>
                                     </td>
                                     <td>
-                                        <%#Eval("ArDate") %>
+                                        <%#Eval("TermName") %>
                                     </td>
-                                    <td>
-                                        <%#Eval("PreGetDay") %>
-                                    </td>
-                                    <td class="right aligned">
-                                        <%#(Convert.ToDouble(Eval("Price")) + Convert.ToDouble(Eval("TaxPrice"))).ToString().ToMoneyString() %>
-                                    </td>
-                                    <td class="right aligned">
-                                        <%#(Convert.ToDouble(Eval("Price")) + Convert.ToDouble(Eval("TaxPrice")) - Convert.ToDouble(Eval("GetPrice"))).ToString().ToMoneyString() %>
+                                    <td class="center aligned">
+                                        <asp:LinkButton ID="lbtn_Add" runat="server" CssClass="ui blue icon button" ValidationGroup="List" CommandName="doInsert" OnClientClick="return confirm('確定新增?')"><i class="plus icon"></i></asp:LinkButton>
+                                        <asp:HiddenField ID="hf_CustID" runat="server" Value='<%#Eval("CustID") %>' />
                                     </td>
                                 </tr>
                             </ItemTemplate>
@@ -130,16 +105,10 @@
                 <!-- 列表 E -->
                 <div class="ui grid">
                     <div class="six wide column">
-                        <asp:Button ID="btn_Back" runat="server" CssClass="ui grey button" Text="重來，回上一步" OnClick="btn_Back_Click" />
                         <a href="<%=Page_SearchUrl %>" class="ui button"><i class="undo icon"></i>返回列表</a>
                     </div>
                     <div class="ten wide column right aligned">
-                        <button id="doNext" type="button" class="ui green button">下一步<i class="chevron right icon"></i></button>
-                        <asp:Button ID="btn_Next" runat="server" Text="next" OnClick="btn_Next_Click" Style="display: none;" />
                     </div>
-                    <asp:HiddenField ID="hf_DataID" runat="server" />
-                    <asp:HiddenField ID="hf_CustID" runat="server" />
-                    <asp:TextBox ID="tb_CbxValues" runat="server" Style="display: none;"></asp:TextBox>
                 </div>
             </div>
             <!-- 資料區 End -->
@@ -150,55 +119,6 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BottomContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="ScriptContent" runat="Server">
-    <script>
-        $(function () {
-            //全選方塊
-            $('#cbx_All').click(function () {
-                $('input:checkbox').prop('checked', this.checked);
-
-                //計數
-                countBox();
-            });
-
-            //偵測單一checkbox
-            $(".myCbx").click(function () {
-                //計數
-                countBox();
-            });
-
-            //計算勾選數
-            function countBox() {
-                var numberOfChecked = $('input:checkbox.myCbx:checked').length;
-
-                $("#countCbx").text(numberOfChecked);
-            }
-
-            //Save Click
-            $("#doNext").click(function () {
-                if (!confirm("確認要選擇已勾選的單據?")) {
-                    return false;
-                }
-
-                //取得已勾選
-                var s = $('input:checkbox:checked.myCbx').map(function () { return $(this).val(); }).get();
-
-                //Check
-                if (s.length == 0) {
-                    alert('至少要勾選一個項目');
-                    return false;
-                }
-
-                //填入勾選值
-                $("#MainContent_tb_CbxValues").val(s.join(','));
-
-                //trigger
-                $("#formData").addClass("loading");
-                $("#MainContent_btn_Next").trigger("click");
-            });
-
-        });
-    </script>
-
     <%-- DataTable Start --%>
     <link href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css" rel="stylesheet" />
     <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
@@ -209,30 +129,30 @@
              注意:標題欄須與內容欄數量相等
            */
             var table = $('#listTable').DataTable({
-                "searching": false,  //搜尋
+                "searching": true,  //搜尋
                 "ordering": true,   //排序
-                "paging": false,     //分頁
+                "paging": true,     //分頁
                 "info": true,      //筆數資訊
+                "pageLength": 5,   //每頁筆數
                 "language": {
                     //自訂筆數顯示選單
                     "lengthMenu": ''
                 },
                 //讓不排序的欄位在初始化時不出現排序圖
                 "order": [],
-                //自訂欄位
-                "columnDefs": [{
-                    "targets": 'no-sort',
-                    "orderable": false,
-                }],
+                //欄位定義:css=no-sort不排序; css=no-search不搜尋
+                "columnDefs": [
+                    { "targets": 'no-sort', "orderable": false, },
+                    { "targets": 'no-search', "searchable": false }
+                ],
                 //捲軸設定
-                "scrollY": '50vh',
+                "scrollY": '60vh',
                 "scrollCollapse": true,
                 "scrollX": false
 
             });
 
         });
-
     </script>
     <%-- DataTable End --%>
 </asp:Content>

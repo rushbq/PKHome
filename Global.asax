@@ -418,7 +418,12 @@
                 { "lang", "auto" }
                 , { "rootID", "3000" }
                 , { "CompID", "TW" }});
-
+        routes.MapPageRoute("ARInformCust", "{lang}/{rootID}/ARInform/{CompID}/CustList", "~/myARdata/CustList.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "CompID", "TW" }});
+        
 
 
         //--- 生產採購(4000) --- 

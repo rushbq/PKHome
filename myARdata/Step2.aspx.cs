@@ -127,7 +127,7 @@ public partial class myARdata_ImportStep2 : SecurityCheck
             hf_CustID.Value = _custID;
 
 
-            //載入單身資料
+            //載入單身資料(日期格式為yyyyMMdd)
             LookupData_Detail(_dbs, _custID, _sDate.ToDateString("yyyyMMdd"), _eDate.ToDateString("yyyyMMdd"));
 
         }

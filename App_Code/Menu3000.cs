@@ -880,6 +880,7 @@ namespace Menu3000Data.Models
         public string CustID { get; set; }
         public string CustName { get; set; }
         public string CustFullName { get; set; }
+        public string TermName { get; set; }
         public string DBS { get; set; }
         public string erp_sDate { get; set; }
         public string erp_eDate { get; set; }
@@ -964,6 +965,10 @@ namespace Menu3000Data.Models
         /// </summary>
         public double GetPrice { get; set; }
 
+        /// <summary>
+        /// 銷貨單備註
+        /// </summary>
+        public string OrderRemark { get; set; }
     }
 
 

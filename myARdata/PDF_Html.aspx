@@ -28,7 +28,7 @@
                             <td>
                                 <asp:Literal ID="lt_ZipCode" runat="server"></asp:Literal>
                             </td>
-                            <td style="text-align: right">To.會計
+                            <td style="text-align: center">To.會計
                             </td>
                         </tr>
                         <tr>
@@ -50,13 +50,25 @@
                             </td>
                         </tr>
                         <tr>
+                            <td>FAX：</td>
+                            <td colspan="2">
+                                <asp:Literal ID="lt_Fax" runat="server"></asp:Literal>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>TEL：</td>
+                            <td colspan="2">
+                                <asp:Literal ID="lt_Tel" runat="server"></asp:Literal>
+                            </td>
+                        </tr>
+                        <tr>
                             <td colspan="3" style="height: 30px"></td>
                         </tr>
                         <tr>
                             <td colspan="2">製表日期:
                                 <asp:Literal ID="lt_today" runat="server"></asp:Literal>
                             </td>
-                            <td style="text-align:center">期間:
+                            <td style="text-align: center">期間:
                                 <asp:Literal ID="lt_sDate" runat="server"></asp:Literal>
                                 至
                                 <asp:Literal ID="lt_eDate" runat="server"></asp:Literal>
@@ -78,6 +90,7 @@
                                         <th>幣別</th>
                                         <th>原幣應收帳款</th>
                                         <th>原幣未收帳款</th>
+                                        <th>備註</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,6 +123,9 @@
                                 </td>
                                 <td class="right aligned">
                                     <%#(Convert.ToDouble(Eval("Price")) + Convert.ToDouble(Eval("TaxPrice")) - Convert.ToDouble(Eval("GetPrice"))).ToString().ToMoneyString() %>
+                                </td>
+                                <td>
+                                    <%#Eval("OrderRemark") %>
                                 </td>
                             </tr>
                         </ItemTemplate>

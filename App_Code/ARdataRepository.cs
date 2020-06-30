@@ -339,13 +339,12 @@ namespace ARData.Controllers
         }
 
 
-
         /// <summary>
         /// 取得結帳單, Step2
         /// </summary>
         /// <param name="dbs"></param>
         /// <param name="parentID"></param>
-        /// <param name="search">查詢參數</param>
+        /// <param name="search">日期格式為yyyyMMdd</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
         public IQueryable<ARData_Details> GetErpList(string dbs, string parentID, Dictionary<string, string> search, out string ErrMsg)
@@ -379,16 +378,17 @@ namespace ARData.Controllers
                 sql.AppendLine("  , Terms.NA002 AS TermID, Terms.NA003 AS TermName");
                 sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency");
                 sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA042 AS float) AS TaxPrice, CAST(Base.TA031 AS float) AS GetPrice");
+                sql.AppendLine("  , Base.TA022 AS OrderRemark");
                 sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY Base.TA002) AS SerialNo");
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
                 sql.AppendLine(" WHERE (TA025 = 'Y') AND (TA027 = 'N')");
-                //--排除重複
-                sql.AppendLine(" AND (RTRIM(Base.TA001)+'-'+RTRIM(Base.TA002) NOT IN (");
-                sql.AppendLine(" 	SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine(" 	FROM [PKExcel].dbo.AR_DataItems subItems");
-                sql.AppendLine(" 	WHERE (subItems.Parent_ID <> @parentID)");
-                sql.AppendLine(" ))");
+                //--排除重複(20200623-Annie說不要擋)
+                //sql.AppendLine(" AND (RTRIM(Base.TA001)+'-'+RTRIM(Base.TA002) NOT IN (");
+                //sql.AppendLine(" 	SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
+                //sql.AppendLine(" 	FROM [PKExcel].dbo.AR_DataItems subItems");
+                //sql.AppendLine(" 	WHERE (subItems.Parent_ID <> @parentID)");
+                //sql.AppendLine(" ))");
 
                 #region >> filter <<
                 if (search != null)
@@ -461,6 +461,7 @@ namespace ARData.Controllers
                                 Price = item.Field<double>("Price"), //應收金額
                                 TaxPrice = item.Field<double>("TaxPrice"), //本幣營業稅額
                                 GetPrice = item.Field<double>("GetPrice"), //已收金額
+                                OrderRemark = item.Field<string>("OrderRemark")
                             };
 
 
@@ -517,6 +518,7 @@ namespace ARData.Controllers
                 sql.AppendLine("  , Terms.NA002 AS TermID, Terms.NA003 AS TermName");
                 sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency");
                 sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA042 AS float) AS TaxPrice, CAST(Base.TA031 AS float) AS GetPrice");
+                sql.AppendLine("  , Base.TA022 AS OrderRemark");
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.ACRTB DT ON Base.TA001 = DT.TB001 AND Base.TA002 = DT.TB002");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
@@ -569,6 +571,7 @@ namespace ARData.Controllers
                                 Price = item.Field<double>("Price"), //應收金額
                                 TaxPrice = item.Field<double>("TaxPrice"), //本幣營業稅額
                                 GetPrice = item.Field<double>("GetPrice"), //已收金額
+                                OrderRemark = item.Field<string>("OrderRemark")
                             };
 
                             //將項目加入至集合
@@ -727,6 +730,124 @@ namespace ARData.Controllers
                             {
                                 Email = item.Field<string>("Email")
                             };
+
+                            //將項目加入至集合
+                            dataList.Add(data);
+                        }
+                    }
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+
+        }
+
+
+        /// <summary>
+        /// 待收款的客戶
+        /// </summary>
+        /// <param name="dbs"></param>
+        /// <param name="search">日期格式為yyyyMMdd</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public IQueryable<ARData_Base> GetCustList(string dbs, Dictionary<string, string> search, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            List<ARData_Base> dataList = new List<ARData_Base>();
+            StringBuilder sql = new StringBuilder();
+            /* 設定DB Name */
+            string _dbName;
+            //來源DB
+            switch (dbs.ToUpper())
+            {
+                case "SZ":
+                    _dbName = "ProUnion";
+                    break;
+
+                case "SH":
+                    _dbName = "SHPK2";
+                    break;
+
+                default:
+                    _dbName = "prokit2";
+                    break;
+            }
+
+            //----- 資料取得 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" SELECT RTRIM(Cust.MA001) AS CustID, RTRIM(Cust.MA002) AS CustName, Terms.NA003 AS TermName");
+                sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
+                sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
+                sql.AppendLine("  INNER JOIN [##dbName##].dbo.COPMA Cust ON Base.TA004 = Cust.MA001");
+                sql.AppendLine(" WHERE (Base.TA025 = 'Y') AND (Base.TA027 = 'N') AND (Base.TA009 = 'NTD')");
+
+                #region >> filter <<
+                if (search != null)
+                {
+                    //過濾空值
+                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                    foreach (var item in thisSearch)
+                    {
+                        switch (item.Key)
+                        {
+                            //case "CustID":
+                            //    sql.Append(" AND (Base.TA004 = @CustID)");
+
+                            //    cmd.Parameters.AddWithValue("CustID", item.Value);
+                            //    break;
+
+
+                            case "StartDate":
+                                sql.Append(" AND (Base.TA003 >= @StartDate)");
+
+                                cmd.Parameters.AddWithValue("StartDate", item.Value);
+                                break;
+
+
+                            case "EndDate":
+                                sql.Append(" AND (Base.TA003 <= @EndDate)");
+
+                                cmd.Parameters.AddWithValue("EndDate", item.Value);
+                                break;
+
+                        }
+                    }
+                }
+                #endregion
+
+
+                //order by
+                sql.AppendLine(" GROUP BY Cust.MA001, Cust.MA002, Terms.NA003");
+                sql.AppendLine(" ORDER BY Cust.MA001, Cust.MA002");
+
+                //Replace DB 前置詞
+                sql.Replace("##dbName##", _dbName);
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    if (DT != null)
+                    {
+                        //LinQ 查詢
+                        var query = DT.AsEnumerable();
+
+                        //資料迴圈
+                        foreach (var item in query)
+                        {
+                            //加入項目
+                            var data = new ARData_Base
+                            {
+                                CustID = item.Field<string>("CustID"),
+                                CustName = item.Field<string>("CustName"),
+                                TermName = item.Field<string>("TermName")
+                            };
+
 
                             //將項目加入至集合
                             dataList.Add(data);

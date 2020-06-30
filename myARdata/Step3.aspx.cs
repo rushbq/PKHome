@@ -123,6 +123,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
             lb_eDate.Text = _eDate;
             hf_DataID.Value = _dataID;
             hf_CustID.Value = _custID;
+            hf_CustName.Value = _custName;
 
 
             //載入單身資料
@@ -299,6 +300,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
         //Params
         string _guid = hf_DataID.Value;
         string _custID = hf_CustID.Value;
+        string _custName = hf_CustName.Value;
 
         //宣告
         ARdataRepository _data = new ARdataRepository();
@@ -337,9 +339,9 @@ public partial class myARdata_ImportStep3 : SecurityCheck
             }
 
 
-            /* 取得發信內文 */
-            string subject = "【重要訊息通知】{0} 年 {1} 月份對帳明細通知【寶工實業股份有限公司】".FormatThis(
-                DateTime.Today.Year, DateTime.Today.Month
+            /* 取得發信主旨,內文 */
+            string subject = "【重要訊息通知】{0} 年 {1} 月份對帳明細通知【寶工實業股份有限公司】#{2}".FormatThis(
+                DateTime.Today.Year, DateTime.Today.Month, _custName
                 );
             StringBuilder mailBody = Get_MailBody();
             if (mailBody.Length == 0)
@@ -455,9 +457,11 @@ public partial class myARdata_ImportStep3 : SecurityCheck
                     Msg.To.Add(new MailAddress(email));
                 }
 
-                //固定傳送MAIL:系統收件箱(功能穩定後可考慮移除)
-                Msg.Bcc.Add(new MailAddress("ITInform@mail.prokits.com.tw"));
+                //固定CC
+                Msg.CC.Add(new MailAddress("shipping@mail.prokits.com.tw"));
 
+                //固定BCC:系統收件箱(功能穩定後可考慮移除)
+                Msg.Bcc.Add(new MailAddress("ITInform@mail.prokits.com.tw"));
 
                 //主旨
                 Msg.Subject = subject;

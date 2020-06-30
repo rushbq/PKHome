@@ -89,11 +89,12 @@
                                             <th>結帳日期</th>
                                             <th>發票號碼</th>
                                             <th>憑證號碼</th>
-                                            <th>付款條件</th>
+                                            <th class="no-sort">付款條件</th>
                                             <th>預計收款日</th>
-                                            <th>幣別</th>
-                                            <th>原幣應收帳款</th>
-                                            <th>原幣未收帳款</th>
+                                            <th class="no-sort">幣別</th>
+                                            <th class="no-sort">原幣應收帳款</th>
+                                            <th class="no-sort">原幣未收帳款</th>
+                                            <th class="no-sort">備註</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -127,6 +128,9 @@
                                     <td class="right aligned">
                                         <%#(Convert.ToDouble(Eval("Price")) + Convert.ToDouble(Eval("TaxPrice")) - Convert.ToDouble(Eval("GetPrice"))).ToString().ToMoneyString() %>
                                     </td>
+                                    <td>
+                                        <%#Eval("OrderRemark") %>
+                                    </td>
                                 </tr>
                             </ItemTemplate>
                             <EmptyDataTemplate>
@@ -157,6 +161,7 @@
                     </div>
                     <asp:HiddenField ID="hf_DataID" runat="server" />
                     <asp:HiddenField ID="hf_CustID" runat="server" />
+                    <asp:HiddenField ID="hf_CustName" runat="server" />
                 </div>
                 <!-- 按鈕 E -->
 

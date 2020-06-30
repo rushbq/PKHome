@@ -182,7 +182,7 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("		 , RTRIM(TD004) AS ModelNo");
                 sql.AppendLine("		 , TD007 AS StockType");
                 sql.AppendLine("		FROM [#dbname#].dbo.PURTD WITH (NOLOCK)");
-                sql.AppendLine("		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('01', '20', '22', '12', '14', 'A01'))");
+                sql.AppendLine("		WHERE (TD016 = 'N') AND (TD018 = 'N') AND (TD007 IN ('01', '20', '22', '12', '14', 'A01'))");
                 sql.AppendLine("		GROUP BY TD004, TD007");
                 sql.AppendLine("	) t ");
                 sql.AppendLine("	PIVOT (");
@@ -236,7 +236,7 @@ namespace Menu4000Data.Controllers
                 //PKSYS包裝資料
                 sql.AppendLine("    LEFT JOIN OpcsStatus_Rel_Box Box ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Box.ErpID");
                 //--Base 基本條件
-                sql.AppendLine(" WHERE (COPTC.TC027 = 'Y') --AND (COPTD.TD013 >= CONVERT(VARCHAR(10), GETDATE() - 60, 112))");
+                sql.AppendLine(" WHERE (COPTC.TC027 = 'Y') AND (COPTD.TD013 >= CONVERT(VARCHAR(10), GETDATE() - 60, 112))");
                 sql.AppendLine(" )");
 
                 #endregion
@@ -532,17 +532,17 @@ namespace Menu4000Data.Controllers
                                         {
                                             case "TW":
                                                 sql.Append(" AND (");
-                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) + ISNULL(TblPreIn.PreIN_01, 0) AS INT)) <= -1");
-                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) + ISNULL(TblPreIn.PreIN_20, 0) AS INT)) <= -1");
-                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) + ISNULL(TblPreIn.PreIN_22, 0) AS INT)) <= -1");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_01, 0) + ISNULL(TblWait.waitQty_01, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_01, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_20, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_20, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_20, 0) + ISNULL(TblWait.waitQty_20, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_20, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_22, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_22, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_22, 0) + ISNULL(TblWait.waitQty_22, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_22, 0) AS INT)) <= -1");
                                                 sql.Append(" )");
                                                 break;
 
                                             case "SH":
                                                 sql.Append(" AND (");
-                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) + ISNULL(TblPreIn.PreIN_12, 0) AS INT)) <= -1");
-                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) + ISNULL(TblPreIn.PreIN_14, 0) AS INT)) <= -1");
-                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) + ISNULL(TblPreIn.PreIN_A01, 0) AS INT)) <= -1");
+                                                sql.Append(" (CAST(ISNULL(TblStock.StkQty_12, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_12, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_12, 0) + ISNULL(TblWait.waitQty_12, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_12, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_14, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_14, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_14, 0) + ISNULL(TblWait.waitQty_14, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_14, 0) AS INT)) <= -1");
+                                                sql.Append(" OR (CAST(ISNULL(TblStock.StkQty_A01, 0) AS INT) + CAST(ISNULL(TblunStock.unStkQty_A01, 0) AS INT) - CAST(ISNULL(TblPreSell.PreSell_A01, 0) + ISNULL(TblWait.waitQty_A01, 0) AS INT) + CAST(ISNULL(TblPreIn.PreIN_A01, 0) AS INT)) <= -1");
                                                 sql.Append(" )");
                                                 break;
                                         }
