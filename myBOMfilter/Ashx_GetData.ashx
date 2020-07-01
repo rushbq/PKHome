@@ -6,14 +6,14 @@ using System.Data;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
-using Menu3000Data.Controllers;
+using Menu4000Data.Controllers;
 using PKLib_Method.Methods;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 /// <summary>
-/// 取得產品庫存狀況
-/// 使用程式:SearchByProd.aspx
+/// 取得BOM資料
+/// 使用程式:Search.aspx
 /// </summary>
 public class Ashx_GetData : IHttpHandler
 {
@@ -35,17 +35,16 @@ public class Ashx_GetData : IHttpHandler
 
 
             //[接收參數] 自訂查詢
-            string _Keyword = context.Request["Keyword"];
             string _ModelNo = context.Request["ModelNo"];
-            string _ClassID = context.Request["ClassID"];
-            string _Lang = context.Request["lang"];
+            string _DBS = context.Request["DBS"];
+            string _StopType = context.Request["StopType"];
 
             //----- 宣告:分頁參數 -----
             int TotalRow = 0;   //總筆數
 
 
             //----- 宣告:資料參數 -----
-            Menu3000Repository _data = new Menu3000Repository();
+            Menu4000Repository _data = new Menu4000Repository();
             Dictionary<string, string> search = new Dictionary<string, string>();
             DataTable DT = new DataTable();
             int DataCnt;
@@ -57,20 +56,14 @@ public class Ashx_GetData : IHttpHandler
                 search.Add("ModelNo", _ModelNo);
             }
 
-            //[查詢條件] - Keyword
-            if (!string.IsNullOrWhiteSpace(_Keyword))
+            //[查詢條件] - Stop
+            if (!string.IsNullOrWhiteSpace(_StopType))
             {
-                search.Add("Keyword", _Keyword);
-            }
-
-            //[查詢條件] - ClassID
-            if (!string.IsNullOrWhiteSpace(_ClassID))
-            {
-                search.Add("ClassID", _ClassID);
+                search.Add("Stop", "Stop");
             }
 
             //----- 方法:取得資料 -----
-            using (DT = _data.GetProdStockStat(search, _Lang, start, length, out DataCnt, out ErrMsg))
+            using (DT = _data.GetBOMfilter(search, _DBS, start, length, out DataCnt, out ErrMsg))
             {
                 //----- 資料整理:取得總筆數 -----
                 TotalRow = DataCnt;

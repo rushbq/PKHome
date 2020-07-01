@@ -2110,6 +2110,327 @@ namespace Menu4000Data.Controllers
         #endregion *** 外廠包材庫存盤點 E ***
 
 
+        #region *** BOM篩選-採購 S ***
+
+        /// <summary>
+        /// [BOM篩選] 所有資料 (GetBOMfilter)
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 匯出時使用
+        /// </remarks>
+        public DataTable GetAllBOMfilter(Dictionary<string, string> search, string dbs, out string ErrMsg)
+        {
+            int dataCnt = 0;
+            return GetBOMfilter(search, dbs, 0, 9999999, out dataCnt, out ErrMsg);
+        }
+
+
+        /// <summary>
+        /// [BOM篩選] 資料清單 (GetBOMfilter)
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
+        /// <param name="startRow">StartRow</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetBOMfilter(Dictionary<string, string> search, string dbs
+            , int startRow, int endRow
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> subParamList = new List<SqlParameter>(); //SQL參數取得
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                StringBuilder subSql = new StringBuilder(); //條件SQL取得
+                DataTable myDT = new DataTable();
+                DataCnt = 0;    //資料總數
+
+                //取得SQL語法
+                subSql = GetSQL_BOMfilter(search, dbs);
+                //取得SQL參數集合
+                subParamList = GetParams_BOMfilter(search);
+
+                string topParams = @"DECLARE @CheckDay AS VARCHAR(8), @DayOfYear AS VARCHAR(8)
+SET @CheckDay = CONVERT(VARCHAR(8), GETDATE(), 112)
+SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
+
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    sql.AppendLine(topParams);
+
+                    sql.AppendLine(" SELECT COUNT(TbAll.MainModelNo) AS TotalCnt FROM (");
+
+                    //子查詢SQL
+                    sql.Append(subSql);
+
+                    sql.AppendLine(" ) AS TbAll");
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+                    sqlParamList.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    //sqlParamList.Add(new SqlParameter("@DataType", DataType));
+
+                    //----- SQL 條件參數 -----
+                    //加入篩選後的參數
+                    sqlParamList.AddRange(subParamList);
+
+                    //加入參數陣列
+                    cmdCnt.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, dbConn.DBS.PKExcel, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    sql.AppendLine(topParams);
+
+                    sql.AppendLine(" SELECT TbAll.* FROM (");
+
+                    //子查詢SQL
+                    sql.Append(subSql);
+
+                    sql.AppendLine(" ) AS TbAll");
+                    sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+                    sql.AppendLine(" ORDER BY TbAll.MainModelNo, TbAll.PartModelNo");
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+                    sqlParamList.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    //sqlParamList.Add(new SqlParameter("@DataType", DataType));
+                    sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                    sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    //----- SQL 條件參數 -----
+                    //加入篩選後的參數
+                    sqlParamList.AddRange(subParamList);
+
+                    //加入參數陣列
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+
+
+                    //return
+                    return myDT;
+                }
+
+                #endregion
+
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [BOM篩選] 取得SQL查詢 (GetBOMfilter)
+        /// ** TSQL查詢條件寫在此 **
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
+        /// <returns></returns>
+        /// <see cref="GetShipData"/>
+        private StringBuilder GetSQL_BOMfilter(Dictionary<string, string> search, string dbs)
+        {
+            StringBuilder sql = new StringBuilder();
+            string dbName = "";
+            string soTypeFilter = ""; //單別條件
+            string langcode = "zh_TW";
+            switch (dbs.ToUpper())
+            {
+                case "SH":
+                    dbName = "SHPK2";
+                    langcode = "zh_CN";
+                    soTypeFilter = "'2313', '2315', '2341', '2342', '2343', '2345', '23B2', '23B3', '23B4', '23B6'";
+                    break;
+
+                default:
+                    dbName = "prokit2";
+                    soTypeFilter = "'2301', '2302', '2303', '2304', '2305', '2306', '2307', '2308', '2309', '2310', '2320', '2330', '2350'";
+                    break;
+            }
+
+            //SQL查詢
+            sql.AppendLine(" SELECT");
+            sql.AppendLine("  RTRIM(Base.MC001) AS MainModelNo	--//主件品號");
+            sql.AppendLine(" , RTRIM(DT.MD003) AS PartModelNo	--//子件品號");
+            sql.AppendLine(" , Prod.Model_Name_zh_TW AS MainModelName	--//主件品名");
+            sql.AppendLine(" , PartProd.Model_Name_{0} AS PartModelName	--//子件品名".FormatThis(langcode));
+            sql.AppendLine(" , CAST(DT.MD006 AS INT) AS Qty	--//組成用量");
+            sql.AppendLine(" , RTRIM(Prod.Provider) AS SupID, RTRIM(Sup.MA002) AS SupName	--//主供應商");
+            sql.AppendLine(" , Prod.Ship_From	--//出貨地");
+            sql.AppendLine(" , Prod.Substitute_Model_No_{0} AS MarketMsg	--//產銷訊息".FormatThis(dbs));
+            sql.AppendLine(" , Prod.Warehouse_Class_ID, WareCls.Class_Name_{0} AS StockProp  --//倉管屬性".FormatThis(langcode));
+            sql.AppendLine(" , REPLACE(Prod.Catelog_Vol, 'NULL', '') AS Vol	--//目錄");
+            sql.AppendLine(" , REPLACE(Prod.Page, 'NULL', '') AS Page	--//頁次");
+            sql.AppendLine(" , Prod.Date_Of_Listing	--//上市日期");
+            sql.AppendLine(" , ErpProd.MB025 AS ProdProp	--//品號屬性");
+            sql.AppendLine(" , TblSOdata.SO_Date, TblSOdata.SO_CustID, Cust.MA002 AS CustName, ISNULL(TblSOdata.SO_Qty, 0) AS SO_Qty");
+            sql.AppendLine(" , ISNULL(TblYearQty.YearQty, 0) AS YearQty");
+            sql.AppendLine(" , ROW_NUMBER() OVER(ORDER BY Base.MC001, DT.MD003) AS RowIdx");
+            sql.AppendLine(" FROM [##DBName##].dbo.BOMMC Base WITH(NOLOCK)");
+            sql.AppendLine("  INNER JOIN [##DBName##].dbo.BOMMD DT WITH(NOLOCK) ON Base.MC001 = DT.MD001");
+            sql.AppendLine("  INNER JOIN [##DBName##].dbo.INVMB ErpProd WITH(NOLOCK) ON Base.MC001 = ErpProd.MB001");
+            sql.AppendLine("  INNER JOIN [ProductCenter].dbo.Prod_Item Prod ON Base.MC001 = Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN");
+            sql.AppendLine("  INNER JOIN [ProductCenter].dbo.Prod_Item PartProd ON DT.MD003 = PartProd.Model_No COLLATE Chinese_Taiwan_Stroke_BIN");
+            sql.AppendLine("  LEFT JOIN [ProductCenter].dbo.Warehouse_Class WareCls ON WareCls.Class_ID = Prod.Warehouse_Class_ID");
+            sql.AppendLine("  LEFT JOIN [##DBName##].dbo.PURMA Sup ON Sup.MA001 = Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN");
+            /* 最近出貨資料(PARTITION排序後取第一筆) */
+            sql.AppendLine(" LEFT JOIN (");
+            sql.AppendLine("   SELECT TG003 AS SO_Date, TG004 AS SO_CustID, CAST(ISNULL(TH008, 0) AS INT) AS SO_Qty, TH004 AS SO_ModelNo");
+            sql.AppendLine("   , RANK() OVER (");
+            sql.AppendLine("      PARTITION BY TH004 /*依品號Group*/");
+            sql.AppendLine("      ORDER BY TG003 DESC /*依日期排序*/");
+            sql.AppendLine("     ) AS myTbSeq");
+            sql.AppendLine("   FROM [##DBName##].dbo.COPTG WITH(NOLOCK)");
+            sql.AppendLine("    INNER JOIN [##DBName##].dbo.COPTH WITH(NOLOCK) ON COPTG.TG001 = COPTH.TH001 AND COPTG.TG002 = COPTH.TH002");
+            sql.AppendLine("   WHERE (COPTH.TH020 = 'Y')");
+            /* 固定條件:單別篩選 */
+            sql.AppendLine("    AND (COPTG.TG001 IN ({0}))".FormatThis(soTypeFilter));
+            sql.AppendLine("  ) AS TblSOdata ON TblSOdata.SO_ModelNo = Base.MC001 AND TblSOdata.myTbSeq = 1");
+            /* 一年內用量 */
+            sql.AppendLine("  LEFT JOIN (");
+            sql.AppendLine("     SELECT ISNULL(SUM(TH008), 0) AS YearQty, TH004 AS ModelNo");
+            sql.AppendLine("     FROM [##DBName##].dbo.COPTG WITH(NOLOCK)");
+            sql.AppendLine("      INNER JOIN [##DBName##].dbo.COPTH WITH(NOLOCK) ON COPTG.TG001 = COPTH.TH001 AND COPTG.TG002 = COPTH.TH002");
+            sql.AppendLine("     WHERE (TG003 >= @DayOfYear) AND (TG003 <= @CheckDay) AND (COPTH.TH020 = 'Y')");
+            /* 固定條件:單別篩選 */
+            sql.AppendLine("      AND (COPTG.TG001 IN ({0}))".FormatThis(soTypeFilter));
+            sql.AppendLine("     GROUP BY TH004");
+            sql.AppendLine("  ) AS TblYearQty ON TblYearQty.ModelNo = Base.MC001");
+            sql.AppendLine("  LEFT JOIN [##DBName##].dbo.COPMA Cust ON Cust.MA001 =TblSOdata.SO_CustID");
+
+            /* --[預設條件] 確認碼=Y / 失效日>今日 OR 失效日空白 */
+            sql.AppendLine(" WHERE (Base.MC016 = 'Y') AND ((DT.MD012 > @CheckDay) OR DT.MD012 = '')");
+
+            #region >> filter <<
+
+            if (search != null)
+            {
+                //過濾空值
+                var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                //查詢內容
+                foreach (var item in thisSearch)
+                {
+                    switch (item.Key)
+                    {
+                        case "Stop":
+                            //--[條件] 排除已停售
+                            sql.Append(" AND (Sup.MA001 = '122002')");
+
+                            break;
+
+                        case "ModelNo":
+                            //--[條件] 子件品號(必填)
+                            sql.Append(" AND (DT.MD003 = @ModelNo)");
+
+                            break;
+
+                    }
+                }
+            }
+            #endregion
+
+
+            //Replace 指定字元
+            sql.Replace("##DBName##", dbName);
+
+            //return
+            return sql;
+        }
+
+
+        /// <summary>
+        /// [BOM篩選] 取得條件參數 (GetBOMfilter)
+        /// ** SQL參數設定寫在此 **
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <returns></returns>
+        /// <see cref="GetSQL_ShipData"/>
+        private List<SqlParameter> GetParams_BOMfilter(Dictionary<string, string> search)
+        {
+            //declare
+            List<SqlParameter> sqlParamList = new List<SqlParameter>();
+
+            //get values
+            if (search != null)
+            {
+                //過濾空值
+                var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                //查詢內容
+                foreach (var item in thisSearch)
+                {
+                    switch (item.Key)
+                    {
+                        case "ModelNo":
+                            sqlParamList.Add(new SqlParameter("@ModelNo", item.Value));
+
+                            break;
+
+                    }
+                }
+            }
+
+
+            return sqlParamList;
+        }
+
+
+        #endregion *** BOM篩選-採購 E ***
+
+
         #endregion
 
 

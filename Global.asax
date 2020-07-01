@@ -471,6 +471,12 @@
                 , { "rootID", "4000" }
                 , { "id", "0" }});
 
+        //BOM篩選        
+        routes.MapPageRoute("BOMFilter", "{lang}/{rootID}/BOMFilter/{CompID}", "~/myBOMfilter/Search.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "4000" }
+                , { "CompID", "TW" }});
 
 
         //Error

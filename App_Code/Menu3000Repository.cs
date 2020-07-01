@@ -5658,7 +5658,7 @@ namespace Menu3000Data.Controllers
         #region *** 出貨明細表(外銷) S ***
 
         /// <summary>
-        /// [出貨明細表](外銷) 指定資料
+        /// [出貨明細表](外銷) 指定資料 (GetShipData)
         /// </summary>
         /// <param name="search">search集合</param>
         /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
@@ -5671,12 +5671,15 @@ namespace Menu3000Data.Controllers
         }
 
         /// <summary>
-        /// [出貨明細表](外銷) 所有資料
+        /// [出貨明細表](外銷) 所有資料 (GetShipData)
         /// </summary>
         /// <param name="search">search集合</param>
         /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
+        /// <remarks>
+        /// 匯出時使用
+        /// </remarks>
         public IQueryable<ShipData_Item> GetAllShipData(Dictionary<string, string> search, string dbs, out string ErrMsg)
         {
             int dataCnt = 0;
@@ -5685,7 +5688,7 @@ namespace Menu3000Data.Controllers
 
 
         /// <summary>
-        /// [出貨明細表](外銷) 資料清單
+        /// [出貨明細表](外銷) 資料清單 (GetShipData)
         /// </summary>
         /// <param name="search">search集合</param>
         /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
@@ -5942,7 +5945,7 @@ namespace Menu3000Data.Controllers
 
 
         /// <summary>
-        /// [出貨明細表](外銷) 取得SQL查詢
+        /// [出貨明細表](外銷) 取得SQL查詢 (GetShipData)
         /// ** TSQL查詢條件寫在此 **
         /// </summary>
         /// <param name="search">search集合</param>
@@ -6096,7 +6099,7 @@ namespace Menu3000Data.Controllers
 
 
         /// <summary>
-        /// [出貨明細表](外銷) 取得條件參數
+        /// [出貨明細表](外銷) 取得條件參數 (GetShipData)
         /// ** SQL參數設定寫在此 **
         /// </summary>
         /// <param name="search">search集合</param>
@@ -7054,7 +7057,7 @@ namespace Menu3000Data.Controllers
         /// <param name="dbs">資料出處(TW/SH/Oin1)</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
-        public IQueryable<ShipDataSH_Item> GetOneShipData_SH(Dictionary<string, string> search, string dbs, out string ErrMsg)
+        public IQueryable<ShipDataSH_Item> GetOneShipData_SH(Dictionary<string, string> search, out string ErrMsg)
         {
             int dataCnt = 0;
             return GetShipData_SH(search, 0, 1, out dataCnt, out ErrMsg);
