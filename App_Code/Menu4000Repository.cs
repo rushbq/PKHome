@@ -2367,7 +2367,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     {
                         case "Stop":
                             //--[條件] 排除已停售
-                            sql.Append(" AND (Sup.MA001 = '122002')");
+                            sql.Append(" AND (Prod.Provider NOT IN ('122002'))");
 
                             break;
 

@@ -15,7 +15,8 @@
                 </div>
             </div>
             <div class="right menu">
-                <asp:LinkButton ID="lbtn_Excel" runat="server" CssClass="item" OnClick="lbtn_Excel_Click"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></asp:LinkButton>
+                <a href="#!" id="exportExcel" class="item"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></a>
+                <asp:Button ID="btn_Excel" runat="server" Text="excel trigger" OnClick="btn_Excel_Click" Style="display: none;" />
             </div>
         </div>
     </div>
@@ -27,18 +28,21 @@
         <div class="ui orange attached segment">
             <div class="ui small form">
                 <div class="fields">
-                    <div class="six wide field">
+                    <div class="four wide field">
                         <label>產品類別</label>
                         <asp:DropDownList ID="filter_Class" runat="server">
                         </asp:DropDownList>
                     </div>
-                    <div class="five wide field">
+                    <div class="four wide field">
                         <label>產品關鍵字</label>
                         <asp:TextBox ID="filter_Keyword" runat="server" MaxLength="20" autocomplete="off" placeholder="品號或品名關鍵字"></asp:TextBox>
                     </div>
-                    <div class="five wide field">
+                    <div class="eight wide field">
                         <label>指定品號</label>
-                        <asp:TextBox ID="filter_ModelNo" runat="server" MaxLength="20" autocomplete="off" placeholder="輸入完整品號,不區分大小寫"></asp:TextBox>
+                        <select id="menuProd" class="ac-drpProd ui fluid search selection dropdown" multiple="">
+                            <option value="">請選擇</option>
+                        </select>
+                        <asp:TextBox ID="val_Prods" runat="server" Style="display: none"></asp:TextBox>
                     </div>
                 </div>
             </div>
@@ -131,7 +135,34 @@
         <!-- List Content End -->
     </div>
     <!-- 內容 End -->
+    <!-- Msg Modal Start -->
+    <!--// 觸發語法在DT initComplete裡 //-->
+    <div id="msgPage" class="ui modal">
+        <div class="header">
+            產銷訊息 - <span id="itemID" class="green-text text-darken-2"></span>
+        </div>
+        <div class="content">
+            <div class="ui message">
+                <div class="header">
+                    (台灣)
+                </div>
+                <p id="twMsg"></p>
+            </div>
 
+            <div class="ui message">
+                <div class="header">
+                    (上海)
+                </div>
+                <p id="shMsg"></p>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui cancel button">
+                關閉視窗
+            </div>
+        </div>
+    </div>
+    <!-- Msg Modal End -->
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="BottomContent" runat="Server">
 </asp:Content>
@@ -151,8 +182,54 @@
             //init dropdown list
             $('select').dropdown();
 
+
+            //匯出excel
+            $("#exportExcel").click(function () {
+                //Get values of models
+                doGetDrpVals();
+
+                //trigger button
+                $("#MainContent_btn_Excel").trigger("click");
+
+            });
+
+
         });
     </script>
+
+    <script>
+        /*
+          search dropdown多選
+          注意事項:
+          需使用Html Controller, 不能使用 .Net元件
+          , 因選項會變動, 會被視為安全性漏洞, 所以要用另一個ServerSide元件接收值
+        */
+        $('.ac-drpProd').dropdown({
+            fields: {
+                remoteValues: 'results',
+                name: 'ID',
+                value: 'ID'
+            },
+            apiSettings: {
+                url: '<%=fn_Param.WebUrl%>Ajax_Data/GetData_Prod_v1.ashx?q={query}&v=1.1'
+            }
+
+        });
+
+        function doGetDrpVals() {
+            //取得多選品號的值
+            var procValue = $("#menuProd").dropdown("get value");
+            if (procValue.length > 0) {
+                //將陣列轉成以#分隔的字串
+                var myVals = procValue.join("#");
+                //填入隱藏欄位(傳遞時使用)
+                $("#MainContent_val_Prods").val(myVals);
+                //console.log(myVals);
+            }
+        }
+
+    </script>
+
     <%-- DataTables Start --%>
     <link href="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.18/datatables.min.css" rel="stylesheet" />
     <script src="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.18/datatables.min.js"></script>
@@ -171,6 +248,10 @@
 
             /* Click事件 - 查詢 */
             $("#doSearch").on("click", function () {
+                //判斷指定品號,填入隱藏欄位
+                doGetDrpVals();
+
+                //search job
                 doSearch();
             });
 
@@ -178,7 +259,7 @@
             function doSearch() {
                 /* 取得資料 - 各欄位 */
                 var _Keyword = $("#MainContent_filter_Keyword").val();
-                var _ModelNo = $("#MainContent_filter_ModelNo").val();
+                var _ModelNo = $("#MainContent_val_Prods").val();
                 var _ClassID = $("#MainContent_filter_Class").val();
                 var _Lang = '<%=Req_Lang%>';
 
@@ -214,9 +295,16 @@
                      "columns": [
                           {
                               data: function (source, type, val) {
-                                  var showID = source.ModelNo
-                                  var showName = source.ModelName
-                                  var html = '<b class="green-text text-darken-2">' + showID + '</b><div class="grey-text text-darken-2"><small>' + showName + '</small></div>'
+                                  var showID = source.ModelNo;
+                                  var showName = source.ModelName;
+
+                                  //產銷訊息modal用的hidden欄位
+                                  var msgTW = '<input type="hidden" id="TWmsgDetail_' + showID + '" value="' + source.MsgTW + '">';
+                                  var msgSH = '<input type="hidden" id="SHmsgDetail_' + showID + '" value="' + source.MsgSH + '">';
+
+                                  //組成html
+                                  var html = '<b class="green-text text-darken-2"><a href="#!" class="doShowMsg" data-id="' + showID + '">' + showID + '</a></b><div class="grey-text text-darken-2"><small>' + showName + '</small></div>'
+                                  + msgTW + msgSH;
 
                                   return html;
                               }, className: "collapsing"
@@ -266,6 +354,7 @@
                      "columnDefs": [
                         {
                             "render": function (data, type, row) {
+                                //呼叫格式化function
                                 return formatNumber(data);
                             },
                             "targets": 'numFmt' //指定class
@@ -283,17 +372,34 @@
                      "initComplete": function (settings, json) {
                          //移除loading
                          s_data.removeClass("loading");
+
+
+                         //*** UI載入完成後觸發 *** Message Modal
+                         $(".doShowMsg").on("click", function () {
+                             //取資料
+                             var id = $(this).attr("data-id"); //model no
+                             var msgTW = $("#TWmsgDetail_" + id).val(); //get hidden field value
+                             var msgSH = $("#SHmsgDetail_" + id).val(); //get hidden field value
+
+                             //填入值
+                             $("#itemID").text(id);
+                             $("#twMsg").text(msgTW);
+                             $("#shMsg").text(msgSH);
+
+                             //顯示modal
+                             $('#msgPage').modal('show');
+                         });
                      }
                  });
 
                 //數字格式化(為0設為灰字)
-                function formatNumber(val) {
-                    if (val == 0) {
-                        val = '<span class="grey-text">' + val + '</span>';
-                    }
-                    
-                    return val;
-                }
+                 function formatNumber(val) {
+                     if (val == 0) {
+                         val = '<span class="grey-text">' + val + '</span>';
+                     }
+
+                     return val;
+                 }
                 /* DataTables UI End */
              }
         });

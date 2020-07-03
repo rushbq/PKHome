@@ -782,9 +782,16 @@ namespace Menu3000Data.Controllers
                                     break;
 
                                 case "ModelNo":
-                                    sql.Append(" AND (UPPER(ModelNo) = UPPER(@ModelNo))");
-                                    sqlParamList.Add(new SqlParameter("@ModelNo", item.Value));
+                                    string[] aryID = Regex.Split(item.Value, "#");
+                                    ArrayList aryLst = new ArrayList(aryID);
 
+                                    //GetSQLParam:SQL WHERE IN的方法
+                                    sql.AppendLine(" AND (UPPER(ModelNo) IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "params")));
+
+                                    for (int row = 0; row < aryID.Count(); row++)
+                                    {
+                                        sqlParamList.Add(new SqlParameter("@params" + row, aryID[row]));
+                                    }
                                     break;
                             }
                         }
@@ -855,9 +862,16 @@ namespace Menu3000Data.Controllers
                                     break;
 
                                 case "ModelNo":
-                                    sql.Append(" AND (UPPER(ModelNo) = UPPER(@ModelNo))");
-                                    sqlParamList.Add(new SqlParameter("@ModelNo", item.Value));
+                                    string[] aryID = Regex.Split(item.Value, "#");
+                                    ArrayList aryLst = new ArrayList(aryID);
 
+                                    //GetSQLParam:SQL WHERE IN的方法
+                                    sql.AppendLine(" AND (UPPER(ModelNo) IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "params")));
+
+                                    for (int row = 0; row < aryID.Count(); row++)
+                                    {
+                                        sqlParamList.Add(new SqlParameter("@params" + row, aryID[row]));
+                                    }
                                     break;
                             }
                         }

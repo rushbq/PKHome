@@ -28,9 +28,15 @@
         <div class="ui orange attached segment">
             <div class="ui small form">
                 <div class="fields">
-                    <div class="five wide required field">
+                    <div class="seven wide required field">
                         <label>指定品號</label>
-                        <asp:TextBox ID="filter_ModelNo" runat="server" MaxLength="20" autocomplete="off" placeholder="輸入完整品號,不區分大小寫"></asp:TextBox>
+                        <div class="ui fluid search ac-ModelNo">
+                            <div class="ui left icon right labeled input">
+                                <asp:TextBox ID="filter_ModelNo" runat="server" CssClass="prompt" MaxLength="20" autocomplete="off" placeholder="輸入完整品號,不區分大小寫"></asp:TextBox>
+                                <i class="search icon"></i>
+                                <asp:Panel ID="lb_ModelNo" runat="server" CssClass="ui label">輸入品號</asp:Panel>
+                            </div>
+                        </div>
                     </div>
                     <div class="four wide field">
                         <label>資料庫</label>
@@ -88,9 +94,12 @@
                             <th class="grey-bg lighten-3">目錄</th>
                             <th class="grey-bg lighten-3">頁次</th>
                             <th class="grey-bg lighten-3">上市日期</th>
-                            <th class="grey-bg lighten-3">最近<br />出貨時間</th>
-                            <th class="grey-bg lighten-3">最近<br />出貨客戶</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">最近<br />出貨數量</th>
+                            <th class="grey-bg lighten-3">最近<br />
+                                出貨時間</th>
+                            <th class="grey-bg lighten-3">最近<br />
+                                出貨客戶</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">最近<br />
+                                出貨數量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">近一年銷量</th>
                             <th class="grey-bg lighten-3">品號屬性</th>
                         </tr>
@@ -123,6 +132,68 @@
 
         });
     </script>
+    <%-- Search UI Start --%>
+    <script>
+        /* 品號 (使用category) */
+        $('.ac-ModelNo').search({
+            type: 'category',
+            minCharacters: 1,
+            searchFields: [
+                'title',
+                'description'
+            ]
+            , onSelect: function (result, response) {
+                //console.log(result.title);
+                $("#MainContent_filter_ModelNo").val(result.title);
+                $("#MainContent_lb_ModelNo").text(result.description);
+            }
+            , apiSettings: {
+                url: '<%=fn_Param.WebUrl%>Ajax_Data/GetData_Prod_v1.ashx?q={query}',
+                onResponse: function (ajaxResp) {
+                    //宣告空陣列
+                    var response = {
+                        results: {}
+                    }
+                    ;
+                    // translate API response to work with search
+                    /*
+                      取得遠端資料後處理
+                      .results = 物件名稱
+                      item.Category = 要群組化的欄位
+                      maxResults = 查詢回傳筆數
+
+                    */
+                    $.each(ajaxResp.results, function (index, item) {
+                        var
+                          categoryContent = item.Category || 'Unknown',
+                          maxResults = 10
+                        ;
+                        if (index >= maxResults) {
+                            return false;
+                        }
+                        // create new categoryContent category
+                        if (response.results[categoryContent] === undefined) {
+                            response.results[categoryContent] = {
+                                name: categoryContent,
+                                results: []
+                            };
+                        }
+
+                        //重組回傳結果(指定顯示欄位)
+                        response.results[categoryContent].results.push({
+                            title: item.ID,
+                            description: item.Label
+                        });
+                    });
+                    return response;
+                }
+            }
+
+        });
+
+    </script>
+    <%-- Search UI End --%>
+
     <%-- DataTables Start --%>
     <link href="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.18/datatables.min.css" rel="stylesheet" />
     <script src="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.18/datatables.min.js"></script>
@@ -157,7 +228,7 @@
                     alert('品號 / 資料庫為必填');
                     return false;
                 }
-                
+
                 //畫面處理 - 顯示或隱藏
                 s_data.addClass("loading");
 
@@ -203,7 +274,7 @@
                          { data: "SO_Qty", className: "right aligned" },
                          { data: "YearQty", className: "right aligned" },
                          { data: "ProdProp", className: "" }
-                        
+
                      ],
                      //自訂欄位格式
                      "columnDefs": [

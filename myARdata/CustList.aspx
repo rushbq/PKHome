@@ -136,7 +136,9 @@
                 "pageLength": 5,   //每頁筆數
                 "language": {
                     //自訂筆數顯示選單
-                    "lengthMenu": ''
+                    "lengthMenu": '',
+                    //自訂頁數資訊
+                    "info": '共 <b>_TOTAL_</b> 筆 ,目前頁次 <b>_PAGE_</b> / _PAGES_, 每頁 5 筆.'
                 },
                 //讓不排序的欄位在初始化時不出現排序圖
                 "order": [],

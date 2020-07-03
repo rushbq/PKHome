@@ -53,7 +53,7 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
     /// <summary>
     /// [按鈕] - 匯出
     /// </summary>
-    protected void lbtn_Excel_Click(object sender, EventArgs e)
+    protected void btn_Excel_Click(object sender, EventArgs e)
     {
         //----- 宣告:資料參數 -----
         Menu3000Repository _data = new Menu3000Repository();
@@ -61,7 +61,7 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
         int DataCnt = 0;
 
         string _Keyword = filter_Keyword.Text;
-        string _ModelNo = filter_ModelNo.Text;
+        string _ModelNo = val_Prods.Text;
         string _cls = filter_Class.SelectedValue;
 
         #region >> 條件篩選 <<
@@ -273,6 +273,23 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
         }
     }
 
+    ///// <summary>
+    ///// 取得網址參數 - Company ID(TW/SH/SZ)
+    ///// </summary>
+    //private string _Req_CompID;
+    //public string Req_CompID
+    //{
+    //    get
+    //    {
+    //        String DataID = Page.RouteData.Values["CompID"].ToString();
+
+    //        return DataID.ToLower().Equals("unknown") ? "TW" : DataID;
+    //    }
+    //    set
+    //    {
+    //        this._Req_CompID = value;
+    //    }
+    //}
 
     /// <summary>
     /// 取得此功能的前置路徑
@@ -289,75 +306,75 @@ public partial class myOrderingStock_SearchByProd : SecurityCheck
     #endregion
 
 
-    #region -- 傳遞參數 --
+    //#region -- 傳遞參數 --
 
-    /// <summary>
-    /// ModelNo
-    /// </summary>
-    public string Req_ModelNo
-    {
-        get
-        {
-            String _data = Request.QueryString["m"];
-            return string.IsNullOrWhiteSpace(_data) ? "" : _data;
-        }
-        set
-        {
-            this._Req_ModelNo = value;
-        }
-    }
-    private string _Req_ModelNo;
+    ///// <summary>
+    ///// ModelNo
+    ///// </summary>
+    //public string Req_ModelNo
+    //{
+    //    get
+    //    {
+    //        String _data = Request.QueryString["m"];
+    //        return string.IsNullOrWhiteSpace(_data) ? "" : _data;
+    //    }
+    //    set
+    //    {
+    //        this._Req_ModelNo = value;
+    //    }
+    //}
+    //private string _Req_ModelNo;
 
-    /// <summary>
-    /// Keyword
-    /// </summary>
-    public string Req_Keyword
-    {
-        get
-        {
-            String _data = Request.QueryString["k"];
-            return string.IsNullOrWhiteSpace(_data) ? "" : _data;
-        }
-        set
-        {
-            this._Req_Keyword = value;
-        }
-    }
-    private string _Req_Keyword;
+    ///// <summary>
+    ///// Keyword
+    ///// </summary>
+    //public string Req_Keyword
+    //{
+    //    get
+    //    {
+    //        String _data = Request.QueryString["k"];
+    //        return string.IsNullOrWhiteSpace(_data) ? "" : _data;
+    //    }
+    //    set
+    //    {
+    //        this._Req_Keyword = value;
+    //    }
+    //}
+    //private string _Req_Keyword;
 
-    /// <summary>
-    /// Class
-    /// </summary>
-    public string Req_Class
-    {
-        get
-        {
-            String _data = Request.QueryString["cls"];
-            return string.IsNullOrWhiteSpace(_data) ? "" : _data;
-        }
-        set
-        {
-            _Req_Class = value;
-        }
-    }
-    private string _Req_Class;
+    ///// <summary>
+    ///// Class
+    ///// </summary>
+    //public string Req_Class
+    //{
+    //    get
+    //    {
+    //        String _data = Request.QueryString["cls"];
+    //        return string.IsNullOrWhiteSpace(_data) ? "" : _data;
+    //    }
+    //    set
+    //    {
+    //        _Req_Class = value;
+    //    }
+    //}
+    //private string _Req_Class;
 
-    /// <summary>
-    /// 設定參數 - 本頁Url
-    /// </summary>
-    public string thisPage
-    {
-        get
-        {
-            return "{0}".FormatThis(FuncPath());
-        }
-        set
-        {
-            _thisPage = value;
-        }
-    }
-    private string _thisPage;
+    ///// <summary>
+    ///// 設定參數 - 本頁Url
+    ///// </summary>
+    //public string thisPage
+    //{
+    //    get
+    //    {
+    //        return "{0}".FormatThis(FuncPath());
+    //    }
+    //    set
+    //    {
+    //        _thisPage = value;
+    //    }
+    //}
+    //private string _thisPage;
 
-    #endregion
+    //#endregion
 
 }
