@@ -19,6 +19,7 @@ public class GetData_Prod_v1 : IHttpHandler
     {
         //[接收參數] 查詢字串
         string searchVal = context.Request["q"];
+        bool showAll = context.Request["show"] == "Y" ? true : false;
 
 
         //----- 宣告:資料參數 -----
@@ -34,7 +35,7 @@ public class GetData_Prod_v1 : IHttpHandler
 
 
         //----- 原始資料:取得所有資料 -----
-        var results = _product.GetProducts(search)
+        var results = _product.GetProducts(Common.ColLang.TW, Common.DBSrc.Prokits, search, showAll)
                 .OrderBy(o => o.ClassID)
                 .ThenBy(o => o.ModelNo)
                 .Select(fld =>
