@@ -2314,6 +2314,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
             sql.AppendLine(" , REPLACE(Prod.Catelog_Vol, 'NULL', '') AS Vol	--//目錄");
             sql.AppendLine(" , REPLACE(Prod.Page, 'NULL', '') AS Page	--//頁次");
             sql.AppendLine(" , Prod.Date_Of_Listing	--//上市日期");
+            sql.AppendLine(" , CONVERT(VARCHAR(10), Prod.Stop_Offer_Date, 111) AS Stop_Offer_Date  --//停售日");
             sql.AppendLine(" , ErpProd.MB025 AS ProdProp	--//品號屬性");
             sql.AppendLine(" , TblSOdata.SO_Date, TblSOdata.SO_CustID, Cust.MA002 AS CustName, ISNULL(TblSOdata.SO_Qty, 0) AS SO_Qty");
             sql.AppendLine(" , ISNULL(TblYearQty.YearQty, 0) AS YearQty");
@@ -2351,7 +2352,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
             sql.AppendLine("  LEFT JOIN [##DBName##].dbo.COPMA Cust ON Cust.MA001 =TblSOdata.SO_CustID");
 
             /* --[預設條件] 確認碼=Y / 失效日>今日 OR 失效日空白 */
-            sql.AppendLine(" WHERE (Base.MC016 = 'Y') AND ((DT.MD012 > @CheckDay) OR DT.MD012 = '')");
+            sql.AppendLine(" WHERE (Base.MC016 = 'Y') AND ((DT.MD012 > @CheckDay) OR (DT.MD012 = ''))");
 
             #region >> filter <<
 
@@ -2367,13 +2368,13 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     {
                         case "Stop":
                             //--[條件] 排除已停售
-                            sql.Append(" AND (Prod.Provider NOT IN ('122002'))");
+                            sql.Append(" AND (Prod.Provider NOT IN ('122002') AND (ISNULL(Prod.Stop_Offer_Date, '') = ''))");
 
                             break;
 
                         case "ModelNo":
                             //--[條件] 子件品號(必填)
-                            sql.Append(" AND (DT.MD003 = @ModelNo)");
+                            sql.Append(" AND (UPPER(DT.MD003) = UPPER(@ModelNo))");
 
                             break;
 

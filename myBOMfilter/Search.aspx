@@ -94,6 +94,7 @@
                             <th class="grey-bg lighten-3">目錄</th>
                             <th class="grey-bg lighten-3">頁次</th>
                             <th class="grey-bg lighten-3">上市日期</th>
+                            <th class="grey-bg lighten-3">停售日期</th>
                             <th class="grey-bg lighten-3">最近<br />
                                 出貨時間</th>
                             <th class="grey-bg lighten-3">最近<br />
@@ -269,6 +270,7 @@
                          { data: "Vol", className: "" },
                          { data: "Page", className: "" },
                          { data: "Date_Of_Listing", className: "" },
+                         { data: "Stop_Offer_Date", className: "" },
                          { data: "SO_Date", className: "" },
                          { data: "CustName", className: "" },
                          { data: "SO_Qty", className: "right aligned" },

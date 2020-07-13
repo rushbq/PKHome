@@ -113,23 +113,12 @@ public partial class myBOMfilter_Search : SecurityCheck
         {
             #region ** 重新設定欄位位置 **
             //在重命名前先執行
-            myDT.Columns["PartModelNo"].SetOrdinal(0);
-            myDT.Columns["MainModelNo"].SetOrdinal(1);
-            myDT.Columns["MainModelName"].SetOrdinal(2);
-            myDT.Columns["Qty"].SetOrdinal(3);
-            myDT.Columns["SupName"].SetOrdinal(4);
-            myDT.Columns["Ship_From"].SetOrdinal(5);
-            myDT.Columns["MarketMsg"].SetOrdinal(6);
-            myDT.Columns["StockProp"].SetOrdinal(7);
-            myDT.Columns["Vol"].SetOrdinal(8);
-            myDT.Columns["Page"].SetOrdinal(9);
-            myDT.Columns["Date_Of_Listing"].SetOrdinal(10);
-            myDT.Columns["SO_Date"].SetOrdinal(11);
-            myDT.Columns["CustName"].SetOrdinal(12);
-            myDT.Columns["SO_Qty"].SetOrdinal(13);
-            myDT.Columns["YearQty"].SetOrdinal(14);
-            myDT.Columns["ProdProp"].SetOrdinal(15);
-
+            var getheader = listHeader();
+            for (int row = 0; row < getheader.Count; row++)
+            {
+                string headerName = getheader[row];
+                myDT.Columns[headerName].SetOrdinal(row);
+            }
             #endregion
 
 
@@ -146,6 +135,7 @@ public partial class myBOMfilter_Search : SecurityCheck
             myDT.Columns["Vol"].ColumnName = "目錄";
             myDT.Columns["Page"].ColumnName = "頁次";
             myDT.Columns["Date_Of_Listing"].ColumnName = "上市日期";
+            myDT.Columns["Stop_Offer_Date"].ColumnName = "停售日期";
             myDT.Columns["SO_Date"].ColumnName = "最近出貨時間";
             myDT.Columns["CustName"].ColumnName = "最近出貨客戶";
             myDT.Columns["SO_Qty"].ColumnName = "最近出貨數量";
@@ -160,6 +150,30 @@ public partial class myBOMfilter_Search : SecurityCheck
             myDT
             , "BOMList-{0}.xlsx".FormatThis(DateTime.Now.ToShortDateString().ToDateString("yyyyMMdd"))
             , false);
+    }
+
+    private List<string> listHeader()
+    {
+        List<string> head = new List<string>();
+        head.Add("PartModelNo");
+        head.Add("MainModelNo");
+        head.Add("MainModelName");
+        head.Add("Qty");
+        head.Add("SupName");
+        head.Add("Ship_From");
+        head.Add("MarketMsg");
+        head.Add("StockProp");
+        head.Add("Vol");
+        head.Add("Page");
+        head.Add("Date_Of_Listing");
+        head.Add("Stop_Offer_Date");
+        head.Add("SO_Date");
+        head.Add("CustName");
+        head.Add("SO_Qty");
+        head.Add("YearQty");
+        head.Add("ProdProp");
+
+        return head;
     }
 
     #endregion
