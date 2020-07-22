@@ -423,8 +423,21 @@
                 { "lang", "auto" }
                 , { "rootID", "3000" }
                 , { "CompID", "TW" }});
-        
-
+        //快遞貨運登記
+        routes.MapPageRoute("DeliverySearch", "{lang}/{rootID}/Delivery", "~/myDelivery/Search.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("DeliveryEdit", "{lang}/{rootID}/Delivery/Edit/{id}", "~/myDelivery/Edit.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "id", "new" }});
+        routes.MapPageRoute("DeliveryView", "{lang}/{rootID}/Delivery/View/{id}", "~/myDelivery/View.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "id", "new" }});
 
         //--- 生產採購(4000) --- 
         //到貨狀況

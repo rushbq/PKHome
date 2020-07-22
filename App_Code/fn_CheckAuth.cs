@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using AuthData.Controllers;
 
 /// <summary>
@@ -13,10 +10,21 @@ public class fn_CheckAuth
     {
         AuthRepository _data = new AuthRepository();
 
-        bool hasAuth = _data.Check_Auth(userID, menuID);
+        try
+        {
+            bool hasAuth = _data.Check_Auth(userID, menuID);
+
+            return hasAuth;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
 
 
-        return hasAuth;
-        
     }
 }

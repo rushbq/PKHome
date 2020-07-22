@@ -1006,6 +1006,99 @@ namespace Menu3000Data.Models
 
     #endregion
 
+
+    #region -- 快遞貨運 --
+
+    public class Delivery_Base
+    {
+        public int SeqNo { get; set; }
+        public Guid Data_ID { get; set; }
+        /// <summary>
+        /// 登記單號(共12碼:西元年 + 月 + 日 + 4碼流水號)
+        /// </summary>
+        public string TraceID { get; set; }
+        /// <summary>
+        /// 類別
+        /// </summary>
+        public Int16 ShipType { get; set; }
+        public string ShipTypeName { get; set; }
+
+        /// <summary>
+        /// 寄送方式(Delivery_RefClass,1)
+        /// </summary>
+        public Int32 ShipWay { get; set; }
+        public string ShipWayName { get; set; }
+
+        /// <summary>
+        /// 付款方式(Delivery_RefClass,2)
+        /// </summary>
+        public Int32 PayWay { get; set; }
+        public string PayWayName { get; set; }
+
+        public string ShipWho  { get; set; }
+        public string ShipWho_Name { get; set; }
+
+        public string SendDate { get; set; }
+        public string SendComp { get; set; }
+        public string SendWho { get; set; }
+        public string SendAddr { get; set; }
+        public string SendTel { get; set; }
+        public string ShipNo { get; set; }
+        /// <summary>
+        /// 運費
+        /// </summary>
+        public double ShipPay { get; set; }
+        //總箱數
+        public Int32? Box { get; set; }
+
+        /// <summary>
+        /// 內容物分類1(Delivery_RefClass,3)
+        /// </summary>
+        public Int32? BoxClass1 { get; set; }
+        public string BoxClass1Name { get; set; }
+
+        /// <summary>
+        /// 內容物分類2(Delivery_RefClass,4)
+        /// </summary>
+        public Int32? BoxClass2 { get; set; }
+        public string BoxClass2Name { get; set; }
+
+        /// <summary>
+        /// 對象分類(Delivery_RefClass,5)
+        /// </summary>
+        public Int32? TargetClass { get; set; }
+        public string TargetName { get; set; }
+
+        public string Remark1 { get; set; }
+        public string Remark2 { get; set; }
+        public string PurNo { get; set; }
+        public string SaleNo { get; set; }
+        public string InvoiceNo { get; set; }
+        public string IsClose { get; set; }
+
+        public string Create_Who { get; set; }
+        public string Create_Name { get; set; }
+        public string Create_Time { get; set; }
+        public string Update_Who { get; set; }
+        public string Update_Name { get; set; }
+        public string Update_Time { get; set; }
+
+    }
+
+
+    public class Delivery_Import
+    {
+        public string TraceID { get; set; }
+        public string ShipNo { get; set; }
+        public double Freight { get; set; }
+    }
+
+    #endregion
+
+
+
+
+
     /// <summary>
     /// 類別
     /// </summary>

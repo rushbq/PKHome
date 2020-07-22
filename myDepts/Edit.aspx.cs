@@ -43,8 +43,6 @@ public partial class myDepts_Edit : SecurityCheck
                     LookupData();
 
                 }
-
-
             }
         }
         catch (Exception)

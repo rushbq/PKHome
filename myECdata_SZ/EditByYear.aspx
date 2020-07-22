@@ -146,6 +146,10 @@
                 $("#MainContent_btn_Save").trigger("click");
             });
 
+            //lock
+            $('input').on("cut copy paste", function (e) {
+                e.preventDefault();
+            });
         });
     </script>
 

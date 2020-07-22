@@ -194,6 +194,11 @@
             $("input").focus(function () {
                 $(this).select();
             });
+
+            //lock
+            $('input').on("cut copy paste", function (e) {
+                e.preventDefault();
+            });
         });
     </script>
 
