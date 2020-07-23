@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using Menu3000Data.Controllers;
 using PKLib_Method.Methods;
+using SZ_ecData.Controllers;
 
 public partial class myECdata_SZ_SearchByYear : SecurityCheck
 {
@@ -93,7 +93,7 @@ public partial class myECdata_SZ_SearchByYear : SecurityCheck
         ArrayList PageParam = new ArrayList();  //條件參數,for pager
 
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
         Dictionary<string, string> search = new Dictionary<string, string>();
 
         #region >> 條件篩選 <<
@@ -174,7 +174,7 @@ public partial class myECdata_SZ_SearchByYear : SecurityCheck
         //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
 
         ////----- 宣告:資料參數 -----
-        //Menu3000Repository _data = new Menu3000Repository();
+        //SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         ////----- 方法:刪除資料 -----
         //if (false == _data.Delete_CCPTemp(Get_DataID))
@@ -238,7 +238,7 @@ public partial class myECdata_SZ_SearchByYear : SecurityCheck
     private void Get_ClassList(string typeID, DropDownList ddl, string rootName)
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //----- 原始資料:取得所有資料 -----
         var query = _data.GetEC_RefMall(typeID, Req_Lang, out ErrMsg);

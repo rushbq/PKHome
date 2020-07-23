@@ -79,6 +79,7 @@ public partial class Site : System.Web.UI.MasterPage
                 //判斷 & 轉換語系
                 Check_Lang();
 
+
                 #region -- 取得選單 --
 
                 //----- 宣告:資料參數 -----

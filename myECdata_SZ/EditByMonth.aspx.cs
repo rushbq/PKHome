@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using Menu3000Data.Controllers;
 using Menu3000Data.Models;
 using PKLib_Method.Methods;
+using SZ_ecData.Controllers;
 
 public partial class myECdata_SZ_EditByMonth : SecurityCheck
 {
@@ -134,7 +132,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
     private void LookupData()
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
         Dictionary<string, string> search = new Dictionary<string, string>();
 
         //----- 原始資料:條件篩選 -----
@@ -205,7 +203,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
         try
         {
             //----- 宣告:資料參數 -----
-            Menu3000Repository _data = new Menu3000Repository();
+            SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
             //----- 設定:資料欄位 -----
             //產生Guid
@@ -290,7 +288,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
     private void Edit_Data(string type)
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //----- 設定:資料欄位 -----
         Int16 _RefType = Convert.ToInt16(Req_TypeID);
@@ -401,7 +399,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
     private void Edit_Detail(string id)
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
         Dictionary<string, string> search = new Dictionary<string, string>();
 
         //----- 原始資料:條件篩選 -----
@@ -432,7 +430,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
     private void LookupData_Detail()
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
         Dictionary<string, string> search = new Dictionary<string, string>();
 
         //----- 原始資料:條件篩選 -----
@@ -478,7 +476,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
 
 
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //----- 設定:資料欄位 -----
         var data = new ECDItem_MonthDT
@@ -533,7 +531,7 @@ public partial class myECdata_SZ_EditByMonth : SecurityCheck
     private void Get_ClassList(string typeID, DropDownList ddl)
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //----- 原始資料:取得所有資料 -----
         var query = _data.GetEC_RefMall(typeID, Req_Lang, out ErrMsg);

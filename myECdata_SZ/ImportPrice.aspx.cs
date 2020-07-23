@@ -4,8 +4,8 @@ using System.Linq;
 using System.Web;
 using System.Web.UI.WebControls;
 using LinqToExcel;
-using Menu3000Data.Controllers;
 using PKLib_Method.Methods;
+using SZ_ecData.Controllers;
 
 public partial class myECdata_SZ_ImportPrice : SecurityCheck
 {
@@ -196,7 +196,7 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
         #region -- 資料處理 --
 
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //設定完整路徑
         string _filePath = @"{0}{1}{2}".FormatThis(
@@ -253,7 +253,7 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
     private void Get_ClassList(string typeID, DropDownList ddl)
     {
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        SZ_ecDataRepository _data = new SZ_ecDataRepository();
 
         //----- 原始資料:取得所有資料 -----
         var query = _data.GetEC_RefMall(typeID, "zh_TW", out ErrMsg);
