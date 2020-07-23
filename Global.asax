@@ -373,6 +373,44 @@
                 , { "typeID", "1" }
                 , { "id", "new" }});
 
+        //電商平台業績-上海
+        routes.MapPageRoute("SH_ECDsearchY", "{lang}/{rootID}/ecData/{typeID}/Year", "~/myECdata_SH/SearchByYear.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }});
+        routes.MapPageRoute("SH_ECDsearchM", "{lang}/{rootID}/ecData/{typeID}/Month", "~/myECdata_SH/SearchByMonth.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }});
+        routes.MapPageRoute("SH_ECDsearchD", "{lang}/{rootID}/ecData/{typeID}/Date", "~/myECdata_SH/SearchByDate.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }});
+
+        routes.MapPageRoute("SH_ECDeditY", "{lang}/{rootID}/ecData/{typeID}/Year/Edit/{id}", "~/myECdata_SH/EditByYear.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }
+                , { "id", "new" }});
+        routes.MapPageRoute("SH_ECDeditM", "{lang}/{rootID}/ecData/{typeID}/Month/Edit/{id}", "~/myECdata_SH/EditByMonth.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }
+                , { "id", "new" }});
+        routes.MapPageRoute("SH_ECDeditD", "{lang}/{rootID}/ecData/{typeID}/Date/Edit/{id}", "~/myECdata_SH/EditByDay.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "1" }
+                , { "id", "new" }});
+
+
+
         //出貨明細表
         routes.MapPageRoute("ShipData_TW", "{lang}/{rootID}/ShipData-TW", "~/myShipmentData/Search_TW.aspx", false,
             new RouteValueDictionary {
