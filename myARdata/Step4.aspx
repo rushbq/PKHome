@@ -52,6 +52,8 @@
                             發送完成，接下來你可以...
                         </div>
                         <div class="inline">
+                            <a href="<%=FuncPath() %>/CustList/" class="ui orange button"><i class="list icon"></i>待收款客戶</a>
+
                             <a class="ui button" href="<%=FuncPath() %>">回列表頁</a>
                             <a class="ui blue button" href="<%=FuncPath() %>/Step1">新增下一筆</a>
                         </div>

@@ -10,6 +10,7 @@ using PKLib_Method.Methods;
 
 /*
  電商平台業績 - SH
+ DB = ReportCenter
 */
 namespace SH_ecData.Controllers
 {

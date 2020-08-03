@@ -96,144 +96,164 @@ public class Ashx_OutputExcel : IHttpHandler
 
                     //header
                     html.Append("<table border=\"1\" class=\"table\">");
-                    html.Append("<tr>");
-                    html.Append(" <th rowspan=\"2\">序號</th>");
-                    //資材
+
+
+                    //資材客制格式
                     if (_menuID.Equals("190"))
                     {
-                        html.Append(" <th rowspan=\"2\">訂單號</th>");
-                    }
-                    html.Append(" <th rowspan=\"2\">品號</th>");
-                    html.Append(" <th rowspan=\"2\">品名</th>");
-                    html.Append(" <th rowspan=\"2\">訂單未出數量</th>");
+                        #region - 資材客制格式 -
 
-                    /* #全部未出數量# */
-                    switch (_CompID)
+                        html.Append("<tr>");
+                        html.Append(" <th>序號</th>");
+                        html.Append(" <th>品號</th>");
+                        html.Append(" <th>品名</th>");
+                        html.Append(" <th>訂單未出數量</th>");
+                        html.Append(" <th>預交日</th>");
+                        html.Append(" <th>儲位</th>");
+                        html.Append(" <th>採購單號</th>");
+                        html.Append(" <th>採購數量</th>");
+                        html.Append(" <th>客戶品號</th>");
+                        html.Append(" <th>產品特別注意事項</th>");
+                        html.Append("</tr>");
+
+                        #endregion
+                    }
+                    else
                     {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉全部未出數量</th>");
-                            html.Append(" <th rowspan=\"2\">14倉全部未出數量</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉全部未出數量</th>");
-                            break;
 
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉全部未出數量</th>");
-                            html.Append(" <th rowspan=\"2\">20倉全部未出數量</th>");
-                            html.Append(" <th rowspan=\"2\">22倉全部未出數量</th>");
-                            break;
+                        #region - 預設格式 -
+
+                        html.Append("<tr>");
+                        html.Append(" <th rowspan=\"2\">序號</th>");
+                        html.Append(" <th rowspan=\"2\">品號</th>");
+                        html.Append(" <th rowspan=\"2\">品名</th>");
+                        html.Append(" <th rowspan=\"2\">訂單未出數量</th>");
+
+                        /* #全部未出數量# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉全部未出數量</th>");
+                                html.Append(" <th rowspan=\"2\">14倉全部未出數量</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉全部未出數量</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉全部未出數量</th>");
+                                html.Append(" <th rowspan=\"2\">20倉全部未出數量</th>");
+                                html.Append(" <th rowspan=\"2\">22倉全部未出數量</th>");
+                                break;
+                        }
+
+                        /* #庫存# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉庫存</th>");
+                                html.Append(" <th rowspan=\"2\">14倉庫存</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉庫存</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉庫存</th>");
+                                html.Append(" <th rowspan=\"2\">20倉庫存</th>");
+                                html.Append(" <th rowspan=\"2\">22倉庫存</th>");
+                                break;
+                        }
+
+                        /* #不足量# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉不足量</th>");
+                                html.Append(" <th rowspan=\"2\">14倉不足量</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉不足量</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉不足量</th>");
+                                html.Append(" <th rowspan=\"2\">20倉不足量</th>");
+                                html.Append(" <th rowspan=\"2\">22倉不足量</th>");
+                                break;
+                        }
+
+                        /* #生產待入庫# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉待入庫</th>");
+                                html.Append(" <th rowspan=\"2\">14倉待入庫</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉待入庫</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉待入庫</th>");
+                                html.Append(" <th rowspan=\"2\">20倉待入庫</th>");
+                                html.Append(" <th rowspan=\"2\">22倉待入庫</th>");
+                                break;
+                        }
+
+                        /* #預計進# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉預計進</th>");
+                                html.Append(" <th rowspan=\"2\">14倉預計進</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉預計進</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉預計進</th>");
+                                html.Append(" <th rowspan=\"2\">20倉預計進</th>");
+                                html.Append(" <th rowspan=\"2\">22倉預計進</th>");
+                                break;
+                        }
+
+                        /* #計畫進# */
+                        switch (_CompID)
+                        {
+                            case "SH":
+                                html.Append(" <th rowspan=\"2\">12倉計畫進</th>");
+                                html.Append(" <th rowspan=\"2\">14倉計畫進</th>");
+                                html.Append(" <th rowspan=\"2\">A01倉計畫進</th>");
+                                break;
+
+                            default:
+                                html.Append(" <th rowspan=\"2\">01倉計畫進</th>");
+                                html.Append(" <th rowspan=\"2\">20倉計畫進</th>");
+                                html.Append(" <th rowspan=\"2\">22倉計畫進</th>");
+                                break;
+                        }
+
+                        html.Append(" <th rowspan=\"2\">品號屬性</th>");
+                        html.Append(" <th rowspan=\"2\">預交日</th>");
+                        html.Append(" <th rowspan=\"2\">安全存量</th>");
+                        html.Append(" <th rowspan=\"2\">儲位</th>");
+                        html.Append(" <th rowspan=\"2\">主供應商</th>");
+                        html.Append(" <th colspan=\"6\">採購/進貨</th>");
+                        html.Append(" <th colspan=\"5\">生產/入庫</th>");
+                        html.Append("<th rowspan=\"2\">客戶品號</th>");
+                        html.Append("<th rowspan=\"2\">產品特別注意事項</th>");
+                        html.Append("</tr>");
+                        html.Append("<tr>");
+                        //採購/進貨
+                        html.Append(" <th>廠商</th>");
+                        html.Append(" <th>採購單號</th>");
+                        html.Append(" <th>採購預交日</th>");
+                        html.Append(" <th>採購數量</th>");
+                        html.Append(" <th>進貨數量</th>");
+                        html.Append(" <th>未進貨數量</th>");
+                        //生產/入庫
+                        html.Append("<th>產品圖號</th>");
+                        html.Append("<th>製令單號</th>");
+                        html.Append("<th>實際完工日</th>");
+                        html.Append("<th>狀態</th>");
+                        html.Append("<th>入庫量</th>");
+                        html.Append("</tr>");
+
+                        #endregion
                     }
 
-                    /* #庫存# */
-                    switch (_CompID)
-                    {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉庫存</th>");
-                            html.Append(" <th rowspan=\"2\">14倉庫存</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉庫存</th>");
-                            break;
-
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉庫存</th>");
-                            html.Append(" <th rowspan=\"2\">20倉庫存</th>");
-                            html.Append(" <th rowspan=\"2\">22倉庫存</th>");
-                            break;
-                    }
-
-                    /* #不足量# */
-                    switch (_CompID)
-                    {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉不足量</th>");
-                            html.Append(" <th rowspan=\"2\">14倉不足量</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉不足量</th>");
-                            break;
-
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉不足量</th>");
-                            html.Append(" <th rowspan=\"2\">20倉不足量</th>");
-                            html.Append(" <th rowspan=\"2\">22倉不足量</th>");
-                            break;
-                    }
-
-                    /* #生產待入庫# */
-                    switch (_CompID)
-                    {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉待入庫</th>");
-                            html.Append(" <th rowspan=\"2\">14倉待入庫</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉待入庫</th>");
-                            break;
-
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉待入庫</th>");
-                            html.Append(" <th rowspan=\"2\">20倉待入庫</th>");
-                            html.Append(" <th rowspan=\"2\">22倉待入庫</th>");
-                            break;
-                    }
-
-                    /* #預計進# */
-                    switch (_CompID)
-                    {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉預計進</th>");
-                            html.Append(" <th rowspan=\"2\">14倉預計進</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉預計進</th>");
-                            break;
-
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉預計進</th>");
-                            html.Append(" <th rowspan=\"2\">20倉預計進</th>");
-                            html.Append(" <th rowspan=\"2\">22倉預計進</th>");
-                            break;
-                    }
-
-                    /* #計畫進# */
-                    switch (_CompID)
-                    {
-                        case "SH":
-                            html.Append(" <th rowspan=\"2\">12倉計畫進</th>");
-                            html.Append(" <th rowspan=\"2\">14倉計畫進</th>");
-                            html.Append(" <th rowspan=\"2\">A01倉計畫進</th>");
-                            break;
-
-                        default:
-                            html.Append(" <th rowspan=\"2\">01倉計畫進</th>");
-                            html.Append(" <th rowspan=\"2\">20倉計畫進</th>");
-                            html.Append(" <th rowspan=\"2\">22倉計畫進</th>");
-                            break;
-                    }
-
-                    html.Append(" <th rowspan=\"2\">品號屬性</th>");
-                    html.Append(" <th rowspan=\"2\">預交日</th>");
-                    html.Append(" <th rowspan=\"2\">安全存量</th>");
-                    html.Append(" <th rowspan=\"2\">儲位</th>");
-                    html.Append(" <th rowspan=\"2\">主供應商</th>");
-                    html.Append(" <th colspan=\"6\">採購/進貨</th>");
-                    html.Append(" <th colspan=\"5\">生產/入庫</th>");
-                    //只有資材190顯示
-                    if (_menuID.Equals("190"))
-                    {
-                        html.Append("<th rowspan=\"2\">資材理貨</th>");
-                        html.Append("<th rowspan=\"2\">箱號/包裝</th>");
-                    }
-                    html.Append("<th rowspan=\"2\">客戶品號</th>");
-                    html.Append("<th rowspan=\"2\">產品特別注意事項</th>");
-                    html.Append("</tr>");
-                    html.Append("<tr>");
-                    //採購/進貨
-                    html.Append(" <th>廠商</th>");
-                    html.Append(" <th>採購單號</th>");
-                    html.Append(" <th>採購預交日</th>");
-                    html.Append(" <th>採購數量</th>");
-                    html.Append(" <th>進貨數量</th>");
-                    html.Append(" <th>未進貨數量</th>");
-                    //生產/入庫
-                    html.Append("<th>產品圖號</th>");
-                    html.Append("<th>製令單號</th>");
-                    html.Append("<th>實際完工日</th>");
-                    html.Append("<th>狀態</th>");
-                    html.Append("<th>入庫量</th>");
-                    html.Append("</tr>");
 
                     string newline = "<br>";
                     for (int row = 0; row < DT.Rows.Count; row++)
@@ -286,351 +306,392 @@ public class Ashx_OutputExcel : IHttpHandler
                         int _ShortQty14 = Convert.ToInt32(DT.Rows[row]["ShortQty14"]);
                         int _ShortQtyA01 = Convert.ToInt32(DT.Rows[row]["ShortQtyA01"]);
 
+                        /*其他資料*/
+                        string _OrderSno = DT.Rows[row]["OrderSno"].ToString();
+                        string _ModelNo = DT.Rows[row]["ModelNo"].ToString();
+                        string _ModelName = DT.Rows[row]["ModelName"].ToString();
+                        string _OrderPreDate = DT.Rows[row]["OrderPreDate"].ToString();
+                        string _StockPos = DT.Rows[row]["StockPos"].ToString();
+                        string _PUR_FID = DT.Rows[row]["PUR_FID"].ToString();
+                        string _PUR_SID = DT.Rows[row]["PUR_SID"].ToString();
+                        string _CustModel = DT.Rows[row]["CustModel"].ToString();
+                        string _ProdRemark = DT.Rows[row]["ProdRemark"].ToString();
+                        string _prodProperty = DT.Rows[row]["ProdProperty"].ToString();
+                        string _Main_SupplierName = DT.Rows[row]["Main_SupplierName"].ToString();
+                        string _Main_SupplierID = DT.Rows[row]["Main_SupplierID"].ToString();
+                        string _PurSupplier = DT.Rows[row]["PurSupplier"].ToString();
+                        string _PurPreDate = DT.Rows[row]["PurPreDate"].ToString();
+                        string _GetInQty = DT.Rows[row]["GetInQty"].ToString();
+                        string _unGetInQty = DT.Rows[row]["unGetInQty"].ToString();
+                        string _prodImgDesc = DT.Rows[row]["ProdImgDesc"].ToString();
+                        string _makeFid = DT.Rows[row]["Make_FID"].ToString();
+                        string _makeSid = DT.Rows[row]["Make_SID"].ToString();
+                        string _FinishDate = DT.Rows[row]["FinishDate"].ToString();
+                        string _MakeStockQty = DT.Rows[row]["MakeStockQty"].ToString();
+
 
                         //判斷是否為各單的第一筆,填入OPCS資訊
-                        //資材190:不顯示
-                        if (!_menuID.Equals("190"))
+                        if (rowNum.Equals(1))
                         {
-                            if (rowNum.Equals(1))
-                            {
-                                html.Append("<tr>");
-                                html.Append("<td colspan=\"{0}\">".FormatThis(_CompID.Equals("TW") ? 29 : 28));
-                                html.Append(" <b>OPCS No：</b>{0}-{1}&nbsp;&nbsp;".FormatThis(_Order_FID, _Order_SID));
-                                html.Append(" <b>客戶：</b>({0})&nbsp;{1}&nbsp;&nbsp;".FormatThis(DT.Rows[row]["CustID"], DT.Rows[row]["CustName"]));
-                                html.Append(" <b>(<span class=\"red-text\">{0}</span>)</b>{1}".FormatThis(GetShipStatusName(DT.Rows[row]["ShipStatus"].ToString()), newline));
-                                //html.Append(" <b>幣別：</b>{0}&nbsp;&nbsp;".FormatThis(DT.Rows[row]["Currency"]));
-                                //html.Append(" <b>交易條件：</b>{0}&nbsp;&nbsp;".FormatThis(DT.Rows[row]["TradeConditional"]));
-                                //html.Append(" <b>付款方式：</b>{0}".FormatThis(DT.Rows[row]["PaidConditional"] + newline));
-                                html.Append(" <b>客戶注意事項：</b>{0}".FormatThis(DT.Rows[row]["OrderRemark"].ToString().Replace("\n", newline)));
-                                html.Append("</td>");
-                                html.Append("</tr>");
-                            }
+                            int _colSpan = _menuID.Equals("190") ? 10 :
+                                    _CompID.Equals("TW") ? 29 : 28;
+
+                            html.Append("<tr>");
+                            html.Append("<td colspan=\"{0}\">".FormatThis(_colSpan));
+                            html.Append(" <b>OPCS No：</b>{0}-{1}&nbsp;&nbsp;".FormatThis(_Order_FID, _Order_SID));
+                            html.Append(" <b>客戶：</b>({0})&nbsp;{1}&nbsp;&nbsp;".FormatThis(DT.Rows[row]["CustID"], DT.Rows[row]["CustName"]));
+                            html.Append(" <b>(<span class=\"red-text\">{0}</span>)</b>{1}".FormatThis(GetShipStatusName(DT.Rows[row]["ShipStatus"].ToString()), newline));
+                            html.Append(" <b>客戶注意事項：</b>{0}".FormatThis(DT.Rows[row]["OrderRemark"].ToString().Replace("\n", newline)));
+                            html.Append("</td>");
+                            html.Append("</tr>");
                         }
 
 
                         //*** 填入Html ***
-                        //定義收合用class
-                        html.Append("<tr>");
-
-                        //訂單序號
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["OrderSno"]));
-
-                        //資材-訂單號
                         if (_menuID.Equals("190"))
                         {
-                            html.Append("<td>{0}{1}</td>".FormatThis(_Order_FID, _Order_SID));
-                        }
+                            #region - 資材客制格式 -
 
-                        //品號
-                        html.Append("<td>{0}</td>".FormatThis(
-                            DT.Rows[row]["ModelNo"]));
+                            //row
+                            html.Append("<tr>");
 
-                        //品名
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["ModelName"]));
+                            //訂單序號
+                            html.Append("<td>{0}</td>".FormatThis(_OrderSno));
 
-                        //訂單數量(未出)
-                        html.Append("<td>{0}</td>".FormatThis(_unShip_OrderQty));
+                            //品號
+                            html.Append("<td>{0}</td>".FormatThis(_ModelNo));
 
+                            //品名
+                            html.Append("<td>{0}</td>".FormatThis(_ModelName));
 
-                        /* #全部未出數量# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQty12
-                                    , _unOutQty12 > _StkQty12 ? "red-text" : "green-text"));
+                            //訂單數量(未出)
+                            html.Append("<td>{0}</td>".FormatThis(_unShip_OrderQty));
 
-                                //SH:14倉
-                                html.Append("<td>;<span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQty14
-                                    , _unOutQty14 > _StkQty14 ? "red-text" : "green-text"));
+                            //預交日
+                            html.Append("<td>{0}</td>".FormatThis(_OrderPreDate));
 
-                                //SH:A01倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQtyA01
-                                    , _unOutQtyA01 > _StkQtyA01 ? "red-text" : "green-text"));
+                            //儲位  
+                            html.Append("<td>{0}</td>".FormatThis(_StockPos));
 
-                                break;
+                            //採購單號
+                            html.Append("<td>{0}-{1}</td>".FormatThis(_PUR_FID, _PUR_SID));
 
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQty01
-                                    , _unOutQty01 > _StkQty01 ? "red-text" : "green-text"));
-
-                                //TW:20倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQty20
-                                    , _unOutQty20 > _StkQty20 ? "red-text" : "green-text"));
-
-                                //TW:22倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _unOutQty22
-                                    , _unOutQty22 > _StkQty22 ? "red-text" : "green-text"));
-
-                                break;
-                        }
-
-
-                        /* #庫存# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty12));
-
-                                //SH:14倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty14));
-
-                                //SH:A01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQtyA01));
-
-                                break;
-
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty01));
-
-                                //TW:20倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty20));
-
-                                //TW:22倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty22));
-
-                                break;
-                        }
-
-
-                        /* #不足量# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQty12
-                                    , _ShortQty12 < 0 ? "red-text" : "green-text"));
-
-                                //SH:14倉
-                                html.Append("<td>;<span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQty14
-                                    , _ShortQty14 < 0 ? "red-text" : "green-text"));
-
-                                //SH:A01倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQtyA01
-                                    , _ShortQtyA01 < 0 ? "red-text" : "green-text"));
-
-                                break;
-
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQty01
-                                    , _ShortQty01 < 0 ? "red-text" : "green-text"));
-
-                                //TW:20倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQty20
-                                    , _ShortQty20 < 0 ? "red-text" : "green-text"));
-
-                                //TW:22倉
-                                html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
-                                    _ShortQty22
-                                    , _ShortQty22 < 0 ? "red-text" : "green-text"));
-
-                                break;
-                        }
-
-
-                        /* #生產待入庫# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty12));
-
-                                //SH:14倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty14));
-
-                                //SH:A01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQtyA01));
-
-                                break;
-
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty01));
-
-                                //TW:20倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty20));
-
-                                //TW:22倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty22));
-
-                                break;
-                        }
-
-
-                        /* #預計進# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty12));
-
-                                //SH:14倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty14));
-
-                                //SH:A01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQtyA01));
-
-                                break;
-
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty01));
-
-                                //TW:20倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty20));
-
-                                //TW:22倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty22));
-
-                                break;
-                        }
-
-
-                        /* #計劃進# */
-                        switch (_CompID)
-                        {
-                            case "SH":
-                                //SH:12倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty12));
-
-                                //SH:14倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty14));
-
-                                //SH:A01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQtyA01));
-
-                                break;
-
-                            default:
-                                //TW:01倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty01));
-
-                                //TW:20倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty20));
-
-                                //TW:22倉
-                                html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty22));
-
-                                break;
-                        }
-
-
-                        //品號屬性
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["ProdProperty"]));
-                        //預交日
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["OrderPreDate"]));
-
-                        //安全存量
-                        html.Append("<td class=\"{1}\">{0}</td>".FormatThis(
-                            _safeQty_Main
-                            , _safeQty_Main - _unShip_OrderQty > 0 ? "yellow" : ""
-                            ));
-
-                        //儲位  
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["StockPos"]));
-
-                        //主供應商
-                        html.Append("<td>{0}{1}</td>".FormatThis(
-                            DT.Rows[row]["Main_SupplierName"]
-                            , "-" + DT.Rows[row]["Main_SupplierID"]));
-
-                        //-- 採購/進貨(col*6) --
-                        //廠商
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["PurSupplier"]));
-                        //採購單號
-                        html.Append("<td>{0}-{1}</td>".FormatThis(DT.Rows[row]["PUR_FID"], DT.Rows[row]["PUR_SID"]));
-                        //採購預交日
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["PurPreDate"]));
-
-                        //採購數量
-                        html.Append("<td class=\"{1}\">{0}</td>".FormatThis(
-                            _purQty
-                            , _purQty < _unShip_OrderQty ? "yellow" : ""
-                            ));
-
-
-                        //進貨數量
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["GetInQty"]));
-                        //未進貨數量
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["unGetInQty"]));
-
-                        //-- 生產/入庫(col*5) --
-                        //產品圖號
-                        string _prodImgDesc = DT.Rows[row]["ProdImgDesc"].ToString();
-                        string _spDesc = "";
-                        if (!string.IsNullOrEmpty(_prodImgDesc))
-                        {
-                            //拆解以_為分隔的資料
-                            if (_prodImgDesc.IndexOf('_') > -1)
-                            {
-                                string[] strAry = _prodImgDesc.Split('_');
-                                //只顯示00的資料
-                                if (strAry[0].Equals("00"))
-                                {
-                                    _spDesc = strAry[1];
-                                }
-                            }
-                        }
-
-                        html.Append("<td>{0}</td>".FormatThis(_spDesc));
-
-                        //製令單號
-                        string _makeFid = DT.Rows[row]["Make_FID"].ToString();
-                        string _makeSid = DT.Rows[row]["Make_SID"].ToString();
-                        html.Append("<td>{0}-{1}</td>".FormatThis(
-                            _makeFid
-                            , _makeSid
-                            ));
-
-                        //實際完工日
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["FinishDate"]));
-
-                        //製令狀態
-                        html.Append("<td>{0}</td>".FormatThis(
-                            GetMakeName(DT.Rows[row]["MakeStatus"].ToString())
-                            , DT.Rows[row]["PurConfirm"].ToString().Equals("V") ? "<span class=\"red-text\">(本單作廢)</span>" : ""));
-
-                        //入庫量  
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["MakeStockQty"]));
-
-
-                        //只有資材190顯示
-                        if (_menuID.Equals("190"))
-                        {
-                            //資材理貨 
-                            string _stockValue = DT.Rows[row]["StockValue"].ToString();
-                            string _showArea = _stockValue;
-                            html.Append("<td>{0}</td>".FormatThis(
-                                string.IsNullOrEmpty(_stockValue) || (_stockValue.Equals("N")) ? "" : _showArea + "區"
+                            //採購數量
+                            html.Append("<td class=\"{1}\">{0}</td>".FormatThis(
+                                _purQty
+                                , _purQty < _unShip_OrderQty ? "yellow" : ""
                                 ));
 
-                            //箱號
-                            string _boxValue = DT.Rows[row]["BoxValue"].ToString();
-                            html.Append("<td>{0} ~ {1}<br/>{2}</td>".FormatThis(DT.Rows[row]["BoxNoStart"], DT.Rows[row]["BoxNoEnd"], _boxValue));
+                            //客戶品號
+                            html.Append("<td>{0}</td>".FormatThis(_CustModel));
+
+                            //產品特別注意事項
+                            html.Append("<td>{0}</td>".FormatThis(_ProdRemark));
+                            html.Append("</tr>");
+
+                            #endregion
+                        }
+                        else
+                        {
+                            #region - 預設格式 -
+
+
+                            //row
+                            html.Append("<tr>");
+
+                            //訂單序號
+                            html.Append("<td>{0}</td>".FormatThis(_OrderSno));
+
+                            //品號
+                            html.Append("<td>{0}</td>".FormatThis(_ModelNo));
+
+                            //品名
+                            html.Append("<td>{0}</td>".FormatThis(_ModelName));
+
+                            //訂單數量(未出)
+                            html.Append("<td>{0}</td>".FormatThis(_unShip_OrderQty));
+
+
+                            /* #全部未出數量# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQty12
+                                        , _unOutQty12 > _StkQty12 ? "red-text" : "green-text"));
+
+                                    //SH:14倉
+                                    html.Append("<td>;<span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQty14
+                                        , _unOutQty14 > _StkQty14 ? "red-text" : "green-text"));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQtyA01
+                                        , _unOutQtyA01 > _StkQtyA01 ? "red-text" : "green-text"));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQty01
+                                        , _unOutQty01 > _StkQty01 ? "red-text" : "green-text"));
+
+                                    //TW:20倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQty20
+                                        , _unOutQty20 > _StkQty20 ? "red-text" : "green-text"));
+
+                                    //TW:22倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _unOutQty22
+                                        , _unOutQty22 > _StkQty22 ? "red-text" : "green-text"));
+
+                                    break;
+                            }
+
+
+                            /* #庫存# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty12));
+
+                                    //SH:14倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty14));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty01));
+
+                                    //TW:20倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty20));
+
+                                    //TW:22倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_StkQty22));
+
+                                    break;
+                            }
+
+
+                            /* #不足量# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQty12
+                                        , _ShortQty12 < 0 ? "red-text" : "green-text"));
+
+                                    //SH:14倉
+                                    html.Append("<td>;<span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQty14
+                                        , _ShortQty14 < 0 ? "red-text" : "green-text"));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQtyA01
+                                        , _ShortQtyA01 < 0 ? "red-text" : "green-text"));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQty01
+                                        , _ShortQty01 < 0 ? "red-text" : "green-text"));
+
+                                    //TW:20倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQty20
+                                        , _ShortQty20 < 0 ? "red-text" : "green-text"));
+
+                                    //TW:22倉
+                                    html.Append("<td><span class=\"{1}\">{0}</span></td>".FormatThis(
+                                        _ShortQty22
+                                        , _ShortQty22 < 0 ? "red-text" : "green-text"));
+
+                                    break;
+                            }
+
+
+                            /* #生產待入庫# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty12));
+
+                                    //SH:14倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty14));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty01));
+
+                                    //TW:20倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty20));
+
+                                    //TW:22倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_unStockQty22));
+
+                                    break;
+                            }
+
+
+                            /* #預計進# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty12));
+
+                                    //SH:14倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty14));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty01));
+
+                                    //TW:20倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty20));
+
+                                    //TW:22倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PreInQty22));
+
+                                    break;
+                            }
+
+
+                            /* #計劃進# */
+                            switch (_CompID)
+                            {
+                                case "SH":
+                                    //SH:12倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty12));
+
+                                    //SH:14倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty14));
+
+                                    //SH:A01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQtyA01));
+
+                                    break;
+
+                                default:
+                                    //TW:01倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty01));
+
+                                    //TW:20倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty20));
+
+                                    //TW:22倉
+                                    html.Append("<td><span>{0}</span></td>".FormatThis(_PlanInQty22));
+
+                                    break;
+                            }
+
+
+                            //品號屬性
+                            html.Append("<td>{0}</td>".FormatThis(_prodProperty));
+                            //預交日
+                            html.Append("<td>{0}</td>".FormatThis(_OrderPreDate));
+
+                            //安全存量
+                            html.Append("<td class=\"{1}\">{0}</td>".FormatThis(
+                                _safeQty_Main
+                                , _safeQty_Main - _unShip_OrderQty > 0 ? "yellow" : ""
+                                ));
+
+                            //儲位  
+                            html.Append("<td>{0}</td>".FormatThis(_StockPos));
+
+                            //主供應商
+                            html.Append("<td>{0}{1}</td>".FormatThis(
+                                _Main_SupplierName
+                                , "-" + _Main_SupplierID));
+
+                            //-- 採購/進貨(col*6) --
+                            //廠商
+                            html.Append("<td>{0}</td>".FormatThis(_PurSupplier));
+                            //採購單號
+                            html.Append("<td>{0}-{1}</td>".FormatThis(_PUR_FID, _PUR_SID));
+                            //採購預交日
+                            html.Append("<td>{0}</td>".FormatThis(_PurPreDate));
+
+                            //採購數量
+                            html.Append("<td class=\"{1}\">{0}</td>".FormatThis(
+                                _purQty
+                                , _purQty < _unShip_OrderQty ? "yellow" : ""
+                                ));
+
+
+                            //進貨數量
+                            html.Append("<td>{0}</td>".FormatThis(_GetInQty));
+                            //未進貨數量
+                            html.Append("<td>{0}</td>".FormatThis(_unGetInQty));
+
+                            //-- 生產/入庫(col*5) --
+                            //產品圖號
+                            string _spDesc = "";
+                            if (!string.IsNullOrEmpty(_prodImgDesc))
+                            {
+                                //拆解以_為分隔的資料
+                                if (_prodImgDesc.IndexOf('_') > -1)
+                                {
+                                    string[] strAry = _prodImgDesc.Split('_');
+                                    //只顯示00的資料
+                                    if (strAry[0].Equals("00"))
+                                    {
+                                        _spDesc = strAry[1];
+                                    }
+                                }
+                            }
+
+                            html.Append("<td>{0}</td>".FormatThis(_spDesc));
+
+                            //製令單號
+                            html.Append("<td>{0}-{1}</td>".FormatThis(_makeFid, _makeSid));
+
+                            //實際完工日
+                            html.Append("<td>{0}</td>".FormatThis(_FinishDate));
+
+                            //製令狀態
+                            html.Append("<td>{0}</td>".FormatThis(
+                                GetMakeName(_MakeStatus)
+                                , DT.Rows[row]["PurConfirm"].ToString().Equals("V") ? "<span class=\"red-text\">(本單作廢)</span>" : ""));
+
+                            //入庫量  
+                            html.Append("<td>{0}</td>".FormatThis(_MakeStockQty));
+
+                            //客戶品號
+                            html.Append("<td>{0}</td>".FormatThis(_CustModel));
+
+                            //產品特別注意事項
+                            html.Append("<td>{0}</td>".FormatThis(_ProdRemark));
+                            html.Append("</tr>");
+
+                            #endregion
                         }
 
-
-                        //客戶品號
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["CustModel"]));
-
-                        //產品特別注意事項
-                        html.Append("<td>{0}</td>".FormatThis(DT.Rows[row]["ProdRemark"]));
-                        html.Append("</tr>");
                     }
 
                     html.Append("</table>");

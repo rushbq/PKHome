@@ -153,7 +153,7 @@ public partial class myDelivery_Search : SecurityCheck
                 lt_Pager.Text = getPager;
 
                 //重新整理頁面Url
-                string reSetPage = "{0}&page={1}{2}".FormatThis(
+                string reSetPage = "{0}?page={1}{2}".FormatThis(
                     thisPage
                     , pageIndex
                     , (PageParam.Count == 0 ? "" : "&") + string.Join("&", PageParam.ToArray()));

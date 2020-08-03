@@ -1095,9 +1095,7 @@ namespace Menu3000Data.Models
 
     #endregion
 
-
-
-
+    
 
     /// <summary>
     /// 類別
