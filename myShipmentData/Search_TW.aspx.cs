@@ -66,7 +66,7 @@ public partial class myShipmentData_Search_TW : SecurityCheck
     private void LookupDataList(int pageIndex)
     {
         //----- 宣告:網址參數 -----
-        int RecordsPerPage = 10;    //每頁筆數
+        int RecordsPerPage = 60;    //每頁筆數
         int StartRow = (pageIndex - 1) * RecordsPerPage;    //第n筆開始顯示
         int TotalRow = 0;   //總筆數
         int DataCnt = 0;

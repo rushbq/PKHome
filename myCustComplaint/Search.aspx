@@ -510,11 +510,13 @@
     <%-- 日期選擇器 Start --%>
     <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/calendar.min.css" rel="stylesheet" />
     <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/calendar.min.js"></script>
-    <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/options.js"></script>
+    <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/options.js?v=200804"></script>
     <script>
         $(function () {
+            //取得設定值(往前天數, 往後天數)
+            var calOpt = getCalOptBydate(730, 7);
             //載入datepicker
-            $('.datepicker').calendar(calendarOpts_Range);
+            $('.datepicker').calendar(calOpt);
         });
     </script>
     <%-- 日期選擇器 End --%>
