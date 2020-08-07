@@ -111,18 +111,24 @@
                     <div class="field">
                         <div class="fields">
                             <div class="eight wide field">
-                                <label>收件者</label>
-                                <asp:TextBox ID="tb_SendWho" runat="server" MaxLength="40" placeholder="名稱"></asp:TextBox>
+                                <label>收件人&nbsp;<span class="grey-text text-darken-2">(可使用自動填寫或手動填寫)</span></label>
+                                <div class="ui fluid search ac-ShipData">
+                                    <div class="ui icon input">
+                                        <asp:TextBox ID="show_SendWho" runat="server" CssClass="prompt" MaxLength="50" placeholder="輸入關鍵字,快速查詢並自動填寫"></asp:TextBox>
+                                        <i class="search icon"></i>
+                                    </div>
+                                    <asp:TextBox ID="tb_SendWho" runat="server" style="display:none;"></asp:TextBox>
+                                </div>
                             </div>
                             <div class="eight wide field">
                                 <label>收件電話</label>
-                                <asp:TextBox ID="tb_SendAddr" runat="server" MaxLength="10" placeholder="電話"></asp:TextBox>
+                                <asp:TextBox ID="tb_SendTel" runat="server" MaxLength="20" placeholder="電話"></asp:TextBox>
                             </div>
                         </div>
                         <div class="fields">
                             <div class="sixteen wide field">
                                 <label>收件地址</label>
-                                <asp:TextBox ID="tb_SendTel" runat="server" MaxLength="80" placeholder="地址"></asp:TextBox>
+                                <asp:TextBox ID="tb_SendAddr" runat="server" MaxLength="80" placeholder="地址"></asp:TextBox>
                             </div>
                         </div>
                     </div>
@@ -313,5 +319,33 @@
         });
     </script>
     <%-- Search UI End --%>
+
+    <%-- 收件人 Search UI Start --%>
+    <script>
+        /* 收件人 */
+        $('.ac-ShipData').search({
+            minCharacters: 1,
+            fields: {
+                results: 'results',
+                title: 'Title',
+                description: 'Addr'
+            },
+            searchFields: [
+                'title',
+                'description'
+            ]
+            , onSelect: function (result, response) {
+                $("#MainContent_tb_SendComp").val(result.Comp);
+                $("#MainContent_tb_SendWho").val(result.Who);
+                $("#MainContent_tb_SendAddr").val(result.Addr);
+                $("#MainContent_tb_SendTel").val(result.Tel);
+            }
+            , apiSettings: {
+                url: '<%=fn_Param.WebUrl%>Ajax_Data/GetData_DeliveryAddress.ashx?q={query}'
+            }
+
+        });
+    </script>
+    <%-- 收件人 Search UI End --%>
 </asp:Content>
 

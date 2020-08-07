@@ -102,7 +102,6 @@ public partial class myECdata_SH_EditByMonth : SecurityCheck
                     case "1":
                         //工具
                         tb_Price_SalesRebate.Enabled = false;
-                        tb_Price_Freight.Enabled = false;
                         break;
 
                     case "2":

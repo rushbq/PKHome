@@ -19,6 +19,7 @@
                 </div>
             </div>
             <div class="right menu">
+                <a href="<%=FuncPath() %>/Address" class="item"><i class="user icon"></i>收件人維護</a>
                 <a href="#!" class="shipHCT item"><i class="shipping icon"></i>新竹單號處理</a>
                 <a href="<%=FuncPath() %>/Edit" class="item"><i class="plus icon"></i>新增登記</a>
             </div>
@@ -56,7 +57,7 @@
                     </div>
                     <div class="four wide field">
                         <label>關鍵字查詢</label>
-                        <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="查詢:登記單號, 收件公司" MaxLength="20"></asp:TextBox>
+                        <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="查詢:登記單號, 收件公司, 收件人, 銷貨單號, 採購單號, INVOICE" MaxLength="20"></asp:TextBox>
                     </div>
                 </div>
             </div>
@@ -74,7 +75,7 @@
         <!-- 新竹物流Steps Start -->
         <div id="section-shipHCT" class="ui red attached segment" style="display: none;">
             <div class="ui header">
-                新竹物流單號回寫&nbsp;<a href="#!" class="shipHCT ui grey mini button">返回查詢</a>
+                新竹物流單號回寫&nbsp;<a href="#!" class="shipHCT ui grey small button">返回查詢</a>
             </div>
             <!-- Steps 示意 -->
             <div class="ui fluid steps">
@@ -102,19 +103,11 @@
                     <div class="content">
                         <div class="title">下載物流單</div>
                         <div class="description">
-                            下載貨運公司的物流單後,<br />
-                            整理資料(<a href="<%=fn_Param.RefUrl %>PKHome/Delivery/DeliverySample.xlsx" target="_blank">參考範例</a>)。
-                        </div>
-                    </div>
-                </div>
-                <div class="step">
-                    <i class="coffee icon"></i>
-                    <div class="content">
-                        <div class="title">匯入物流單</div>
-                        <div class="description">
+                            1.下載貨運公司的物流單(<a href="<%=fn_Param.RefUrl %>PKHome/Delivery/Sample-1.xlsx" target="_blank">參考範例</a>)。<br />
+                            2.匯入物流單號 (登記單號為對應)
                             <div class="ui small segments">
                                 <div class="ui segment">
-                                    上傳前請確認資料在<b class="red-text">第一個工作表</b>
+                                    請確認資料在<b class="red-text">第一個工作表</b>, 並檢查格式是否符合規定.
                                 </div>
                                 <div class="ui segment">
                                     <div class="ui grid">
@@ -122,7 +115,32 @@
                                             <asp:FileUpload ID="fu_ShipFile" runat="server" />
                                         </div>
                                         <div class="eight wide column center aligned">
-                                            <asp:LinkButton ID="lbtn_JobUpload" runat="server" CssClass="ui mini teal basic button" OnClick="lbtn_JobUpload_Click" OnClientClick="return confirm('確認執行?\n匯入後將無法還原.')">執行匯入</asp:LinkButton>
+                                            <asp:LinkButton ID="lbtn_JobUpload" runat="server" CssClass="ui mini teal basic button" OnClick="lbtn_JobUpload_Click" OnClientClick="return confirm('確認執行?\n匯入後將無法還原.')">匯入單號</asp:LinkButton>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <i class="dollar icon"></i>
+                    <div class="content">
+                        <div class="title">下載運費單</div>
+                        <div class="description">
+                            1.下載貨運公司的運費單(<a href="<%=fn_Param.RefUrl %>PKHome/Delivery/Sample-2.xlsx" target="_blank">參考範例</a>)。<br />
+                            2.匯入運費 (物流單號為對應)
+                            <div class="ui small segments">
+                                <div class="ui segment">
+                                    請確認資料在<b class="red-text">第一個工作表</b>, 並檢查格式是否符合規定.
+                                </div>
+                                <div class="ui segment">
+                                    <div class="ui grid">
+                                        <div class="eight wide column">
+                                            <asp:FileUpload ID="fu_FreightFile" runat="server" />
+                                        </div>
+                                        <div class="eight wide column center aligned">
+                                            <asp:LinkButton ID="lbtn_FreightUpload" runat="server" CssClass="ui mini teal basic button" OnClick="lbtn_FreightUpload_Click" OnClientClick="return confirm('確認執行?\n匯入後將無法還原.')">匯入運費</asp:LinkButton>
                                         </div>
                                     </div>
                                 </div>
@@ -292,7 +310,7 @@
     <script>
         $(function () {
             //載入datepicker
-            $('.datepicker').calendar(calendarOpts_Range);
+            $('.datepicker').calendar(calendarOptsByTime_Range);
         });
     </script>
     <%-- 日期選擇器 End --%>

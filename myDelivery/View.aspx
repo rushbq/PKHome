@@ -97,7 +97,7 @@
                             <div class="eight wide field">
                                 <label>物流單號</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_ShipNo" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_ShipNo" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                             <div class="eight wide field">
@@ -176,7 +176,7 @@
                             <div class="sixteen wide field">
                                 <label>說明</label>
                                 <div class="ui basic large fluid label">
-                                    <asp:Literal ID="lt_Remark1" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_Remark1" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                         </div>
@@ -187,13 +187,13 @@
                             <div class="eight wide field">
                                 <label>採購單號(單別-單號)</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_PurNo" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_PurNo" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                             <div class="eight wide field">
                                 <label>銷貨單號(單別-單號)</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_SaleNo" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_SaleNo" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                         </div>
@@ -201,7 +201,7 @@
                             <div class="eight wide field">
                                 <label>INVOICE</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_InvoiceNo" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_InvoiceNo" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                             <div class="eight wide field">
@@ -211,7 +211,7 @@
                             <div class="sixteen wide field">
                                 <label>備註</label>
                                 <div class="ui basic large fluid label">
-                                    <asp:Literal ID="lt_Remark2" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_Remark2" runat="server"></asp:Literal>&nbsp;
                                 </div>
                             </div>
                         </div>

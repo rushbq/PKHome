@@ -286,11 +286,11 @@ public partial class myARdata_ImportStep2 : SecurityCheck
         try
         {
             //[Step1] 取得要做成PDF的頁面(使用元件轉換,內部站台不能用api)
-            string url = "{0}myARdata/PDF_Html.aspx?id={1}".FormatThis(fn_Param.WebUrl, dataID);
+            string url = "{0}myARdata/PDF_Html_{2}.aspx?id={1}".FormatThis(fn_Param.WebUrl, dataID, Req_CompID.ToUpper());
 
             //[Step2] 產生PDF轉成byte
             byte[] pdfByte = convertPDF(url);
-            
+
             //[Step3] 使用byte方式上傳至FTP
             bool isOK = _ftp.FTP_doUploadWithByte(pdfByte, UploadFolder(), custID + ".pdf");
 
@@ -363,7 +363,7 @@ public partial class myARdata_ImportStep2 : SecurityCheck
 
         return byteDoc;
     }
-    
+
 
     /// <summary>
     /// 刪除本次轉入

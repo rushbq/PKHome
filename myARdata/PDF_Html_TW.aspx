@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="PDF_Html.aspx.cs" Inherits="myARdata_PDF_Html" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="PDF_Html_TW.aspx.cs" Inherits="myARdata_PDF_Html_TW" %>
 
 <%@ Import Namespace="PKLib_Method.Methods" %>
 <!DOCTYPE html>

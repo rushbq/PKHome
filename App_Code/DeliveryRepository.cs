@@ -286,6 +286,10 @@ namespace DeliveryData.Controllers
                             sql.Append(" AND (");
                             sql.Append(" (UPPER(Base.TraceID) LIKE '%' + UPPER(@keyword) + '%')");
                             sql.Append(" OR (UPPER(Base.SendComp) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append(" OR (UPPER(Base.InvoiceNo) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append(" OR (UPPER(Base.PurNo) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append(" OR (UPPER(Base.SaleNo) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append(" OR (UPPER(Base.SendWho) LIKE '%' + UPPER(@keyword) + '%')");
                             sql.Append(")");
 
                             break;
@@ -353,10 +357,10 @@ namespace DeliveryData.Controllers
                             break;
 
                         case "sDate":
-                            sqlParamList.Add(new SqlParameter("@sDate", item.Value + " 00:00:00"));
+                            sqlParamList.Add(new SqlParameter("@sDate", item.Value.ToDateString("yyyy/MM/dd HH:mm")));
                             break;
                         case "eDate":
-                            sqlParamList.Add(new SqlParameter("@eDate", item.Value + " 23:59:59"));
+                            sqlParamList.Add(new SqlParameter("@eDate", item.Value.ToDateString("yyyy/MM/dd HH:mm")));
                             break;
 
                     }
@@ -447,7 +451,6 @@ namespace DeliveryData.Controllers
         }
 
 
-
         /// <summary>
         /// 取得Excel欄位 - 匯入物流單號時使用
         /// </summary>
@@ -469,19 +472,67 @@ namespace DeliveryData.Controllers
                 //宣告各內容參數
                 string _TraceID = ""; //單號
                 string _ShipNo = ""; //物流單號
-                double _Freight = 0; //運費
 
                 //資料迴圈
                 foreach (var val in queryVals)
                 {
-                    _TraceID = val[0];
-                    _ShipNo = val[1];
-                    _Freight = Convert.ToDouble(val[2]);
+                    _TraceID = val[2];
+                    _ShipNo = val[14];
 
                     //加入項目
                     var data = new Delivery_Import
                     {
                         TraceID = _TraceID,
+                        ShipNo = _ShipNo
+                    };
+
+                    //將項目加入至集合
+                    dataList.Add(data);
+
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception("請檢查Excel格式是否正確!!" + ex.Message.ToString());
+            }
+        }
+
+
+        /// <summary>
+        /// 取得Excel欄位 - 匯入運費時使用
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="sheetName"></param>
+        /// <returns>
+        /// </returns>
+        public IQueryable<Delivery_Import> GetExcel_FreightData(string filePath, string sheetName)
+        {
+            try
+            {
+                //----- 宣告 -----
+                List<Delivery_Import> dataList = new List<Delivery_Import>();
+
+                //[Excel] - 取得原始資料
+                var excelFile = new ExcelQueryFactory(filePath);
+                var queryVals = excelFile.Worksheet(sheetName);
+
+                //宣告各內容參數
+                string _ShipNo = ""; //物流單號
+                double _Freight = 0;
+
+                //資料迴圈
+                foreach (var val in queryVals)
+                {
+                    _ShipNo = val[4];
+                    _Freight = Convert.ToDouble(val[19]);
+
+                    //加入項目
+                    var data = new Delivery_Import
+                    {
                         ShipNo = _ShipNo,
                         Freight = _Freight
                     };
@@ -501,6 +552,69 @@ namespace DeliveryData.Controllers
             }
         }
 
+
+        /// <summary>
+        /// 收件人設定清單
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetAddress(Dictionary<string, string> search, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            List<ClassItem> dataList = new List<ClassItem>();
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" SELECT SeqNo, ToComp, ToWho, ToAddr, ToTel");
+                sql.AppendLine(" FROM Delivery_Address");
+                sql.AppendLine(" WHERE (1 = 1)");
+
+                /* Search */
+                #region >> filter <<
+
+                if (search != null)
+                {
+                    //過濾空值
+                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                    //查詢內容
+                    foreach (var item in thisSearch)
+                    {
+                        switch (item.Key)
+                        {
+                            case "Who":
+                                sql.Append(" AND (Create_Who = @Who)");
+
+                                cmd.Parameters.AddWithValue("Who", item.Value);
+
+                                break;
+
+                            case "Keyword":
+                                sql.Append(" AND (");
+                                sql.Append(" ToWho LIKE '%' + UPPER(@keyword) + '%'");
+                                sql.Append(" OR ToComp LIKE '%' + UPPER(@keyword) + '%'");
+                                sql.Append(" OR ToAddr LIKE '%' + UPPER(@keyword) + '%'");
+                                sql.Append(")");
+
+                                cmd.Parameters.AddWithValue("keyword", item.Value);
+
+                                break;
+                        }
+                    }
+                }
+                #endregion
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+
+                //----- 資料取得 -----
+                return dbConn.LookupDT(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+        }
 
         #endregion
 
@@ -573,6 +687,41 @@ namespace DeliveryData.Controllers
                 cmd.Parameters.AddWithValue("Create_Who", fn_Param.CurrentUser);
 
                 //execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
+
+        /// <summary>
+        /// 新增收件名單
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Create_Address(AddressBook instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" INSERT INTO Delivery_Address( ");
+                sql.AppendLine("  ToComp, ToWho, ToAddr, ToTel, Create_Who");
+                sql.AppendLine(" ) VALUES (");
+                sql.AppendLine("  @ToComp, @ToWho, @ToAddr, @ToTel, @Create_Who");
+                sql.AppendLine(" );");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("ToComp", instance.ToComp);
+                cmd.Parameters.AddWithValue("ToWho", instance.ToWho);
+                cmd.Parameters.AddWithValue("ToAddr", instance.ToAddr);
+                cmd.Parameters.AddWithValue("ToTel", instance.ToTel);
+                cmd.Parameters.AddWithValue("Create_Who", fn_Param.CurrentUser);
+
+
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
             }
 
@@ -681,7 +830,6 @@ namespace DeliveryData.Controllers
         /// </remarks>
         public bool Update_ShipNo(IQueryable<Delivery_Import> instance, out string ErrMsg)
         {
-            //回寫至ShipmentNo
             //----- 宣告 -----
             StringBuilder sql = new StringBuilder();
 
@@ -692,9 +840,44 @@ namespace DeliveryData.Controllers
                 foreach (var item in instance)
                 {
                     sql.AppendLine(" UPDATE Delivery_Data");
-                    sql.AppendLine(" SET ShipNo = '{1}', ShipPay = {2} WHERE (TraceID = '{0}');".FormatThis(
+                    sql.AppendLine(" SET ShipNo = '{1}' WHERE (TraceID = '{0}');".FormatThis(
                          item.TraceID
                          , item.ShipNo
+                        ));
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
+
+
+        /// <summary>
+        /// 回寫運費
+        /// </summary>
+        /// <param name="instance">excel來源資料</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// </remarks>
+        public bool Update_Freight(IQueryable<Delivery_Import> instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 語法 -----
+                foreach (var item in instance)
+                {
+                    sql.AppendLine(" UPDATE Delivery_Data");
+                    sql.AppendLine(" SET ShipPay = {1} WHERE (ShipNo = '{0}');".FormatThis(
+                         item.ShipNo
                          , item.Freight
                         ));
                 }
@@ -707,7 +890,6 @@ namespace DeliveryData.Controllers
             }
 
         }
-        
 
         #endregion
 
@@ -738,6 +920,30 @@ namespace DeliveryData.Controllers
             }
         }
 
+
+        /// <summary>
+        /// 刪除收件名單
+        /// </summary>
+        /// <param name="dataID"></param>
+        /// <returns></returns>
+        public bool Delete_Address(string dataID, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" DELETE FROM Delivery_Address WHERE (SeqNo = @Data_ID);");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
+
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+        }
         #endregion
 
     }

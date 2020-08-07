@@ -4,13 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 using System.Web.UI;
-using System.Web.UI.WebControls;
 using ARData.Controllers;
 using PKLib_Method.Methods;
 
-public partial class myARdata_PDF_Html : System.Web.UI.Page
+public partial class myARdata_PDF_Html_SH : System.Web.UI.Page
 {
     public string ErrMsg;
 
@@ -178,13 +176,13 @@ public partial class myARdata_PDF_Html : System.Web.UI.Page
             //----- 資料整理:填入資料 -----
             lb_PrePrice.Text = data.PrePrice.ToString().ToMoneyString();
             lt_PreCnt.Text = data.PreCnt.ToString();
-            lb_TotalPrice_NoTax.Text = data.TotalPrice_NoTax.ToString().ToMoneyString();
+            //lb_TotalPrice_NoTax.Text = data.TotalPrice_NoTax.ToString().ToMoneyString();
             lb_TotalPrice.Text = data.TotalPrice.ToString().ToMoneyString();
-            lb_TotalTaxPrice.Text = data.TotalTaxPrice.ToString().ToMoneyString();
+            //lb_TotalTaxPrice.Text = data.TotalTaxPrice.ToString().ToMoneyString();
             lt_Cnt.Text = data.Cnt.ToString();
             lb_AllPrice.Text = data.AllPrice.ToString().ToMoneyString();
             lt_TotalCnt.Text = (data.PreCnt + data.Cnt).ToString();
-
+            lb_GetPrice.Text = data.GetPrice.ToString().ToMoneyString();
 
         }
         catch (Exception)

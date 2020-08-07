@@ -965,7 +965,7 @@ namespace Menu3000Data.Controllers
                         break;
                 }
 
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046, DT.TH007");
+                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046");
 
                 sql.AppendLine(" UNION ALL");
                 /*

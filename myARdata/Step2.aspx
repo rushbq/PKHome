@@ -79,6 +79,7 @@
                                                     (已勾選: <strong class="orange-text text-darken-4" id="countCbx">0</strong> )
                                                 </div>
                                             </th>
+                                            <th>銷貨單號</th>
                                             <th>結帳單號</th>
                                             <th>結帳日期</th>
                                             <th>預計收款日</th>
@@ -98,6 +99,9 @@
                                             <input type="checkbox" id="cbx_<%#Eval("SerialNo") %>" class="myCbx" value="<%#Eval("AR_Fid") %>-<%#Eval("AR_Sid") %>" />
                                             <label for="cbx_<%#Eval("SerialNo") %>"></label>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <%#Eval("SO_Fid") %>-<%#Eval("SO_Sid") %>
                                     </td>
                                     <td>
                                         <%#Eval("AR_Fid") %>-<%#Eval("AR_Sid") %>

@@ -373,12 +373,15 @@ namespace ARData.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" SELECT RTRIM(Base.TA001) AS AR_Fid, RTRIM(Base.TA002) AS AR_Sid");
+                sql.AppendLine("  , RTRIM(SO.TG001) AS SO_Fid, RTRIM(SO.TG002) AS SO_Sid");
                 sql.AppendLine("  , Terms.NA002 AS TermID, Terms.NA003 AS TermName");
                 sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency");
                 sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA042 AS float) AS TaxPrice, CAST(Base.TA031 AS float) AS GetPrice");
                 sql.AppendLine("  , Base.TA022 AS OrderRemark");
                 sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY Base.TA002) AS SerialNo");
-                sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
+                sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base WITH(NOLOCK)");
+                sql.AppendLine("  INNER JOIN [##dbName##].dbo.ACRTB WITH(NOLOCK) ON Base.TA001 = ACRTB.TB001 AND Base.TA002 = ACRTB.TB002");
+                sql.AppendLine("  INNER JOIN [##dbName##].dbo.COPTG SO WITH(NOLOCK) ON ACRTB.TB005 = SO.TG001 AND ACRTB.TB006 = SO.TG002 ");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
                 sql.AppendLine(" WHERE (TA025 = 'Y') AND (TA027 = 'N')");
                 //--排除重複(20200623-Annie說不要擋)
@@ -449,6 +452,8 @@ namespace ARData.Controllers
                                 SerialNo = item.Field<Int64>("SerialNo"),
                                 AR_Fid = item.Field<string>("AR_Fid"),
                                 AR_Sid = item.Field<string>("AR_Sid"),
+                                SO_Fid = item.Field<string>("SO_Fid"),
+                                SO_Sid = item.Field<string>("SO_Sid"),
                                 //付款條件
                                 TermID = item.Field<string>("TermID"),
                                 TermName = item.Field<string>("TermName"),
@@ -458,7 +463,7 @@ namespace ARData.Controllers
                                 Currency = item.Field<string>("Currency"),
                                 Price = item.Field<double>("Price"), //應收金額
                                 TaxPrice = item.Field<double>("TaxPrice"), //本幣營業稅額
-                                GetPrice = item.Field<double>("GetPrice"), //已收金額
+                                GetPrice = item.Field<double>("GetPrice"), //已收金額(預收款)
                                 OrderRemark = item.Field<string>("OrderRemark")
                             };
 
@@ -620,7 +625,7 @@ namespace ARData.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" ;WITH TblPreGet AS (");
-                sql.AppendLine("     SELECT ISNULL(SUM(TA029+TA042), 0) AS PrePrice");
+                sql.AppendLine("     SELECT ISNULL(SUM(TA029+TA042), 0) AS PrePrice, ISNULL(SUM(TA031), 0) AS GetPrice");
                 sql.AppendLine("     , COUNT(*) AS Cnt");
                 sql.AppendLine("     , TA004 AS CustID");
                 sql.AppendLine("     FROM [##dbName##].dbo.ACRTA");
@@ -645,6 +650,7 @@ namespace ARData.Controllers
                 sql.AppendLine(" )");
                 sql.AppendLine(" SELECT");
                 sql.AppendLine("  ISNULL(CAST(TblPreGet.PrePrice AS float), 0) AS PrePrice");
+                sql.AppendLine("  , ISNULL(CAST(TblPreGet.GetPrice AS float), 0) AS GetPrice");
                 sql.AppendLine("  , ISNULL(CAST(TblPreGet.Cnt AS int), 0) AS PreCnt");
                 sql.AppendLine("  , ISNULL(CAST(TblWishGet.TotalPrice AS float), 0) AS TotalPrice");
                 sql.AppendLine("  , ISNULL(CAST(TblWishGet.TotalPrice_NoTax AS float), 0) AS TotalPrice_NoTax");
@@ -678,6 +684,7 @@ namespace ARData.Controllers
                                 TotalPrice = item.Field<double>("TotalPrice"), //本期應收總額
                                 TotalPrice_NoTax = item.Field<double>("TotalPrice_NoTax"), //本幣未稅金額
                                 TotalTaxPrice = item.Field<double>("TotalTaxPrice"), //本幣稅額
+                                GetPrice = item.Field<double>("GetPrice"), //預收款
                                 Cnt = item.Field<int>("Cnt"),
                                 AllPrice = item.Field<double>("PrePrice") + item.Field<double>("TotalPrice")
                             };
@@ -965,7 +972,7 @@ namespace ARData.Controllers
 
         #region -----// Update //-----
 
-        public bool UpdateStatus(string dataID,out string ErrMsg)
+        public bool UpdateStatus(string dataID, out string ErrMsg)
         {
             //----- 宣告 -----
             StringBuilder sql = new StringBuilder();

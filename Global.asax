@@ -476,6 +476,12 @@
                 { "lang", "auto" }
                 , { "rootID", "3000" }
                 , { "id", "new" }});
+        routes.MapPageRoute("DeliveryAddr", "{lang}/{rootID}/Delivery/Address", "~/myDelivery/InformConfig.aspx", false,
+        new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+
+
 
         //--- 生產採購(4000) --- 
         //到貨狀況

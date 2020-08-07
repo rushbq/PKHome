@@ -932,6 +932,8 @@ namespace Menu3000Data.Models
         public Int64 SerialNo { get; set; }
         public string AR_Fid { get; set; }
         public string AR_Sid { get; set; }
+        public string SO_Fid { get; set; }
+        public string SO_Sid { get; set; }
         public string CustID { get; set; }
         public string CustName { get; set; }
         /// <summary>
@@ -974,6 +976,11 @@ namespace Menu3000Data.Models
 
     public class ARData_PriceInfo
     {
+        /// <summary>
+        /// 預收款
+        /// </summary>
+        public double GetPrice { get; set; }
+
         /// <summary>
         /// 前期未收款
         /// </summary>
@@ -1093,9 +1100,18 @@ namespace Menu3000Data.Models
         public double Freight { get; set; }
     }
 
+
+    public class AddressBook
+    {
+        public string ToComp { get; set; }
+        public string ToWho { get; set; }
+        public string ToAddr { get; set; }
+        public string ToTel { get; set; }
+
+    }
     #endregion
 
-    
+
 
     /// <summary>
     /// 類別

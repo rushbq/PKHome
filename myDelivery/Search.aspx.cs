@@ -138,7 +138,7 @@ public partial class myDelivery_Search : SecurityCheck
                 ph_Data.Visible = false;
 
                 //Clear
-                CustomExtension.setCookie("Devliery", "", -1);
+                CustomExtension.setCookie("Delivery", "", -1);
             }
             else
             {
@@ -147,19 +147,19 @@ public partial class myDelivery_Search : SecurityCheck
 
                 //分頁設定
                 string getPager = CustomExtension.Pagination(TotalRow, RecordsPerPage, pageIndex, 5
-                    , thisPage, PageParam, false, true);
+                    , FuncPath(), PageParam, false, true);
 
                 Literal lt_Pager = (Literal)this.lvDataList.FindControl("lt_Pager");
                 lt_Pager.Text = getPager;
 
                 //重新整理頁面Url
                 string reSetPage = "{0}?page={1}{2}".FormatThis(
-                    thisPage
+                    FuncPath()
                     , pageIndex
                     , (PageParam.Count == 0 ? "" : "&") + string.Join("&", PageParam.ToArray()));
 
                 //暫存頁面Url, 給其他頁使用
-                CustomExtension.setCookie("Devliery", Server.UrlEncode(reSetPage), 1);
+                CustomExtension.setCookie("Delivery", Server.UrlEncode(reSetPage), 1);
 
             }
         }
@@ -510,7 +510,181 @@ public partial class myDelivery_Search : SecurityCheck
 
 
         //Redirect
-        CustomExtension.AlertMsg("匯入完成.", thisPage);
+        CustomExtension.AlertMsg("物流單號匯入完成.", thisPage);
+    }
+
+
+    /// <summary>
+    /// 上傳&匯入運費
+    /// </summary>
+    protected void lbtn_FreightUpload_Click(object sender, EventArgs e)
+    {
+        #region -- 檔案處理 --
+
+        //宣告
+        List<IOTempParam> ITempList = new List<IOTempParam>();
+        Random rnd = new Random();
+        string Message = "";
+        string ftpFolder = UploadFolder; //FTP資料夾
+        string thisFileName = ""; //檔名
+
+        if (fu_ShipFile.PostedFile.ContentLength == 0)
+        {
+            CustomExtension.AlertMsg("請選擇要上傳的檔案", thisPage);
+            return;
+        }
+
+        //取得上傳檔案集合
+        HttpFileCollection hfc = Request.Files;
+
+        //--- 檔案檢查 ---
+        for (int idx = 0; idx <= hfc.Count - 1; idx++)
+        {
+            //取得個別檔案
+            HttpPostedFile hpf = hfc[idx];
+
+            if (hpf.ContentLength > FileSizeLimit)
+            {
+                //[提示]
+                Message = "檔案大小超出限制, 每個檔案大小限制為 {0} MB".FormatThis(FileSizeLimit);
+                CustomExtension.AlertMsg(Message, thisPage);
+                return;
+            }
+
+            if (hpf.ContentLength > 0)
+            {
+                //取得原始檔名
+                string OrgFileName = System.IO.Path.GetFileName(hpf.FileName);
+                //取得副檔名
+                string FileExt = System.IO.Path.GetExtension(OrgFileName).ToLower();
+                if (false == CustomExtension.CheckStrWord(FileExt, FileExtLimit, "|", 1))
+                {
+                    //[提示]
+                    Message = "檔案副檔名不符規定, 僅可上傳副檔名為 {0}".FormatThis(FileExtLimit.Replace("|", ", "));
+                    CustomExtension.AlertMsg(Message, thisPage);
+                    return;
+                }
+            }
+        }
+
+
+        //--- 檔案暫存List ---
+        for (int idx = 0; idx <= hfc.Count - 1; idx++)
+        {
+            //取得個別檔案
+            HttpPostedFile hpf = hfc[idx];
+
+            if (hpf.ContentLength > 0)
+            {
+                //取得原始檔名
+                string OrgFileName = System.IO.Path.GetFileName(hpf.FileName);
+                //取得副檔名
+                string FileExt = System.IO.Path.GetExtension(OrgFileName).ToLower();
+
+                //設定檔名, 重新命名
+                string myFullFile = String.Format(@"{0:yyMMddHHmmssfff}{1}{2}"
+                    , DateTime.Now
+                    , rnd.Next(0, 99)
+                    , FileExt);
+
+                //暫存檔名
+                thisFileName = myFullFile;
+
+                //判斷副檔名, 未符合規格的檔案不上傳
+                if (CustomExtension.CheckStrWord(FileExt, FileExtLimit, "|", 1))
+                {
+                    //設定暫存-檔案
+                    ITempList.Add(new IOTempParam(myFullFile, OrgFileName, hpf));
+                }
+            }
+        }
+
+        #endregion
+
+        //Check Null
+        if (ITempList.Count == 0)
+        {
+            CustomExtension.AlertMsg("請選擇要上傳的檔案", thisPage);
+            return;
+        }
+
+        #region -- 儲存檔案 --
+
+        int errCnt = 0;
+
+        //判斷資料夾, 不存在則建立
+        _ftp.FTP_CheckFolder(ftpFolder);
+
+        //暫存檔案List
+        for (int row = 0; row < ITempList.Count; row++)
+        {
+            //取得個別檔案
+            HttpPostedFile hpf = ITempList[row].Param_hpf;
+
+            //執行上傳
+            if (false == _ftp.FTP_doUpload(hpf, ftpFolder, ITempList[row].Param_FileName))
+            {
+                errCnt++;
+            }
+        }
+
+        if (errCnt > 0)
+        {
+            Message = "檔案上傳失敗, 失敗筆數為 {0} 筆, 請重新整理後再上傳!".FormatThis(errCnt);
+            CustomExtension.AlertMsg(Message, thisPage);
+            return;
+        }
+
+        #endregion
+
+
+        #region -- 資料處理 --
+
+        //----- 宣告:資料參數 -----
+        DeliveryRepository _data = new DeliveryRepository();
+
+        //設定完整路徑
+        string _filePath = @"{0}{1}{2}".FormatThis(
+            System.Web.Configuration.WebConfigurationManager.AppSettings["FTP_DiskUrl"]
+            , ftpFolder.Replace("/", "\\")
+            , thisFileName);
+
+
+        //查詢Excel
+        var excelFile = new ExcelQueryFactory(_filePath);
+
+        //取得Excel 第一個頁籤名稱
+        var sheetData = excelFile.GetWorksheetNames().FirstOrDefault();
+
+        //取得Excel資料欄位
+        var query_Xls = _data.GetExcel_FreightData(_filePath, sheetData);
+
+        try
+        {
+            //回寫物流單號
+            if (!_data.Update_Freight(query_Xls, out ErrMsg))
+            {
+                //lt_errMsg.Text = "匯入失敗,請重新上傳：" + ErrMsg;
+                CustomExtension.AlertMsg("資料匯入失敗", "");
+                return;
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            //刪除檔案
+            _ftp.FTP_DelFile(ftpFolder, thisFileName);
+            _data = null;
+        }
+        #endregion
+
+
+        //Redirect
+        CustomExtension.AlertMsg("運費匯入完成.", thisPage);
     }
 
 
@@ -535,7 +709,7 @@ public partial class myDelivery_Search : SecurityCheck
         StringBuilder url = new StringBuilder();
 
         //固定條件:Page/TOP選單
-        url.Append("{0}?page=1".FormatThis(thisPage));
+        url.Append("{0}?page=1".FormatThis(FuncPath()));
 
         //[查詢條件] - Date
         if (!string.IsNullOrWhiteSpace(_sDate))
@@ -727,8 +901,8 @@ public partial class myDelivery_Search : SecurityCheck
         get
         {
             String _data = Request.QueryString["sDate"];
-            string dt = DateTime.Now.AddDays(-7).ToString().ToDateString("yyyy/MM/dd");
-            return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : dt;
+            string dt = DateTime.Now.AddDays(-7).ToString().ToDateString("yyyy/MM/dd 00:00");
+            return (CustomExtension.String_資料長度Byte(_data, "1", "20", out ErrMsg)) ? _data.Trim() : dt;
         }
         set
         {
@@ -746,8 +920,8 @@ public partial class myDelivery_Search : SecurityCheck
         get
         {
             String _data = Request.QueryString["eDate"];
-            string dt = DateTime.Now.ToString().ToDateString("yyyy/MM/dd");
-            return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : dt;
+            string dt = DateTime.Now.ToString().ToDateString("yyyy/MM/dd 23:59");
+            return (CustomExtension.String_資料長度Byte(_data, "1", "20", out ErrMsg)) ? _data.Trim() : dt;
         }
         set
         {

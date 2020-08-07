@@ -121,6 +121,7 @@ public partial class myDelivery_Edit : SecurityCheck
 
             tb_SendDate.Text = query.SendDate.ToDateString("yyyy/MM/dd");
             tb_SendComp.Text = query.SendComp;
+            show_SendWho.Text = query.SendWho;
             tb_SendWho.Text = query.SendWho;
             tb_SendAddr.Text = query.SendAddr;
             tb_SendTel.Text = query.SendTel;
