@@ -47,7 +47,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>台端：</td>
+                            <td>名称：</td>
                             <td>
                                 <asp:Label ID="lb_Cust" runat="server"></asp:Label>
                             </td>
@@ -107,7 +107,7 @@
                                     <%#Eval("ArDate").ToString().ToDateString_ERP("/") %>
                                 </td>
                                 <td>
-                                    <%#Eval("BillNo") %>
+                                    <%#Eval("InvoiceNo") %>
                                 </td>
                                 <td>
                                     <%#Eval("AT_Fid") %>-<%#Eval("AT_Sid") %>-<%#Eval("AT_Tid") %>
@@ -148,7 +148,7 @@
                         <tr>
                             <td style="text-align: right; width: 100px;">预收款</td>
                             <td style="text-align: right; width: 100px;">
-                                <asp:Label ID="lb_GetPrice" runat="server"></asp:Label>
+                                <asp:Label ID="lb_PreGetPrice" runat="server"></asp:Label>
                             </td>
                             <td style="text-align: right; width: 60px;"></td>
                             <td></td>

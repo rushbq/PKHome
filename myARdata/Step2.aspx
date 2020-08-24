@@ -44,6 +44,7 @@
                     <div class="field">
                         <label>追蹤碼</label>
                         <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
+                        <asp:HiddenField ID="hf_TraceID" runat="server" />
                     </div>
                     <div class="field">
                         <label>資料庫</label>
@@ -79,12 +80,13 @@
                                                     (已勾選: <strong class="orange-text text-darken-4" id="countCbx">0</strong> )
                                                 </div>
                                             </th>
-                                            <th>銷貨單號</th>
+                                            <th>銷貨(銷退)單號</th>
                                             <th>結帳單號</th>
                                             <th>結帳日期</th>
                                             <th>預計收款日</th>
                                             <th class="no-sort">原幣應收帳款</th>
                                             <th class="no-sort">原幣未收帳款</th>
+                                            <th class="no-sort">備註</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -117,6 +119,9 @@
                                     </td>
                                     <td class="right aligned">
                                         <%#(Convert.ToDouble(Eval("Price")) + Convert.ToDouble(Eval("TaxPrice")) - Convert.ToDouble(Eval("GetPrice"))).ToString().ToMoneyString() %>
+                                    </td>
+                                    <td>
+                                        <%#Eval("OrderRemark") %>
                                     </td>
                                 </tr>
                             </ItemTemplate>

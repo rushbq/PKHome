@@ -285,6 +285,15 @@ namespace Menu3000Data.Models
 
     }
 
+
+    public class RebateCust
+    {
+        public string CustID { get; set; }
+        //public string CustName { get; set; }
+        public string ParentCustID { get; set; }
+        //public string ParentCustName { get; set; }
+    }
+
     #endregion
 
 
@@ -301,6 +310,8 @@ namespace Menu3000Data.Models
         public string TraceID { get; set; }
         public Int32? PlanType { get; set; }
         public string PlanTypeName { get; set; }
+        public Int32? BadReason { get; set; }
+        public string BadReasonName { get; set; }
         public string InvoiceIsBack { get; set; }
         public Int32? CustType { get; set; }
         public string CustTypeName { get; set; }
@@ -389,6 +400,8 @@ namespace Menu3000Data.Models
         public string TraceID { get; set; }
         public Int32 PlanType { get; set; }
         public string PlanTypeName { get; set; }
+        public Int32 BadReason { get; set; }
+        public string BadReasonName { get; set; }
         //客戶類別
         public Int32 CustType { get; set; }
         public string CustTypeName { get; set; }
@@ -903,6 +916,7 @@ namespace Menu3000Data.Models
         public string AddrRemark { get; set; }
         public string Fax { get; set; }
         public string Tel { get; set; }
+        public Int32 ItemCnt { get; set; }
         /// <summary>
         /// 報錯時的訊息
         /// </summary>
@@ -949,6 +963,7 @@ namespace Menu3000Data.Models
         public string TermName { get; set; }
         public string ArDate { get; set; }
         public string BillNo { get; set; }
+        public string InvoiceNo { get; set; }
         public string PreGetDay { get; set; }
         public string Currency { get; set; }
 
@@ -979,17 +994,17 @@ namespace Menu3000Data.Models
         /// <summary>
         /// 預收款
         /// </summary>
-        public double GetPrice { get; set; }
+        public double PreGetPrice { get; set; }
 
         /// <summary>
         /// 前期未收款
         /// </summary>
-        public double PrePrice { get; set; }
+        public double unGetPrice { get; set; }
 
         /// <summary>
         /// 前期未收款筆數
         /// </summary>
-        public int PreCnt { get; set; }
+        public int unGetCnt { get; set; }
 
         /// <summary>
         /// 本期應收總額
@@ -1042,14 +1057,15 @@ namespace Menu3000Data.Models
         public Int32 PayWay { get; set; }
         public string PayWayName { get; set; }
 
-        public string ShipWho  { get; set; }
+        public string ShipWho { get; set; }
         public string ShipWho_Name { get; set; }
 
         public string SendDate { get; set; }
         public string SendComp { get; set; }
         public string SendWho { get; set; }
         public string SendAddr { get; set; }
-        public string SendTel { get; set; }
+        public string SendTel1 { get; set; }
+        public string SendTel2 { get; set; }
         public string ShipNo { get; set; }
         /// <summary>
         /// 運費

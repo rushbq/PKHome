@@ -177,7 +177,8 @@ namespace DeliveryData.Controllers
                                 SendComp = item.Field<string>("SendComp"),
                                 SendWho = item.Field<string>("SendWho"),
                                 SendAddr = item.Field<string>("SendAddr"),
-                                SendTel = item.Field<string>("SendTel"),
+                                SendTel1 = item.Field<string>("SendTel1"),
+                                SendTel2 = item.Field<string>("SendTel2"),
                                 ShipNo = item.Field<string>("ShipNo"),
                                 ShipPay = item.Field<double>("ShipPay"),
                                 Box = item.Field<Int32?>("Box"),
@@ -234,7 +235,7 @@ namespace DeliveryData.Controllers
             string sqlstr = @"
  SELECT Base.SeqNo, Base.Data_ID, Base.TraceID
  , Base.ShipType, Base.ShipWho, Base.SendDate, Base.SendComp
- , Base.SendWho, Base.SendAddr, Base.SendTel
+ , Base.SendWho, Base.SendAddr, Base.SendTel1, Base.SendTel2
  , Base.ShipNo, Base.ShipPay, Base.Box
  , Cls1.Class_ID AS ShipWay, Cls1.Class_Name AS ShipWayName
  , Cls2.Class_ID AS PayWay, Cls2.Class_Name AS PayWayName
@@ -477,7 +478,7 @@ namespace DeliveryData.Controllers
                 foreach (var val in queryVals)
                 {
                     _TraceID = val[2];
-                    _ShipNo = val[14];
+                    _ShipNo = val[15];
 
                     //加入項目
                     var data = new Delivery_Import
@@ -648,13 +649,13 @@ namespace DeliveryData.Controllers
                 //新增語法
                 sql.AppendLine(" INSERT INTO Delivery_Data (");
                 sql.AppendLine("  Data_ID, TraceID, ShipType, ShipWay, PayWay");
-                sql.AppendLine("  , ShipWho, SendDate, SendComp, SendWho, SendAddr, SendTel");
+                sql.AppendLine("  , ShipWho, SendDate, SendComp, SendWho, SendAddr, SendTel1, SendTel2");
                 sql.AppendLine("  , ShipNo, ShipPay, Box, BoxClass1, BoxClass2, TargetClass");
                 sql.AppendLine("  , Remark1, Remark2, PurNo, SaleNo, InvoiceNo, IsClose");
                 sql.AppendLine("  , Create_Who, Create_Time");
                 sql.AppendLine(" ) VALUES (");
                 sql.AppendLine("  @Data_ID, @NewOrderID, @ShipType, @ShipWay, @PayWay");
-                sql.AppendLine("  , @ShipWho, @SendDate, @SendComp, @SendWho, @SendAddr, @SendTel");
+                sql.AppendLine("  , @ShipWho, @SendDate, @SendComp, @SendWho, @SendAddr, @SendTel1, @SendTel2");
                 sql.AppendLine("  , @ShipNo, @ShipPay, @Box, @BoxClass1, @BoxClass2, @TargetClass");
                 sql.AppendLine("  , @Remark1, @Remark2, @PurNo, @SaleNo, @InvoiceNo, 'N'");
                 sql.AppendLine("  , @Create_Who, GETDATE()");
@@ -672,7 +673,8 @@ namespace DeliveryData.Controllers
                 cmd.Parameters.AddWithValue("SendComp", instance.SendComp);
                 cmd.Parameters.AddWithValue("SendWho", instance.SendWho);
                 cmd.Parameters.AddWithValue("SendAddr", instance.SendAddr);
-                cmd.Parameters.AddWithValue("SendTel", instance.SendTel);
+                cmd.Parameters.AddWithValue("SendTel1", instance.SendTel1);
+                cmd.Parameters.AddWithValue("SendTel2", instance.SendTel2);
                 cmd.Parameters.AddWithValue("ShipNo", instance.ShipNo);
                 cmd.Parameters.AddWithValue("ShipPay", instance.ShipPay);
                 cmd.Parameters.AddWithValue("Box", instance.Box.Equals(0) ? 1 : (object)instance.Box);
@@ -751,7 +753,7 @@ namespace DeliveryData.Controllers
                 sql.AppendLine(" UPDATE Delivery_Data SET ");
                 sql.AppendLine("  ShipType = @ShipType, ShipWay = @ShipWay, PayWay = @PayWay");
                 sql.AppendLine("  , ShipWho = @ShipWho, SendDate = @SendDate, SendComp = @SendComp");
-                sql.AppendLine("  , SendWho = @SendWho, SendAddr = @SendAddr, SendTel = @SendTel");
+                sql.AppendLine("  , SendWho = @SendWho, SendAddr = @SendAddr, SendTel1 = @SendTel1, SendTel2 = @SendTel2");
                 sql.AppendLine("  , ShipNo = @ShipNo, ShipPay = @ShipPay, Box = @Box");
                 sql.AppendLine("  , BoxClass1 = @BoxClass1, BoxClass2 = @BoxClass2, TargetClass = @TargetClass");
                 sql.AppendLine("  , Remark1 = @Remark1, Remark2 = @Remark2, PurNo = @PurNo, SaleNo = @SaleNo, InvoiceNo = @InvoiceNo");
@@ -769,7 +771,8 @@ namespace DeliveryData.Controllers
                 cmd.Parameters.AddWithValue("SendComp", instance.SendComp);
                 cmd.Parameters.AddWithValue("SendWho", instance.SendWho);
                 cmd.Parameters.AddWithValue("SendAddr", instance.SendAddr);
-                cmd.Parameters.AddWithValue("SendTel", instance.SendTel);
+                cmd.Parameters.AddWithValue("SendTel1", instance.SendTel1);
+                cmd.Parameters.AddWithValue("SendTel2", instance.SendTel2);
                 cmd.Parameters.AddWithValue("ShipNo", instance.ShipNo);
                 cmd.Parameters.AddWithValue("ShipPay", instance.ShipPay);
                 cmd.Parameters.AddWithValue("Box", instance.Box.Equals(0) ? DBNull.Value : (object)instance.Box);

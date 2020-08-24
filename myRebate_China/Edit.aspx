@@ -1,4 +1,4 @@
-﻿<%@ Page Title="客戶返利資料維護-SZ" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Edit.aspx.cs" Inherits="myRebate_Edit" %>
+﻿<%@ Page Title="客戶返利資料維護-China" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Edit.aspx.cs" Inherits="myRebate_Edit" %>
 
 <%@ Import Namespace="PKLib_Method.Methods" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="CssContent" runat="Server">
@@ -16,7 +16,7 @@
                 <div class="ui small breadcrumb">
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
-                    <div class="section">客戶返利統計-SZ</div>
+                    <div class="section">客戶返利統計-China</div>
                     <i class="right angle icon divider"></i>
                     <div class="active section">
                         資料維護
@@ -60,8 +60,7 @@
                         <div class="four wide field">
                             <label>計算方式</label>
                             <asp:DropDownList ID="ddl_Formula" runat="server">
-                                <asp:ListItem Value="A">算式A</asp:ListItem>
-                                <asp:ListItem Value="B">算式B</asp:ListItem>
+                                <asp:ListItem Value="A" Selected="True">算式A</asp:ListItem>
                             </asp:DropDownList>
                         </div>
                     </div>

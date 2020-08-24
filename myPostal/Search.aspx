@@ -95,7 +95,7 @@
                                     </div>
                                     <div class="four wide field">
                                         <label>郵務號碼</label>
-                                        <asp:TextBox ID="tb_PostNo" runat="server" MaxLength="10" autocomplete="off"></asp:TextBox>
+                                        <asp:TextBox ID="tb_PostNo" runat="server" MaxLength="20" autocomplete="off"></asp:TextBox>
                                     </div>
                                 </div>
                                 <div class="fields">

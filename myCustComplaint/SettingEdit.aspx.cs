@@ -91,7 +91,8 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
                 Get_ClassList("2", ddl_CustType, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("3", ddl_FreightType, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("11", ddl_PlanType, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
-
+                Get_ClassList("12", ddl_BadReason, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
+                
 
                 //    /* 多語系設定 */
                 //    lt_TraceID.Text = GetLocalResourceObject("txt_系統自動產生").ToString();
@@ -160,6 +161,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
 
         //--- 填入客服資料 ---
         ddl_PlanType.SelectedValue = query.PlanType.ToString();
+        ddl_BadReason.SelectedValue = query.BadReason.ToString();
         ddl_InvoiceIsBack.SelectedValue = query.InvoiceIsBack.ToString();
         ddl_CustType.SelectedValue = query.CustType.ToString(); //-客戶類別
         //-客戶選單
@@ -308,6 +310,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
 
         //----- 檢查:必填欄位 -----
         string _planType = ddl_PlanType.SelectedValue;
+        string _badReason = ddl_BadReason.SelectedValue;
         string _custType = ddl_CustType.SelectedValue;
         string _custID = val_CustID.Text;
         string _mallID = ddl_Mall.SelectedValue;
@@ -326,6 +329,10 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
         if (string.IsNullOrWhiteSpace(_planType))
         {
             errTxt += "請選擇「計劃處理方式」\\n";
+        }
+        if (string.IsNullOrWhiteSpace(_badReason))
+        {
+            errTxt += "請選擇「不良原因」\\n";
         }
         if (string.IsNullOrWhiteSpace(_custType))
         {
@@ -357,6 +364,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
         {
             Data_ID = new Guid(Req_DataID),
             PlanType = Convert.ToInt32(_planType),
+            BadReason = Convert.ToInt32(_badReason),
             CustType = Convert.ToInt32(_custType),
             RefCustID = _custID,
             RefMallID = string.IsNullOrWhiteSpace(_mallID) ? 0 : Convert.ToInt32(_mallID),

@@ -177,6 +177,7 @@ namespace ARData.Controllers
                                 AddrRemark = item.Field<string>("AddrRemark"),
                                 Fax = item.Field<string>("Fax"),
                                 Tel = item.Field<string>("Tel"),
+                                ItemCnt = item.Field<Int32>("ItemCnt"),
 
                                 ErrMessage = item.Field<string>("ErrMessage"),
                                 ErrTime = item.Field<DateTime?>("ErrTime").ToString().ToDateString("yyyy/MM/dd HH:mm"),
@@ -226,6 +227,7 @@ namespace ARData.Controllers
             sql.AppendLine(" , Base.Create_Who, Base.Create_Time, Base.Update_Who, Base.Update_Time");
             sql.AppendLine(" , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Create_Who)) AS Create_Name");
             sql.AppendLine(" , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Update_Who)) AS Update_Name");
+            sql.AppendLine(" , (SELECT COUNT(*) FROM[PKExcel].dbo.AR_DataItems WHERE Parent_ID = Base.Data_ID) AS ItemCnt");
             sql.AppendLine(" , ROW_NUMBER() OVER(ORDER BY Base.[Status], Base.Create_Time DESC) AS RowIdx");
             sql.AppendLine(" , RTRIM(Cust.MA002) AS CustName, RTRIM(Cust.MA003) AS CustFullName");
             sql.AppendLine(" , Cust.MA040 AS ZipCode, Cust.MA025 AS Addr, Cust.MA026 AS AddrRemark, Cust.MA008 AS Fax, Cust.MA006 AS Tel");
@@ -345,6 +347,9 @@ namespace ARData.Controllers
         /// <param name="search">日期格式為yyyyMMdd</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
+        /// <remarks>
+        /// 結帳單-憑證單號對應COPTG / COPTJ
+        /// </remarks>
         public IQueryable<ARData_Details> GetErpList(string dbs, string parentID, Dictionary<string, string> search, out string ErrMsg)
         {
             //----- 宣告 -----
@@ -373,17 +378,20 @@ namespace ARData.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" SELECT RTRIM(Base.TA001) AS AR_Fid, RTRIM(Base.TA002) AS AR_Sid");
-                sql.AppendLine("  , RTRIM(SO.TG001) AS SO_Fid, RTRIM(SO.TG002) AS SO_Sid");
+                sql.AppendLine("  , RTRIM(ACRTB.TB005) AS SO_Fid, RTRIM(ACRTB.TB006) AS SO_Sid");
                 sql.AppendLine("  , Terms.NA002 AS TermID, Terms.NA003 AS TermName");
-                sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency");
-                sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA042 AS float) AS TaxPrice, CAST(Base.TA031 AS float) AS GetPrice");
+                sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency, Base.TA036 AS InvoiceNo");
+                sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA030 AS float) AS TaxPrice");
+                sql.AppendLine("  , CAST(Base.TA031 AS float) AS GetPrice");
                 sql.AppendLine("  , Base.TA022 AS OrderRemark");
                 sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY Base.TA002) AS SerialNo");
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base WITH(NOLOCK)");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.ACRTB WITH(NOLOCK) ON Base.TA001 = ACRTB.TB001 AND Base.TA002 = ACRTB.TB002");
-                sql.AppendLine("  INNER JOIN [##dbName##].dbo.COPTG SO WITH(NOLOCK) ON ACRTB.TB005 = SO.TG001 AND ACRTB.TB006 = SO.TG002 ");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.CMSNA Terms ON Base.TA043 = Terms.NA002 AND Terms.NA001 = 2");
-                sql.AppendLine(" WHERE (TA025 = 'Y') AND (TA027 = 'N')");
+                sql.AppendLine("  LEFT JOIN [##dbName##].dbo.COPTG SO WITH(NOLOCK) ON ACRTB.TB005 = SO.TG001 AND ACRTB.TB006 = SO.TG002");
+                sql.AppendLine("  LEFT JOIN [##dbName##].dbo.COPTJ Reb WITH(NOLOCK) ON ACRTB.TB005 = Reb.TJ001 AND ACRTB.TB006 = Reb.TJ002 AND ACRTB.TB007 = Reb.TJ003");
+                sql.AppendLine(" WHERE (Base.TA025 = 'Y') AND (Base.TA027 = 'N')");
+
                 //--排除重複(20200623-Annie說不要擋)
                 //sql.AppendLine(" AND (RTRIM(Base.TA001)+'-'+RTRIM(Base.TA002) NOT IN (");
                 //sql.AppendLine(" 	SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
@@ -458,12 +466,13 @@ namespace ARData.Controllers
                                 TermID = item.Field<string>("TermID"),
                                 TermName = item.Field<string>("TermName"),
                                 ArDate = item.Field<string>("ArDate"),
-                                BillNo = item.Field<string>("BillNo"),
+                                BillNo = item.Field<string>("BillNo"),  //TW
+                                InvoiceNo = item.Field<string>("InvoiceNo"),  //SH
                                 PreGetDay = item.Field<string>("PreGetDay"),
                                 Currency = item.Field<string>("Currency"),
                                 Price = item.Field<double>("Price"), //應收金額
                                 TaxPrice = item.Field<double>("TaxPrice"), //本幣營業稅額
-                                GetPrice = item.Field<double>("GetPrice"), //已收金額(預收款)
+                                GetPrice = item.Field<double>("GetPrice"), //已收金額-應收 = 預收款
                                 OrderRemark = item.Field<string>("OrderRemark")
                             };
 
@@ -519,8 +528,9 @@ namespace ARData.Controllers
                 sql.AppendLine("  , Base.TA004 AS CustID, Base.TA008 AS CustName");
                 sql.AppendLine("  , DT.TB005 AS AT_Fid, DT.TB006 AS AT_Sid, DT.TB007 AS AT_Tid");
                 sql.AppendLine("  , Terms.NA002 AS TermID, Terms.NA003 AS TermName");
-                sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency");
-                sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA042 AS float) AS TaxPrice, CAST(Base.TA031 AS float) AS GetPrice");
+                sql.AppendLine("  , Base.TA003 AS ArDate, Base.TA015 AS BillNo, Base.TA020 AS PreGetDay, Base.TA009 AS Currency, Base.TA036 AS InvoiceNo");
+                sql.AppendLine("  , CAST(Base.TA029 AS float) AS Price, CAST(Base.TA030 AS float) AS TaxPrice");
+                sql.AppendLine("  , CAST(Base.TA031 AS float) AS GetPrice");
                 sql.AppendLine("  , Base.TA022 AS OrderRemark");
                 sql.AppendLine(" FROM [##dbName##].dbo.ACRTA Base");
                 sql.AppendLine("  INNER JOIN [##dbName##].dbo.ACRTB DT ON Base.TA001 = DT.TB001 AND Base.TA002 = DT.TB002");
@@ -569,11 +579,12 @@ namespace ARData.Controllers
                                 TermName = item.Field<string>("TermName"),
                                 ArDate = item.Field<string>("ArDate"),
                                 BillNo = item.Field<string>("BillNo"),
+                                InvoiceNo = item.Field<string>("InvoiceNo"),
                                 PreGetDay = item.Field<string>("PreGetDay"),
                                 Currency = item.Field<string>("Currency"),
                                 Price = item.Field<double>("Price"), //應收金額
                                 TaxPrice = item.Field<double>("TaxPrice"), //本幣營業稅額
-                                GetPrice = item.Field<double>("GetPrice"), //已收金額
+                                GetPrice = item.Field<double>("GetPrice"), //已收金額-應收=預收
                                 OrderRemark = item.Field<string>("OrderRemark")
                             };
 
@@ -601,7 +612,7 @@ namespace ARData.Controllers
         {
             //----- 宣告 -----
             List<ARData_PriceInfo> dataList = new List<ARData_PriceInfo>();
-            StringBuilder sql = new StringBuilder();
+            //StringBuilder sql = new StringBuilder();
             /* 設定DB Name */
             string _dbName;
             //來源DB
@@ -624,43 +635,54 @@ namespace ARData.Controllers
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" ;WITH TblPreGet AS (");
-                sql.AppendLine("     SELECT ISNULL(SUM(TA029+TA042), 0) AS PrePrice, ISNULL(SUM(TA031), 0) AS GetPrice");
-                sql.AppendLine("     , COUNT(*) AS Cnt");
-                sql.AppendLine("     , TA004 AS CustID");
-                sql.AppendLine("     FROM [##dbName##].dbo.ACRTA");
-                sql.AppendLine("     LEFT JOIN [PKExcel].dbo.AR_Data Base ON TA004 = Base.CustID COLLATE Chinese_Taiwan_Stroke_BIN AND TA003 < Base.erp_sDate");
-                sql.AppendLine("     WHERE (TA025 = 'Y') AND (TA027 = 'N') AND (Base.Data_ID = @parentID)");
-                sql.AppendLine("     GROUP BY TA004");
-                sql.AppendLine(" )");
-                sql.AppendLine(" , TblWishGet AS (");
-                sql.AppendLine("     SELECT ISNULL(SUM(TA029+TA042), 0) AS TotalPrice");
-                sql.AppendLine("     , ISNULL(SUM(TA029), 0) AS TotalPrice_NoTax");
-                sql.AppendLine("     , ISNULL(SUM(TA042), 0) AS TotalTaxPrice");
-                sql.AppendLine("     , COUNT(*) AS Cnt");
-                sql.AppendLine("     , TA004 AS CustID");
-                sql.AppendLine("     FROM [##dbName##].dbo.ACRTA");
-                sql.AppendLine("     WHERE (TA025 = 'Y') AND (TA027 = 'N')");
-                sql.AppendLine("     AND (RTRIM(TA001)+'-'+RTRIM(TA002) IN (");
-                sql.AppendLine("         SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine("         FROM [PKExcel].dbo.AR_DataItems subItems");
-                sql.AppendLine("         WHERE (subItems.Parent_ID = @parentID)");
-                sql.AppendLine("     ))");
-                sql.AppendLine("     GROUP BY TA004");
-                sql.AppendLine(" )");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  ISNULL(CAST(TblPreGet.PrePrice AS float), 0) AS PrePrice");
-                sql.AppendLine("  , ISNULL(CAST(TblPreGet.GetPrice AS float), 0) AS GetPrice");
-                sql.AppendLine("  , ISNULL(CAST(TblPreGet.Cnt AS int), 0) AS PreCnt");
-                sql.AppendLine("  , ISNULL(CAST(TblWishGet.TotalPrice AS float), 0) AS TotalPrice");
-                sql.AppendLine("  , ISNULL(CAST(TblWishGet.TotalPrice_NoTax AS float), 0) AS TotalPrice_NoTax");
-                sql.AppendLine("  , ISNULL(CAST(TblWishGet.TotalTaxPrice AS float), 0) AS TotalTaxPrice");
-                sql.AppendLine("  , ISNULL(CAST(TblWishGet.Cnt AS int), 0) AS Cnt");
-                sql.AppendLine(" FROM TblPreGet FULL OUTER JOIN TblWishGet ON TblPreGet.CustID = TblWishGet.CustID");
+                string sql = @"
+                 ;WITH TblPreGet AS (
+                     SELECT ISNULL(SUM(TA029+TA030), 0) AS unGetPrice
+                     , COUNT(*) AS Cnt
+                     , TA004 AS CustID
+                     FROM [##dbName##].dbo.ACRTA
+                     LEFT JOIN [PKExcel].dbo.AR_Data Base ON TA004 = Base.CustID COLLATE Chinese_Taiwan_Stroke_BIN AND TA003 < Base.erp_sDate
+                     WHERE (ACRTA.TA001 <> '6201') AND (ACRTA.TA025 = 'Y') AND (ACRTA.TA027 = 'N') AND (Base.Data_ID = @parentID)
+                     GROUP BY TA004
+                 )
+                 , TblPreGetPrice AS (
+	                 SELECT ACRTA.TA004 AS CustID
+	                  , ISNULL(SUM(ACRTA.TA031 - ACRTA.TA041), 0) AS PreGetPrice
+	                 FROM [##dbName##].dbo.ACRTA
+	                 LEFT JOIN [PKExcel].dbo.AR_Data Base ON TA004 = Base.CustID COLLATE Chinese_Taiwan_Stroke_BIN AND TA003 < Base.erp_sDate
+	                 WHERE (ACRTA.TA001 = '6201') AND (ACRTA.TA025 = 'Y') AND (ACRTA.TA027 = 'N') AND (Base.Data_ID = @parentID)
+	                 GROUP BY ACRTA.TA004
+                 )
+                 , TblWishGet AS (
+                     SELECT ISNULL(SUM(TA029+TA030), 0) AS TotalPrice
+                     , ISNULL(SUM(TA029), 0) AS TotalPrice_NoTax
+                     , ISNULL(SUM(TA030), 0) AS TotalTaxPrice
+                     , COUNT(*) AS Cnt
+                     , TA004 AS CustID
+                     FROM [##dbName##].dbo.ACRTA
+                     WHERE (TA025 = 'Y') AND (TA027 = 'N')
+                     AND (RTRIM(TA001)+'-'+RTRIM(TA002) IN (
+                         SELECT subItems.Erp_AR_ID COLLATE Chinese_Taiwan_Stroke_BIN
+                         FROM [PKExcel].dbo.AR_DataItems subItems
+                         WHERE (subItems.Parent_ID = @parentID)
+                     ))
+                     GROUP BY TA004
+                 )
+                 SELECT
+                  ISNULL(CAST(TblPreGet.unGetPrice AS float), 0) AS unGetPrice
+                  , ISNULL(CAST(TblPreGet.Cnt AS int), 0) AS unGetCnt
+                  , ISNULL(CAST(TblPreGetPrice.PreGetPrice AS float), 0) AS PreGetPrice
+                  , ISNULL(CAST(TblWishGet.TotalPrice AS float), 0) AS TotalPrice
+                  , ISNULL(CAST(TblWishGet.TotalPrice_NoTax AS float), 0) AS TotalPrice_NoTax
+                  , ISNULL(CAST(TblWishGet.TotalTaxPrice AS float), 0) AS TotalTaxPrice
+                  , ISNULL(CAST(TblWishGet.Cnt AS int), 0) AS Cnt
+                 FROM TblPreGet FULL OUTER JOIN TblWishGet ON TblPreGet.CustID = TblWishGet.CustID
+                    LEFT JOIN TblPreGetPrice ON TblPreGet.CustID = TblPreGetPrice.CustID
+                ";
 
 
-                //Replace DB 前置詞
-                sql.Replace("##dbName##", _dbName);
+                //Replace DB 前置詞                
+                sql = sql.Replace("##dbName##", _dbName);
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -679,14 +701,14 @@ namespace ARData.Controllers
                             //加入項目
                             var data = new ARData_PriceInfo
                             {
-                                PrePrice = item.Field<double>("PrePrice"), //前期未收款
-                                PreCnt = item.Field<int>("PreCnt"), //前期未收款筆數
+                                unGetPrice = item.Field<double>("unGetPrice"), //前期未收款
+                                unGetCnt = item.Field<int>("unGetCnt"), //前期未收款筆數
                                 TotalPrice = item.Field<double>("TotalPrice"), //本期應收總額
                                 TotalPrice_NoTax = item.Field<double>("TotalPrice_NoTax"), //本幣未稅金額
                                 TotalTaxPrice = item.Field<double>("TotalTaxPrice"), //本幣稅額
-                                GetPrice = item.Field<double>("GetPrice"), //預收款
+                                PreGetPrice = item.Field<double>("PreGetPrice"), //預收款=已收-應收
                                 Cnt = item.Field<int>("Cnt"),
-                                AllPrice = item.Field<double>("PrePrice") + item.Field<double>("TotalPrice")
+                                AllPrice = item.Field<double>("unGetPrice") + item.Field<double>("TotalPrice")  //前期未收款+本期應收總額
                             };
 
                             //將項目加入至集合

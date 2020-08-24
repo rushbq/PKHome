@@ -152,7 +152,12 @@
                                                 <label>聯絡地址</label>
                                                 <asp:Label ID="lb_BuyerAddr" runat="server" CssClass="ui fluid basic label"></asp:Label>
                                             </div>
-
+                                        </div>
+                                        <div class="fields">
+                                            <div class="sixteen wide field">
+                                                <label>不良原因</label>
+                                                <asp:Label ID="lb_BadReason" runat="server" CssClass="ui fluid basic label"></asp:Label>
+                                            </div>
                                         </div>
                                         <div class="fields">
                                             <div class="seven wide field grey-text text-darken-2">

@@ -155,6 +155,11 @@
                                     <i class="pencil icon"></i>
                                 </a>
                             </asp:PlaceHolder>
+                            <asp:PlaceHolder ID="ph_PDF" runat="server">
+                                <a class="ui small grey basic icon button" href="<%#fn_Param.RefUrl %>PKHome/ARData/<%#Eval("TraceID") %>/<%#Eval("CustID") %>.pdf" target="_blank">
+                                    <i class="file pdf outline icon"></i>
+                                </a>
+                            </asp:PlaceHolder>
                         </td>
                     </tr>
                 </ItemTemplate>

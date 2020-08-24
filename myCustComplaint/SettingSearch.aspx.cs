@@ -363,6 +363,7 @@ public partial class myCustComplaint_SettingSearch : SecurityCheck
                 聯絡位址 = fld.Field<string>("BuyerAddr"),
                 商城 = fld.Field<string>("RefMallName"),
                 商城單號 = fld.Field<string>("Platform_ID"),
+                不良原因 = fld.Field<string>("BadReasonName"),
                 備註 = fld.Field<string>("CustInput"),
                 客服填寫人員 = fld.Field<string>("CS_Name"),
                 收貨填寫人員 = fld.Field<string>("Freight_Name"),

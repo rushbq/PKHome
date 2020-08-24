@@ -124,7 +124,8 @@ public partial class myDelivery_Edit : SecurityCheck
             show_SendWho.Text = query.SendWho;
             tb_SendWho.Text = query.SendWho;
             tb_SendAddr.Text = query.SendAddr;
-            tb_SendTel.Text = query.SendTel;
+            tb_SendTel1.Text = query.SendTel1;
+            tb_SendTel2.Text = query.SendTel2;
             tb_ShipNo.Text = query.ShipNo;
             tb_ShipPay.Text = query.ShipPay.ToString();
             tb_Box.Text = query.Box.ToString();
@@ -189,9 +190,10 @@ public partial class myDelivery_Edit : SecurityCheck
             string _ShipWho = val_Emp.Text;
             string _SendDate = tb_SendDate.Text;
             string _SendComp = tb_SendComp.Text;
-            string _SendWho = tb_SendWho.Text;
+            string _SendWho = string.IsNullOrWhiteSpace(tb_SendWho.Text) ? show_SendWho.Text.Trim() : tb_SendWho.Text;
             string _SendAddr = tb_SendAddr.Text;
-            string _SendTel = tb_SendTel.Text;
+            string _SendTel1 = tb_SendTel1.Text;
+            string _SendTel2 = tb_SendTel2.Text;
             string _ShipNo = tb_ShipNo.Text;
             string _ShipPay = tb_ShipPay.Text;
             string _Box = tb_Box.Text;
@@ -216,7 +218,8 @@ public partial class myDelivery_Edit : SecurityCheck
                 SendComp = _SendComp,
                 SendWho = _SendWho,
                 SendAddr = _SendAddr,
-                SendTel = _SendTel,
+                SendTel1 = _SendTel1,
+                SendTel2 = _SendTel2,
                 ShipNo = _ShipNo,
                 ShipPay = string.IsNullOrWhiteSpace(_ShipPay) ? 0 : Convert.ToDouble(_ShipPay),
                 Box = string.IsNullOrWhiteSpace(_Box) ? 0 : Convert.ToInt32(_Box),
@@ -286,9 +289,10 @@ public partial class myDelivery_Edit : SecurityCheck
             string _ShipWho = val_Emp.Text;
             string _SendDate = tb_SendDate.Text;
             string _SendComp = tb_SendComp.Text;
-            string _SendWho = tb_SendWho.Text;
+            string _SendWho = string.IsNullOrWhiteSpace(tb_SendWho.Text) ? show_SendWho.Text.Trim() : tb_SendWho.Text;
             string _SendAddr = tb_SendAddr.Text;
-            string _SendTel = tb_SendTel.Text;
+            string _SendTel1 = tb_SendTel1.Text;
+            string _SendTel2 = tb_SendTel2.Text;
             string _ShipNo = tb_ShipNo.Text;
             string _ShipPay = tb_ShipPay.Text;
             string _Box = tb_Box.Text;
@@ -312,7 +316,8 @@ public partial class myDelivery_Edit : SecurityCheck
                 SendComp = _SendComp,
                 SendWho = _SendWho,
                 SendAddr = _SendAddr,
-                SendTel = _SendTel,
+                SendTel1 = _SendTel1,
+                SendTel2 = _SendTel2,
                 ShipNo = _ShipNo,
                 ShipPay = string.IsNullOrWhiteSpace(_ShipPay) ? 0 : Convert.ToDouble(_ShipPay),
                 Box = string.IsNullOrWhiteSpace(_Box) ? 0 : Convert.ToInt32(_Box),

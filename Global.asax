@@ -289,6 +289,19 @@
                 , { "rootID", "3000" }
                 , { "CompID", "SZ" }
                 , { "id", "new" }});
+        routes.MapPageRoute("RebateCHNSearch", "{lang}/{rootID}/RebateChina", "~/myRebate_China/Search.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("RebateCHNEdit", "{lang}/{rootID}/RebateChina/Edit/{id}", "~/myRebate_China/Edit.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "id", "new" }});
+        routes.MapPageRoute("RebateCHNCust", "{lang}/{rootID}/RebateChina/CustRel", "~/myRebate_China/CustConfig.aspx", false,
+        new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
 
 
         //客訴管理

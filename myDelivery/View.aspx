@@ -117,10 +117,16 @@
                                     <asp:Literal ID="lt_SendWho" runat="server"></asp:Literal>
                                 </div>
                             </div>
-                            <div class="eight wide field">
-                                <label>收件電話</label>
+                            <div class="four wide field">
+                                <label>收件電話1</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_SendAddr" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_SendTel1" runat="server"></asp:Literal>
+                                </div>
+                            </div>
+                            <div class="four wide field">
+                                <label>收件電話2</label>
+                                <div class="ui basic large label">
+                                    <asp:Literal ID="lt_SendTel2" runat="server"></asp:Literal>
                                 </div>
                             </div>
                         </div>
@@ -128,7 +134,7 @@
                             <div class="sixteen wide field">
                                 <label>收件地址</label>
                                 <div class="ui basic large label">
-                                    <asp:Literal ID="lt_SendTel" runat="server"></asp:Literal>
+                                    <asp:Literal ID="lt_SendAddr" runat="server"></asp:Literal>
                                 </div>
                             </div>
                         </div>

@@ -177,7 +177,13 @@
                                                 <label>聯絡地址</label>
                                                 <asp:TextBox ID="tb_BuyerAddr" runat="server" MaxLength="200" placeholder="完整地址"></asp:TextBox>
                                             </div>
-
+                                        </div>
+                                        <div class="fields">
+                                            <div class="sixteen wide required field">
+                                                <label>不良原因</label>
+                                                <asp:DropDownList ID="ddl_BadReason" runat="server" CssClass="fluid">
+                                                </asp:DropDownList>
+                                            </div>
                                         </div>
                                         <div class="fields">
                                             <div class="seven wide field grey-text text-darken-2">

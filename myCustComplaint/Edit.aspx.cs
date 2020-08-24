@@ -91,6 +91,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
                 Get_ClassList("5", ddl_Flow301_Type, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("6", ddl_Flow401_Type, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("7", ddl_Flow501_Type, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
+                Get_ClassList("13", ddl_BadReason, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
 
 
                 //載入資料
@@ -177,6 +178,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
 
         //--- 二線F301 ---
         ddl_Flow301_Type.SelectedValue = query.Flow301_Type.ToString();
+        ddl_BadReason.SelectedValue = query.BadReason.ToString();
         tb_Flow301_Desc.Text = query.Flow301_Desc;
         lt_Flow301_Who.Text = query.Flow301_WhoName ?? "待填寫...";
         lt_Flow301_Time.Text = query.Flow301_Time;
@@ -185,6 +187,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
         tb_FixOkDate.Text = query.FixOkDate;
         //判斷是否啟用
         ddl_Flow301_Type.Enabled = _use301;
+        ddl_BadReason.Enabled = _use301;
         tb_Flow301_Desc.Enabled = _use301;
         tb_FixPrice.Enabled = _use301;
         tb_FixWishDate.Enabled = _use301;
@@ -389,6 +392,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
         string _ERP_No4 = tb_ERP_No4.Text;
         string _ERP_No5 = tb_ERP_No5.Text;
         string _ERP_No6 = tb_ERP_No6.Text;
+        string _badReason = ddl_BadReason.SelectedValue;
 
         //----- 設定:資料欄位 -----
         var dataItem = new CCPItem
@@ -406,6 +410,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
             ShipNo = _ShipNo,
             ShipDate = _ShipDate,
             Remark_Check = _Remark_Check,
+            BadReason = string.IsNullOrWhiteSpace(_badReason) ? 0 : Convert.ToInt32(_badReason),
             ERP_No1 = _ERP_No1,
             ERP_No2 = _ERP_No2,
             ERP_No3 = _ERP_No3,

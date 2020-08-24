@@ -201,6 +201,13 @@
                                                 <asp:TextBox ID="tb_FixPrice" runat="server" type="number" min="0" step="any">0</asp:TextBox>
                                             </div>
                                         </div>
+                                        <div class="fields">
+                                            <div class="sixteen wide required field">
+                                                <label>不良原因</label>
+                                                <asp:DropDownList ID="ddl_BadReason" runat="server" CssClass="fluid">
+                                                </asp:DropDownList>
+                                            </div>
+                                        </div>
                                     </div>
                                     <!-- Right Block -->
                                     <div class="eight wide field">

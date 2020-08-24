@@ -202,6 +202,12 @@ public partial class myARdata_Search : SecurityCheck
                 ph_KeepGo.Visible = !_flow.Equals(20);
 
 
+                //取得資料:單身數
+                Int32 _itemCnt = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "ItemCnt"));
+
+                PlaceHolder ph_PDF = (PlaceHolder)e.Item.FindControl("ph_PDF");
+                ph_PDF.Visible = !_itemCnt.Equals(0);
+
             }
         }
         catch (Exception)
@@ -379,14 +385,14 @@ public partial class myARdata_Search : SecurityCheck
 
     /// <summary>
     /// 取得傳遞參數 - sDate
-    /// 預設7日內
+    /// 預設30日內
     /// </summary>
     public string Req_sDate
     {
         get
         {
             String _data = Request.QueryString["sDate"];
-            string dt = DateTime.Now.AddDays(-7).ToString().ToDateString("yyyy/MM/dd");
+            string dt = DateTime.Now.AddDays(-30).ToString().ToDateString("yyyy/MM/dd");
             return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : dt;
         }
         set

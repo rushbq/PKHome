@@ -727,7 +727,8 @@ public partial class myCustComplaint_Search : SecurityCheck
                          FlowStatusName = fld.FlowStatusName,
                          Flow301_TypeName = fld.Flow301_TypeName,
                          FixPrice = fld.FixPrice,
-                         Flow301_Desc = fld.Flow301_Desc
+                         Flow301_Desc = fld.Flow301_Desc,
+                         BadReasonName = fld.BadReasonName
                      });
 
                 //將IQueryable轉成DataTable
@@ -746,6 +747,7 @@ public partial class myCustComplaint_Search : SecurityCheck
                     myDT.Columns["Flow301_TypeName"].ColumnName = "處理方式";
                     myDT.Columns["FixPrice"].ColumnName = "報價金額";
                     myDT.Columns["Flow301_Desc"].ColumnName = "處理說明";
+                    myDT.Columns["BadReasonName"].ColumnName = "不良原因";
                 }
 
                 break;

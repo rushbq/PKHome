@@ -44,6 +44,7 @@
                     <div class="field">
                         <label>追蹤碼</label>
                         <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
+                        <asp:HiddenField ID="hf_TraceID" runat="server" />
                     </div>
                     <div class="field">
                         <label>客戶</label>
@@ -58,8 +59,8 @@
                 <div class="four fields">
                     <div class="field">
                         <label>前期未收款</label>
-                        <asp:Label ID="lb_PrePrice" runat="server" CssClass="ui basic large label"></asp:Label>
-                        &nbsp;(<asp:Literal ID="lt_PreCnt" runat="server"></asp:Literal>
+                        <asp:Label ID="lb_unGetPrice" runat="server" CssClass="ui basic large label"></asp:Label>
+                        &nbsp;(<asp:Literal ID="lt_unGetCnt" runat="server"></asp:Literal>
                         筆)
                     </div>
                     <div class="field">
@@ -108,7 +109,7 @@
                                         <%#Eval("ArDate") %>
                                     </td>
                                     <td>
-                                        <%#Eval("BillNo") %>
+                                        <%#Eval("BillNo") %>&nbsp;<%#Eval("InvoiceNo") %>
                                     </td>
                                     <td>
                                         <%#Eval("AT_Fid") %>-<%#Eval("AT_Sid") %>-<%#Eval("AT_Tid") %>
@@ -153,7 +154,7 @@
                         <a href="<%=Page_SearchUrl %>" class="ui button"><i class="undo icon"></i>返回列表</a>
                     </div>
                     <div class="five wide column center aligned">
-                        <a href="<%=fn_Param.RefUrl %>PKHome/ARData/<%=hf_CustID.Value %>.pdf" target="_blank" class="ui orange button"><i class="file pdf outline icon"></i>檢查PDF</a>
+                        <a href="<%=fn_Param.RefUrl %>PKHome/ARData/<%=hf_TraceID.Value %>/<%=hf_CustID.Value %>.pdf" target="_blank" class="ui orange button"><i class="file pdf outline icon"></i>檢查PDF</a>
                     </div>
                     <div class="five wide column right aligned">
                         <button id="doNext" type="button" class="ui green button">下一步<i class="chevron right icon"></i></button>

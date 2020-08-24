@@ -1,4 +1,4 @@
-﻿<%@ Page Title="客戶返利統計-SZ" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Search.aspx.cs" Inherits="myRebate_Search" %>
+﻿<%@ Page Title="客戶返利統計-China" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Search.aspx.cs" Inherits="myRebate_Search" %>
 
 <%@ Import Namespace="PKLib_Method.Methods" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="CssContent" runat="Server">
@@ -17,11 +17,12 @@
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
                     <div class="active section">
-                        客戶返利統計-SZ
+                        客戶返利統計-China
                     </div>
                 </div>
             </div>
             <div class="right menu">
+                <a href="<%=FuncPath() %>/CustRel" class="item"><i class="users icon"></i>多客戶設定</a>
                 <asp:LinkButton ID="lbtn_Excel" runat="server" CssClass="item" OnClick="lbtn_Excel_Click"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></asp:LinkButton>
                 <a class="item" href="<%=FuncPath() %>/Edit">
                     <i class="plus icon"></i>
@@ -203,10 +204,10 @@
                         </td>
                         <td>
                             <asp:Literal ID="lt_Remark" runat="server"></asp:Literal></td>
-                        <td class="right aligned <%#showNumber(Eval("CntBase_D")) %>" data-content="D" title="D = A - g">
+                        <td class="right aligned <%#showNumber(Eval("CntBase_D")) %>" data-content="D" title="D = A + B - g">
                             <%#Eval("CntBase_D").ToString().ToMoneyString() %>
                         </td>
-                        <td class="right aligned <%#showNumber(Eval("CntBase_E")) %>" data-content="E" title="E = A - e">
+                        <td class="right aligned <%#showNumber(Eval("CntBase_E")) %>" data-content="E" title="E = A + B - e">
                             <%#Eval("CntBase_E").ToString().ToMoneyString() %>
                         </td>
                         <td class="right aligned" data-content="c">

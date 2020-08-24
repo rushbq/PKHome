@@ -315,7 +315,7 @@ public partial class myDelivery_Search : SecurityCheck
                 登記單號 = fld.TraceID,
                 收件人姓名 = fld.SendComp + "-" + fld.SendWho,
                 收件人地址 = fld.SendAddr,
-                收件人電話 = fld.SendTel,
+                收件人電話1 = fld.SendTel1,
                 託運備註 = fld.Remark2,
                 商品別編號 = "",
                 商品數量 = fld.Box,

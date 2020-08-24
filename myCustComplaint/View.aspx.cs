@@ -150,6 +150,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
         lb_FixPrice.Text = query.FixPrice.ToString();
         lb_FixWishDate.Text = string.IsNullOrWhiteSpace(query.FixWishDate) ? "&nbsp;" : query.FixWishDate;
         lb_FixOkDate.Text = string.IsNullOrWhiteSpace(query.FixOkDate) ? "&nbsp;" : query.FixOkDate;
+        lb_BadReason.Text = query.BadReasonName;
 
 
         //--- 業務F401 ---

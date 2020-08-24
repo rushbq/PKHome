@@ -180,6 +180,12 @@
                                                 <asp:Label ID="lb_FixPrice" runat="server" CssClass="ui fluid basic label"></asp:Label>
                                             </div>
                                         </div>
+                                        <div class="fields">
+                                            <div class="sixteen wide required field">
+                                                <label>不良原因</label>
+                                                <asp:Label ID="lb_BadReason" runat="server" CssClass="ui fluid basic label"></asp:Label>
+                                            </div>
+                                        </div>
                                     </div>
                                     <!-- Right Block -->
                                     <div class="eight wide field">

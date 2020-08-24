@@ -143,7 +143,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
         lb_InvoiceIsBack.Text = query.InvoiceIsBack.ToString();
         lb_ERP_ID.Text = query.ERP_ID;
         lb_Platform_ID.Text = query.Platform_ID;
-
+        lb_BadReason.Text = query.BadReasonName;
 
         //--- 填入收貨資料 ---
         lb_FreightType.Text = query.FreightTypeName ?? "&nbsp;";

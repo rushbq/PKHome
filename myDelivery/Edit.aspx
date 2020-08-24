@@ -120,9 +120,13 @@
                                     <asp:TextBox ID="tb_SendWho" runat="server" style="display:none;"></asp:TextBox>
                                 </div>
                             </div>
-                            <div class="eight wide field">
-                                <label>收件電話</label>
-                                <asp:TextBox ID="tb_SendTel" runat="server" MaxLength="20" placeholder="電話"></asp:TextBox>
+                            <div class="four wide field">
+                                <label>收件電話1</label>
+                                <asp:TextBox ID="tb_SendTel1" runat="server" MaxLength="40" placeholder="電話1"></asp:TextBox>
+                            </div>
+                            <div class="four wide field">
+                                <label>收件電話2</label>
+                                <asp:TextBox ID="tb_SendTel2" runat="server" MaxLength="40" placeholder="電話2"></asp:TextBox>
                             </div>
                         </div>
                         <div class="fields">
@@ -338,7 +342,7 @@
                 $("#MainContent_tb_SendComp").val(result.Comp);
                 $("#MainContent_tb_SendWho").val(result.Who);
                 $("#MainContent_tb_SendAddr").val(result.Addr);
-                $("#MainContent_tb_SendTel").val(result.Tel);
+                $("#MainContent_tb_SendTel1").val(result.Tel);
             }
             , apiSettings: {
                 url: '<%=fn_Param.WebUrl%>Ajax_Data/GetData_DeliveryAddress.ashx?q={query}'

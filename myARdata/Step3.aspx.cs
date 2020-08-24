@@ -117,6 +117,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
 
             //填入表單欄位
             lb_TraceID.Text = _traceID;
+            hf_TraceID.Value = _traceID;
             //lb_DBS.Text = _dbs;
             lb_Cust.Text = "{0} ({1})".FormatThis(_custName, _custID);
             lb_sDate.Text = _sDate;
@@ -219,8 +220,8 @@ public partial class myARdata_ImportStep3 : SecurityCheck
             var data = query.Take(1).FirstOrDefault();
 
             //----- 資料整理:填入資料 -----
-            lb_PrePrice.Text = data.PrePrice.ToString().ToMoneyString();
-            lt_PreCnt.Text = data.PreCnt.ToString();
+            lb_unGetPrice.Text = data.unGetPrice.ToString().ToMoneyString();
+            lt_unGetCnt.Text = data.unGetCnt.ToString();
             lb_TotalPrice_NoTax.Text = data.TotalPrice_NoTax.ToString().ToMoneyString();
             lb_TotalPrice.Text = data.TotalPrice.ToString().ToMoneyString();
             lb_TotalTaxPrice.Text = data.TotalTaxPrice.ToString().ToMoneyString();
@@ -340,9 +341,23 @@ public partial class myARdata_ImportStep3 : SecurityCheck
 
 
             /* 取得發信主旨,內文 */
-            string subject = "【重要訊息通知】{0} 年 {1} 月份對帳明細通知【寶工實業股份有限公司】#{2}".FormatThis(
-                DateTime.Today.Year, DateTime.Today.Month, _custName
-                );
+            string subject = "";
+
+            switch (Req_CompID)
+            {
+                case "SH":
+                    subject = "【重要讯息通知】{0} 年 {1} 月份对帐明细通知【上海宝工工具有限公司】#{2}".FormatThis(
+                       DateTime.Today.Year, DateTime.Today.Month, _custName
+                       );
+                    break;
+
+                default:
+                    subject = "【重要訊息通知】{0} 年 {1} 月份對帳明細通知【寶工實業股份有限公司】#{2}".FormatThis(
+                       DateTime.Today.Year, DateTime.Today.Month, _custName
+                       );
+                    break;
+            }
+
             StringBuilder mailBody = Get_MailBody();
             if (mailBody.Length == 0)
             {
@@ -457,8 +472,19 @@ public partial class myARdata_ImportStep3 : SecurityCheck
                     Msg.To.Add(new MailAddress(email));
                 }
 
-                //固定CC
-                Msg.CC.Add(new MailAddress("shipping@mail.prokits.com.tw"));
+                //Check Comp
+                switch (Req_CompID)
+                {
+                    case "SH":
+                        //固定CC
+                        Msg.CC.Add(new MailAddress("sh_opteam@mail.prokits.com.tw"));
+                        break;
+
+                    default:
+                        //固定CC
+                        Msg.CC.Add(new MailAddress("shipping@mail.prokits.com.tw"));
+                        break;
+                }
 
                 //固定BCC:系統收件箱(功能穩定後可考慮移除)
                 Msg.Bcc.Add(new MailAddress("ITInform@mail.prokits.com.tw"));

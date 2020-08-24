@@ -119,6 +119,7 @@ public partial class myARdata_ImportStep2 : SecurityCheck
 
             //填入表單欄位
             lb_TraceID.Text = _traceID;
+            hf_TraceID.Value = _traceID;
             lb_DBS.Text = _dbs;
             lb_Cust.Text = "{0} ({1})".FormatThis(_custName, _custID);
             lb_sDate.Text = _sDate;
@@ -242,6 +243,8 @@ public partial class myARdata_ImportStep2 : SecurityCheck
             //[Job1] 開始寫入單身
             if (!_data.CreateDetail(_guid, dataList.AsQueryable(), out ErrMsg))
             {
+                ph_ErrMessage.Visible = true;
+                lt_ShowMsg.Text = ErrMsg;
                 CustomExtension.AlertMsg("資料處理失敗-新增單身資料, 請通知資訊人員.", "");
                 return;
             }
@@ -249,6 +252,8 @@ public partial class myARdata_ImportStep2 : SecurityCheck
             //[Job2]產生PDF
             if (!Upload_Pdf(_guid, _custID, out ErrMsg))
             {
+                ph_ErrMessage.Visible = true;
+                lt_ShowMsg.Text = ErrMsg;
                 CustomExtension.AlertMsg("PDF產生失敗,請重試.", "");
                 return;
             }
@@ -285,6 +290,8 @@ public partial class myARdata_ImportStep2 : SecurityCheck
     {
         try
         {
+            ErrMsg = "";
+
             //[Step1] 取得要做成PDF的頁面(使用元件轉換,內部站台不能用api)
             string url = "{0}myARdata/PDF_Html_{2}.aspx?id={1}".FormatThis(fn_Param.WebUrl, dataID, Req_CompID.ToUpper());
 
@@ -292,9 +299,13 @@ public partial class myARdata_ImportStep2 : SecurityCheck
             byte[] pdfByte = convertPDF(url);
 
             //[Step3] 使用byte方式上傳至FTP
-            bool isOK = _ftp.FTP_doUploadWithByte(pdfByte, UploadFolder(), custID + ".pdf");
+            string ftpFolder = UploadFolder() + hf_TraceID.Value;
 
-            ErrMsg = "";
+            //判斷資料夾, 不存在則建立
+            _ftp.FTP_CheckFolder(ftpFolder);
+
+            //執行上傳
+            bool isOK = _ftp.FTP_doUploadWithByte(pdfByte, ftpFolder, custID + ".pdf");
 
             return isOK;
         }
@@ -378,11 +389,16 @@ public partial class myARdata_ImportStep2 : SecurityCheck
 
         try
         {
+            //delete Data
             if (!_data.Delete(_guid, out ErrMsg))
             {
                 CustomExtension.AlertMsg("資料處理失敗-刪除暫存, 請通知資訊人員.", "");
                 return;
             }
+
+            //Delete Ftp Folder
+            string ftpFolder = UploadFolder() + hf_TraceID.Value + "/";
+            _ftp.FTP_DelFolder(ftpFolder);
 
             //返回上一步
             Response.Redirect(FuncPath() + "/Step1");

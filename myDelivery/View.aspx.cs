@@ -93,7 +93,8 @@ public partial class myDelivery_View : SecurityCheck
             lt_SendComp.Text = query.SendComp;
             lt_SendWho.Text = query.SendWho;
             lt_SendAddr.Text = query.SendAddr;
-            lt_SendTel.Text = query.SendTel;
+            lt_SendTel1.Text = query.SendTel1;
+            lt_SendTel2.Text = query.SendTel2;
             lt_ShipNo.Text = query.ShipNo;
             lt_ShipPay.Text = query.ShipPay.ToString();
             lt_Box.Text = query.Box.ToString();

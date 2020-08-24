@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using CustRebate_SZ_Data.Controllers;
+using CustRebate_China_Data.Controllers;
 using PKLib_Method.Methods;
 
 public partial class myRebate_Search : SecurityCheck
@@ -22,25 +22,7 @@ public partial class myRebate_Search : SecurityCheck
                 #region --權限--
                 //[權限判斷] Start
                 bool isPass = false;
-                string getCorpUid = fn_Param.GetCorpUID(Req_CompID);
-
-                switch (getCorpUid)
-                {
-                    case "3":
-                        //上海寶工
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3732");
-                        break;
-
-                    case "2":
-                        //深圳寶工
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3731");
-                        break;
-
-                    default:
-                        //TW
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3733");
-                        break;
-                }
+                isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3733");
 
                 if (!isPass)
                 {
@@ -99,7 +81,7 @@ public partial class myRebate_Search : SecurityCheck
         ArrayList PageParam = new ArrayList();  //條件參數,for pager
 
         //----- 宣告:資料參數 -----
-        CustRebate_SZ_Repository _data = new CustRebate_SZ_Repository();
+        CustRebate_China_Repository _data = new CustRebate_China_Repository();
         Dictionary<string, string> search = new Dictionary<string, string>();
         string inputY = Req_Year;
         string inputM = Req_Month;
@@ -120,7 +102,7 @@ public partial class myRebate_Search : SecurityCheck
         #endregion
 
         //----- 原始資料:取得所有資料 -----
-        var query = _data.GetCustRebateList(Req_CompID, inputY, inputM, search, out ErrMsg);
+        var query = _data.GetCustRebateList(inputY, inputM, search, out ErrMsg);
 
         //----- 資料整理:繫結 ----- 
         this.lvDataList.DataSource = query;
@@ -203,7 +185,7 @@ public partial class myRebate_Search : SecurityCheck
     protected void lbtn_Excel_Click(object sender, EventArgs e)
     {
         //----- 宣告:資料參數 -----
-        CustRebate_SZ_Repository _data = new CustRebate_SZ_Repository();
+        CustRebate_China_Repository _data = new CustRebate_China_Repository();
         Dictionary<string, string> search = new Dictionary<string, string>();
         DataTable DT = new DataTable();
 
@@ -219,7 +201,7 @@ public partial class myRebate_Search : SecurityCheck
         #endregion
 
         //----- 方法:取得資料(輸出順序以此為主) -----
-        var query = _data.GetCustRebateList(Req_CompID, Req_Year, Req_Month, search, out ErrMsg)
+        var query = _data.GetCustRebateList(Req_Year, Req_Month, search, out ErrMsg)
             .Select(fld => new
             {
                 DeptName = fld.DeptName,
@@ -452,34 +434,15 @@ public partial class myRebate_Search : SecurityCheck
     }
 
     /// <summary>
-    /// 取得網址參數 - Company ID(TW/SH/SZ)
-    /// </summary>
-    private string _Req_CompID;
-    public string Req_CompID
-    {
-        get
-        {
-            String DataID = Page.RouteData.Values["CompID"].ToString();
-
-            return DataID.ToLower().Equals("unknown") ? "SZ" : DataID;
-        }
-        set
-        {
-            this._Req_CompID = value;
-        }
-    }
-
-    /// <summary>
     /// 取得此功能的前置路徑
     /// </summary>
     /// <returns></returns>
     public string FuncPath()
     {
-        return "{0}{1}/{2}/CustRebate/{3}".FormatThis(
+        return "{0}{1}/{2}/RebateChina".FormatThis(
             fn_Param.WebUrl
             , Req_Lang
-            , Req_RootID
-            , Req_CompID);
+            , Req_RootID);
     }
 
     #endregion
