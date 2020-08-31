@@ -216,6 +216,7 @@
 
         });
 
+        //取得複選選單欄位值
         function doGetDrpVals() {
             //取得多選品號的值
             var procValue = $("#menuProd").dropdown("get value");
@@ -372,25 +373,27 @@
                      "initComplete": function (settings, json) {
                          //移除loading
                          s_data.removeClass("loading");
-
-
-                         //*** UI載入完成後觸發 *** Message Modal
-                         $(".doShowMsg").on("click", function () {
-                             //取資料
-                             var id = $(this).attr("data-id"); //model no
-                             var msgTW = $("#TWmsgDetail_" + id).val(); //get hidden field value
-                             var msgSH = $("#SHmsgDetail_" + id).val(); //get hidden field value
-
-                             //填入值
-                             $("#itemID").text(id);
-                             $("#twMsg").text(msgTW);
-                             $("#shMsg").text(msgSH);
-
-                             //顯示modal
-                             $('#msgPage').modal('show');
-                         });
                      }
                  });
+
+                /* table 重新後寫入觸發 */
+                table.on('draw', function () {
+                    //*** UI載入完成後觸發 *** Message Modal
+                    $(".doShowMsg").on("click", function () {
+                        //取資料
+                        var id = $(this).attr("data-id"); //model no
+                        var msgTW = $("#TWmsgDetail_" + id).val(); //get hidden field value
+                        var msgSH = $("#SHmsgDetail_" + id).val(); //get hidden field value
+
+                        //填入值
+                        $("#itemID").text(id);
+                        $("#twMsg").text(msgTW);
+                        $("#shMsg").text(msgSH);
+
+                        //顯示modal
+                        $('#msgPage').modal('show');
+                    });
+                });
 
                 //數字格式化(為0設為灰字)
                  function formatNumber(val) {

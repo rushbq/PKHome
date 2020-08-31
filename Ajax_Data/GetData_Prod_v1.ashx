@@ -43,6 +43,7 @@ public class GetData_Prod_v1 : IHttpHandler
                     {
                         ID = fld.ModelNo,
                         Label = fld.Name_TW,
+                        FullLabel = "(" + fld.ModelNo + ") " + fld.Name_TW,
                         Category = fld.ClassName_TW
                     }).Take(50);
 

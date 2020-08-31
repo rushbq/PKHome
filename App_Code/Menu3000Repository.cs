@@ -918,6 +918,370 @@ namespace Menu3000Data.Controllers
         #endregion *** 訂單庫存狀況 E ***
 
 
+
+        #region *** 客戶歷史報價 S ***
+        /// <summary>
+        /// [報價管理] 客戶歷史報價
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable GetQuote_History(Dictionary<string, string> search
+            , int startRow, int endRow
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                string mainSql = ""; //SQL主體
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataTable myDT = new DataTable();
+                DataCnt = 0;    //資料總數
+
+
+                //條件參數SQL
+                string filterModel = "", filterCust = "";
+                string strQuoteModel = "", strQuoteCust = "";   //報價篩選條件
+                string strOrderModel = "", strOrderCust = "";   //訂單篩選條件
+
+                #region >> [前置作業] 條件組合 <<
+
+                if (search != null)
+                {
+                    //過濾空值
+                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                    //查詢內容
+                    foreach (var item in thisSearch)
+                    {
+                        switch (item.Key)
+                        {
+                            case "ModelNo":
+                                //拆解輸入字串(1PK-036S#GE-123#MT-810)
+                                string[] aryID = Regex.Split(item.Value, "#");
+                                ArrayList aryLst = new ArrayList(aryID);
+
+                                /*
+                                 GetSQLParam:SQL WHERE IN的方法  ,ex:UPPER(ModelNo) IN ({0})
+                                */
+                                filterModel = CustomExtension.GetSQLParam(aryLst, "pModel");
+                                /* [篩選條件], 品號 */
+                                strQuoteModel = "AND (MB002 IN ({0}))".FormatThis(filterModel);
+                                strOrderModel = "AND (COPTD.TD004 IN ({0}))".FormatThis(filterModel);
+
+
+                                //SQL參數組成
+                                for (int row = 0; row < aryID.Count(); row++)
+                                {
+                                    sqlParamList.Add(new SqlParameter("@pModel" + row, aryID[row]));
+                                    sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryID[row]));
+                                }
+                                break;
+
+                            case "Cust":
+                                string[] aryCustID = Regex.Split(item.Value, "#");
+                                ArrayList aryCustLst = new ArrayList(aryCustID);
+
+                                /*
+                                 GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                                */
+                                filterCust = CustomExtension.GetSQLParam(aryCustLst, "pCust");
+                                /* [篩選條件], 客戶代號 */
+                                strQuoteCust = "AND (MB001 IN ({0}))".FormatThis(filterCust);
+                                strOrderCust = "AND (COPTC.TC004 IN ({0}))".FormatThis(filterCust);
+
+
+                                //SQL參數組成
+                                for (int row = 0; row < aryCustID.Count(); row++)
+                                {
+                                    sqlParamList.Add(new SqlParameter("@pCust" + row, aryCustID[row]));
+                                    sqlParamList_Cnt.Add(new SqlParameter("@pCust" + row, aryCustID[row]));
+                                }
+                                break;
+                        }
+                    }
+                }
+                #endregion
+
+
+                #region >> [前置作業] SQL主體 <<
+                /*
+                 TW:不含稅
+                 SH:含稅([MB013] = 'Y')
+                  利潤率 = ((Agent價 * 匯率) - 成本) / (Agent價 * 匯率)
+                */
+                mainSql = @"
+                    DECLARE @myRateTW AS FLOAT, @myRateSH AS FLOAT
+                    SET @myRateTW = (SELECT TOP 1 MG003 FROM [prokit2].dbo.CMSMG WHERE (MG001 = 'USD') ORDER BY MG002 DESC)
+                    SET @myRateSH = (SELECT TOP 1 MG003 FROM [SHPK2].dbo.CMSMG WHERE (MG001 = 'USD') ORDER BY MG002 DESC)
+                    ;WITH TblQuote AS (
+                    SELECT 'TW' AS DBS
+	                    , RTRIM(TA_COPMB.MB001) AS CustID	--[客戶代號]
+	                    , RTRIM(Cust.MA002) AS CustName	--[客戶簡稱]
+	                    , RTRIM(TA_COPMB.MB002) AS ModelNo	--[品號]
+	                    , [TA_COPMB].[MB004] AS Currency	--[幣別]
+	                    , [TA_COPMB].[MB008] AS UnitPrice	--[單價]
+	                    , [TA_COPMB].[MB009] AS QuoteDate	--[核價日]
+	                    , [TA_COPMB].[MB010] AS LastSalesDay	--[上次銷貨日]
+	                    , Cust.MA036 AS DisRate
+                    FROM (
+	                    SELECT
+		                    [MB001] --AS [客戶代號]
+		                    ,[MB002] --AS [品號]
+		                    ,[MB004] --AS [幣別]
+		                    ,[MB008] --AS [單價]
+		                    ,[MB009] --AS [核價日]
+		                    ,[MB010] --AS [上次銷貨日]
+		                    ,[MB017] --AS [生效日]
+		                    ,[MB018] --AS [失效日]
+		                    , RANK() OVER (
+			                    PARTITION BY MB001, MB002, MB004 ORDER BY MB017 DESC
+		                    ) AS RankSeq  --依生效日排序,取最新的日期
+	                    FROM [prokit2].[dbo].[COPMB] WITH (NOLOCK)
+	                    WHERE (MB001 NOT IN ('LEONARD', 'SHINYPOWER', 'SUNGLOW', 'YFL', 'Z08', 'T1', 'T2', 'T3', 'T4', '1111111', '7422200', 'A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007'))
+	                     /* [篩選條件], 品號 */
+	                     ##strQuoteModel##
+	                     /* [篩選條件], 客戶代號 */
+	                     ##strQuoteCust##
+	                    ) AS [TA_COPMB]
+                    INNER JOIN [prokit2].[dbo].[COPMA] Cust WITH (NOLOCK) ON TA_COPMB.MB001 = Cust.MA001
+                    WHERE ([TA_COPMB].[RankSeq] = 1)
+                    UNION ALL
+                    SELECT 'SH' AS DBS
+	                    , RTRIM(TA_COPMB.MB001) AS CustID	--[客戶代號]
+	                    , RTRIM(Cust.MA002) AS CustName	--[客戶簡稱]
+	                    , RTRIM(TA_COPMB.MB002) AS ModelNo	--[品號]
+	                    , [TA_COPMB].[MB004] AS Currency	--[幣別]
+	                    , [TA_COPMB].[MB008] AS UnitPrice	--[單價]
+	                    , [TA_COPMB].[MB009] AS QuoteDate	--[核價日]
+	                    , [TA_COPMB].[MB010] AS LastSalesDay	--[上次銷貨日]
+	                    , Cust.MA036 AS DisRate
+                    FROM (
+	                    SELECT
+		                    [MB001] --AS [客戶代號]
+		                    ,[MB002] --AS [品號]
+		                    ,[MB004] --AS [幣別]
+		                    ,[MB008] --AS [單價]
+		                    ,[MB009] --AS [核價日]
+		                    ,[MB010] --AS [上次銷貨日]
+		                    ,[MB017] --AS [生效日]
+		                    ,[MB018] --AS [失效日]
+		                    , RANK() OVER (
+			                    PARTITION BY MB001, MB002, MB004 ORDER BY MB017 DESC
+		                    ) AS RankSeq  --依生效日排序,取最新的日期
+	                    FROM [SHPK2].[dbo].[COPMB] WITH (NOLOCK)
+	                    --[條件], 含稅
+	                    WHERE ([MB013] = 'Y')
+	                     AND (MB001 NOT IN ('LEONARD', 'SHINYPOWER', 'SUNGLOW', 'YFL', 'Z08', 'T1', 'T2', 'T3', 'T4', '1111111', '7422200', 'SA001', 'SA002', 'SA003', 'SA004', 'SA005', 'SA006', 'SA007'))
+	                     /* [篩選條件], 品號 */
+	                     ##strQuoteModel##
+	                     /* [篩選條件], 客戶代號 */
+	                     ##strQuoteCust##
+	                    ) AS [TA_COPMB]
+                    INNER JOIN [SHPK2].[dbo].[COPMA] Cust WITH (NOLOCK) ON TA_COPMB.MB001 = Cust.MA001
+                    WHERE ([TA_COPMB].[RankSeq] = 1)
+                    )
+                    , TblOrder_TW AS (
+	                    SELECT myOrder_TW.* FROM (
+		                    SELECT COPTC.TC004 AS CustID
+		                    , COPTD.TD004 AS ModelNo
+		                    , COPTC.TC003 AS OrderDate
+		                    , COPTD.TD011 AS UnitPrice
+		                    , RANK() OVER (
+			                    PARTITION BY COPTC.TC004, COPTD.TD004 ORDER BY COPTC.TC003 DESC, COPTD.TD002 DESC, COPTD.TD003 DESC
+		                    ) AS RankSeq  --取最新的日期
+		                    FROM [prokit2].dbo.COPTC
+		                     INNER JOIN [prokit2].dbo.COPTD ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
+		                    WHERE (COPTD.TD021 = 'Y') AND (COPTD.TD011 > 0)
+		                     /* [篩選條件], 品號 */
+		                     ##strOrderModel##
+		                     /* [篩選條件], 客戶代號 */
+		                     ##strOrderCust##
+	                    ) AS myOrder_TW
+	                    WHERE (myOrder_TW.RankSeq = 1)
+                    )
+
+                    , TblOrder_SH AS (
+	                    SELECT myOrder_SH.* FROM (
+		                    SELECT COPTC.TC004 AS CustID
+		                    , COPTD.TD004 AS ModelNo
+		                    , COPTC.TC003 AS OrderDate
+		                    , COPTD.TD011 AS UnitPrice
+		                    , RANK() OVER (
+			                    PARTITION BY COPTC.TC004, COPTD.TD004 ORDER BY COPTC.TC003 DESC, COPTD.TD002 DESC, COPTD.TD003 DESC
+		                    ) AS RankSeq  --取最新的日期
+		                    FROM [SHPK2].dbo.COPTC
+		                     INNER JOIN [SHPK2].dbo.COPTD ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
+		                    WHERE (COPTD.TD021 = 'Y') AND (COPTD.TD011 > 0)
+		                     /* [篩選條件], 品號 */
+		                     ##strOrderModel##
+		                     /* [篩選條件], 客戶代號 */
+		                     ##strOrderCust##
+	                    ) AS myOrder_SH
+	                    WHERE (myOrder_SH.RankSeq = 1)
+                    )";
+                //置入條件SQL
+                mainSql = mainSql.Replace("##strQuoteModel##", strQuoteModel)
+                    .Replace("##strQuoteCust##", strQuoteCust)
+                    .Replace("##strOrderModel##", strOrderModel)
+                    .Replace("##strOrderCust##", strOrderCust);
+
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    //append 主體語法
+                    sql.Append(mainSql);
+
+                    //欄位select
+                    sql.AppendLine("SELECT TbAll.*");
+                    /*((Agent價 * 匯率) - 成本) / (Agent價 * 匯率)*/
+                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_TW = 0 THEN 0 ELSE CAST(ROUND(((TbAll.AgentPrice_TW * @myRateTW) - TbAll.PaperCost_TW) / (TbAll.AgentPrice_TW * @myRateTW), 3) AS FLOAT) END) AS ProfitTW");
+                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_SH = 0 THEN 0 ELSE CAST(ROUND(((TbAll.AgentPrice_SH * @myRateSH) - TbAll.PaperCost_SH) / (TbAll.AgentPrice_SH * @myRateSH), 3) AS FLOAT) END) AS ProfitSH");
+                    sql.AppendLine(" FROM (");
+                 
+                    sql.AppendLine(" SELECT TblQuote.DBS");
+                    sql.AppendLine("	, RTRIM(TblQuote.CustID) AS CustID"); //--[客戶代號]
+                    sql.AppendLine("	, RTRIM(TblQuote.CustName) AS CustName"); //--[客戶簡稱]
+                    sql.AppendLine("	, RTRIM(TblQuote.ModelNo) AS ModelNo"); //--[品號]
+                    sql.AppendLine("	, Cls.Class_Name_zh_TW AS ClsaaName"); //--[類別名稱]
+                    sql.AppendLine("	, Prod.Model_Name_zh_TW AS ProdName_TW");
+                    sql.AppendLine("	, Prod.Model_Name_en_US AS ProdName_EN");
+                    sql.AppendLine("	, Prod.Model_Name_zh_CN AS ProdName_CN");
+                    sql.AppendLine("	, Prod.Pub_Carton_Qty_CTN AS OuterBox"); //--[外包裝商品數]
+                    sql.AppendLine("	, Prod.Pub_IB_Qty AS InnerBox"); //--[內盒產品數]
+                    sql.AppendLine("	, Prod.Ship_From");
+                    sql.AppendLine("	, ISNULL(Prod.Substitute_Model_No_TW, '') AS ProdMsg_TW");
+                    sql.AppendLine("	, ISNULL(Prod.Substitute_Model_No_SH, '') AS ProdMsg_SH");
+                    sql.AppendLine("	, TblQuote.Currency"); //--[幣別]
+                    sql.AppendLine("	, TblQuote.UnitPrice"); //--[單價]
+                    sql.AppendLine("	, TblQuote.QuoteDate"); //--[核價日]
+                    sql.AppendLine("	, TblQuote.LastSalesDay"); //--[上次銷貨日]
+                    sql.AppendLine("	, ISNULL(TblOrder_TW.UnitPrice, 0) AS LastOrderPrice_TW");
+                    sql.AppendLine("	, ISNULL(TblOrder_TW.OrderDate, '') AS LastOrderDate_TW");
+                    sql.AppendLine("	, ISNULL(TblOrder_SH.UnitPrice, 0) AS LastOrderPrice_SH");
+                    sql.AppendLine("	, ISNULL(TblOrder_SH.OrderDate, '') AS LastOrderDate_SH");
+                    sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_TW.MB057 + INVMB_TW.MB058 + INVMB_TW.MB059 + INVMB_TW.MB060), 0)) AS PaperCost_TW");
+                    sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_SH.MB057 + INVMB_SH.MB058 + INVMB_SH.MB059 + INVMB_SH.MB060), 0)) AS PaperCost_SH");
+                    sql.AppendLine("	, ISNULL(");
+                    sql.AppendLine("      ROUND((INVMB_TW.MB053 / 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)");
+                    sql.AppendLine("		, 0) AS AgentPrice_TW");
+                    sql.AppendLine("    , ISNULL(");
+                    sql.AppendLine("      ROUND(((INVMB_SH.MB053 / 8) * 1.3 * 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)");
+                    sql.AppendLine("		, 0) AS AgentPrice_SH");
+                    sql.AppendLine("    , ROW_NUMBER() OVER(ORDER BY TblQuote.CustID, TblQuote.ModelNo) AS RowIdx");
+                    sql.AppendLine(" FROM TblQuote");
+                    sql.AppendLine(" LEFT JOIN [prokit2].dbo.INVMB INVMB_TW WITH(NOLOCK) ON TblQuote.ModelNo = INVMB_TW.MB001");
+                    sql.AppendLine(" LEFT JOIN [SHPK2].dbo.INVMB INVMB_SH WITH(NOLOCK) ON TblQuote.ModelNo = INVMB_SH.MB001");
+                    sql.AppendLine(" LEFT JOIN [ProductCenter].dbo.Prod_Item Prod WITH(NOLOCK) ON UPPER(Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN) = UPPER(TblQuote.ModelNo)");
+                    sql.AppendLine(" LEFT JOIN [ProductCenter].dbo.Prod_Class Cls WITH(NOLOCK) ON Prod.Class_ID = Cls.Class_ID");
+                    sql.AppendLine(" LEFT JOIN TblOrder_TW ON TblQuote.ModelNo = TblOrder_TW.ModelNo AND TblQuote.CustID = TblOrder_TW.CustID");
+                    sql.AppendLine(" LEFT JOIN TblOrder_SH ON TblQuote.ModelNo = TblOrder_SH.ModelNo AND TblQuote.CustID = TblOrder_SH.CustID");
+                    sql.AppendLine(" WHERE(1 = 1)");
+
+                    sql.AppendLine(") AS TbAll");
+                    sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                    sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+
+                    //加入參數陣列
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+
+                }
+
+                #endregion
+
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    //append 主體語法
+                    sql.Append(mainSql);
+                    //欄位select
+                    sql.AppendLine(" SELECT COUNT(TblQuote.ModelNo) AS TotalCnt");
+                    sql.AppendLine(" FROM TblQuote");
+                    sql.AppendLine(" LEFT JOIN [prokit2].dbo.INVMB INVMB_TW WITH(NOLOCK) ON TblQuote.ModelNo = INVMB_TW.MB001");
+                    sql.AppendLine(" LEFT JOIN [SHPK2].dbo.INVMB INVMB_SH WITH(NOLOCK) ON TblQuote.ModelNo = INVMB_SH.MB001");
+                    sql.AppendLine(" LEFT JOIN [ProductCenter].dbo.Prod_Item Prod WITH(NOLOCK) ON UPPER(Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN) = UPPER(TblQuote.ModelNo)");
+                    sql.AppendLine(" LEFT JOIN [ProductCenter].dbo.Prod_Class Cls WITH(NOLOCK) ON Prod.Class_ID = Cls.Class_ID");
+                    sql.AppendLine(" LEFT JOIN TblOrder_TW ON TblQuote.ModelNo = TblOrder_TW.ModelNo AND TblQuote.CustID = TblOrder_TW.CustID");
+                    sql.AppendLine(" LEFT JOIN TblOrder_SH ON TblQuote.ModelNo = TblOrder_SH.ModelNo AND TblQuote.CustID = TblOrder_SH.CustID");
+                    sql.AppendLine(" WHERE(1 = 1)");
+
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 條件參數 -----
+                    //加入參數陣列
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+                //return
+                return myDT;
+
+
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        #endregion *** 客戶歷史報價 S ***
+
+
+
         #region *** 發貨 S ***
         /// <summary>
         /// 發貨總表(ShipFreight)
@@ -2190,7 +2554,7 @@ namespace Menu3000Data.Controllers
         }
 
         #endregion *** 發貨 E ***
-        
+
 
         #region *** 客訴 S ***
 
@@ -6284,7 +6648,7 @@ namespace Menu3000Data.Controllers
 
 
         #endregion *** 發貨 E ***
-        
+
 
         #region *** 客訴 S ***
 
@@ -6691,7 +7055,7 @@ namespace Menu3000Data.Controllers
 
         #endregion *** 客訴 E ***
 
-        
+
         #region *** 出貨明細表(外銷) S ***
         /// <summary>
         /// [出貨明細表] 建立 & 更新出貨資料
@@ -7281,7 +7645,7 @@ namespace Menu3000Data.Controllers
 
 
         #endregion *** 發貨 E ***
-        
+
 
         #region *** 客訴 S ***
 
@@ -7495,7 +7859,7 @@ namespace Menu3000Data.Controllers
         }
 
         #endregion *** 客訴 E ***
-                
+
 
         #endregion
 
