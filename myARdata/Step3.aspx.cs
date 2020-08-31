@@ -302,6 +302,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
         string _guid = hf_DataID.Value;
         string _custID = hf_CustID.Value;
         string _custName = hf_CustName.Value;
+        string _traceid = hf_TraceID.Value;
 
         //宣告
         ARdataRepository _data = new ARdataRepository();
@@ -327,7 +328,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
 
 
             /* 取得PDF,轉成byte */
-            string url = "{0}PKHome/ARData/{1}.pdf".FormatThis(fn_Param.RefUrl, _custID);
+            string url = "{0}PKHome/ARData/{1}/{2}.pdf".FormatThis(fn_Param.RefUrl, _traceid, _custID);
             string pdfName = _custID + ".pdf";
             WebClient myClient = new WebClient();
             //file to byte
