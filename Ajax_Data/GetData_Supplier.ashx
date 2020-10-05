@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="GetData_Customer" %>
+﻿<%@ WebHandler Language="C#" Class="GetData_Supplier" %>
 
 using System.Web;
 using System.Linq;
@@ -8,10 +8,10 @@ using Newtonsoft.Json;
 using PKLib_Data.Controllers;
 using PKLib_Data.Assets;
 
-public class GetData_Customer : IHttpHandler
+public class GetData_Supplier : IHttpHandler
 {
     /// <summary>
-    /// 取得客戶資料(Ajax)
+    /// 取得供應商資料(Ajax)
     /// 使用Semantic UI的Search UI
     /// </summary>
     public void ProcessRequest(HttpContext context)
@@ -42,32 +42,29 @@ public class GetData_Customer : IHttpHandler
 
 
         //----- 宣告:資料參數 -----
-        CustomersRepository _data = new CustomersRepository();
+        SupplierRepository _data = new SupplierRepository();
         Dictionary<int, string> search = new Dictionary<int, string>();
             
 
         //----- 原始資料:條件篩選 -----
         if (!string.IsNullOrEmpty(searchVal))
         {
-            search.Add((int)Common.CustSearch.Keyword, searchVal);
+            search.Add((int)Common.mySearch.Keyword, searchVal);
         }
         
         if (!string.IsNullOrEmpty(corp))
         {
-            search.Add((int)Common.CustSearch.Corp, corp);
+            search.Add((int)Common.mySearch.Corp, corp);
         }
 
         //----- 原始資料:取得所有資料 -----
-        var results = _data.GetCustomers(search)
+        var results = _data.GetERPDataList(search)
                 .Select(fld =>
                     new
                     {
-                        ID = fld.CustID,
-                        Label = "(" + fld.Corp_Name + ") " + fld.CustName,
-                        FullLabel = "(" + fld.Corp_Name + ") " + fld.CustID + " - " + fld.CustName,
-                        ContactWho = fld.ContactWho,
-                        ContactAddr = fld.ContactAddr,
-                        Tel = fld.Tel
+                        ID = fld.ERP_SupID,
+                        Label = "(" + fld.Corp_Name + ") " + fld.ERP_SupID,
+                        FullLabel = "(" + fld.Corp_Name + ") " + fld.ERP_SupID + " - " + fld.ERP_SupName
                     }).Take(50);
 
 

@@ -133,6 +133,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
         lt_Qty.Text = query.Qty.ToString();
         lt_Remark.Text = query.Remark.Replace("\r", "<br/>");
         lt_Remark_Check.Text = query.Remark_Check.Replace("\r", "<br/>");
+        lt_BadReason.Text = query.BadReasonName;
 
 
         //--- 一線F201 ---

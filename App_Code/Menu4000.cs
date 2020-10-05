@@ -98,4 +98,62 @@ namespace Menu4000Data.Models
         public string Currency { get; set; }
         public double lastPurPrice { get; set; }
     }
+
+
+    public class PurPlanList
+    {
+        public string ModelNo { get; set; }
+        public string Item_Type { get; set; }
+        public string ModelName { get; set; }
+        public string ProdVol { get; set; }
+        public string ProdPage { get; set; }
+        public string Currency { get; set; }
+        public double checkPrice { get; set; }
+        public int WaitQty { get; set; }
+        public int StockQty_A01 { get; set; }
+        public int SafeQty_A01 { get; set; }
+        public int PreIN_A01 { get; set; }
+        public int VirIn_A01 { get; set; }
+        public int PlanIN_A01 { get; set; }
+        public int PreSell_A01 { get; set; }
+        public int PreGet_A01 { get; set; }
+        public int PlanOut_A01 { get; set; }
+        public int StockQty_12 { get; set; }
+        public int SafeQty_12 { get; set; }
+        public int PreIN_12 { get; set; }
+        public int VirIn_12 { get; set; }
+        public int PlanIN_12 { get; set; }
+        public int PreSell_12 { get; set; }
+        public int PreGet_12 { get; set; }
+        public int PlanOut_12 { get; set; }
+        public double Qty_Days { get; set; }
+        public double Qty_Year { get; set; }
+        public double Qty_Season { get; set; }
+        public int VirPreSell { get; set; }
+        public int RealPreSell { get; set; }
+        public int CNT { get; set; }
+        public double SZ_QtyOfYear { get; set; }
+        public int Min_Supply { get; set; }
+        public int InBox_Qty { get; set; }
+        public int Qty_Packing { get; set; }
+        public double OutBox_Cuft { get; set; }
+        public int MOQ { get; set; }
+        public string ProdMsg { get; set; }
+        public string Supplier { get; set; }
+        public string Supply_ID { get; set; }
+
+        public int PushQty { get; set; }
+        public int UsefulQty_A01 { get; set; }
+        public int UsefulQty_12 { get; set; }
+        public int QTM_A01 { get; set; }
+        public int QTM_12 { get; set; }
+
+        public double MonthTurn_A01 { get; set; }
+        public double MonthTurn_12 { get; set; }
+        public double NowMonthTurn_A01 { get; set; }
+        public double NowMonthTurn_12 { get; set; }
+        public double QTM_Month { get; set; }
+        public Int64 RowIdx { get; set; }
+      
+    }
 }

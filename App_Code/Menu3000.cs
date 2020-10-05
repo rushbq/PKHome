@@ -243,6 +243,8 @@ namespace Menu3000Data.Models
         public double CntBase_E { get; set; }
         //(F) 2341整年(含稅)
         public double CntBase_F { get; set; }
+        //(Fa) B009整年(含稅)
+        public double CntBase_Fa { get; set; }
         //(G) 2341當月(含稅)
         public double CntBase_G { get; set; }
         //(utF) 2341整年(未稅)

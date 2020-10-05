@@ -93,7 +93,7 @@ namespace CustRebate_China_Data.Controllers
 	                SELECT ISNULL(SUM(Base.TH037) + SUM(Base.TH038) ,0) AS RangeSell, ISNULL(SUM(Base.TH037), 0) AS RangeSell_NoTax, Base.TG004 AS CustID
 	                FROM TblSO Base
 	                 INNER JOIN [PKEF].dbo.Rebate_Data DT ON Base.TG004 COLLATE Chinese_Taiwan_Stroke_BIN = DT.CustID
-	                WHERE (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN')
+	                WHERE (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN') AND (LEFT(Base.TH004, 3) <> 'B00')
 	                GROUP BY Base.TG004
                 )
                 , TblCost_Range AS (
@@ -110,7 +110,16 @@ namespace CustRebate_China_Data.Controllers
 	                SELECT ISNULL(SUM(Base.TH037) + SUM(Base.TH038) ,0) AS RangeSellExcept, ISNULL(SUM(Base.TH037), 0) AS RangeSellExcept_NoTax, Base.TG004 AS CustID
 	                FROM TblSO Base
 	                 INNER JOIN [PKEF].dbo.Rebate_Data DT ON Base.TG004 COLLATE Chinese_Taiwan_Stroke_BIN = DT.CustID
-	                WHERE (Base.TG001 IN ('2341')) AND (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN')
+	                WHERE (Base.TG001 IN ('2341')) AND (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN') AND (LEFT(Base.TH004, 3) <> 'B00')
+	                GROUP BY Base.TG004
+                )
+                , TblCnt_ExItem1 AS (
+	                /* B009 (整年) --[Fa] */
+	                SELECT ISNULL(SUM(Base.TH013), 0) AS ItemMoney, ISNULL(SUM(Base.TH037), 0) AS ItemMoney_NoTax, Base.TG004 AS CustID
+	                FROM TblSO Base
+	                 INNER JOIN [PKEF].dbo.Rebate_Data DT ON Base.TG004 COLLATE Chinese_Taiwan_Stroke_BIN = DT.CustID
+	                WHERE (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN')
+	                 AND (Base.TH004 = 'B009')
 	                GROUP BY Base.TG004
                 )
                 , TblCnt_RangeBack AS (
@@ -144,6 +153,7 @@ namespace CustRebate_China_Data.Controllers
 	                FROM TblSO Base
 	                 INNER JOIN [PKEF].dbo.Rebate_Data DT ON Base.TG004 COLLATE Chinese_Taiwan_Stroke_BIN = DT.CustID
 	                WHERE (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN') AND (LEFT(Base.TG003, 6) = @paramYear+@paramMonth)
+	                 AND (LEFT(Base.TH004, 3) <> 'B00')
 	                GROUP BY Base.TG004
                 )
                 , TblCnt_NowExcept AS (
@@ -151,7 +161,7 @@ namespace CustRebate_China_Data.Controllers
 	                SELECT ISNULL(SUM(Base.TH037) + SUM(Base.TH038) ,0) AS NowSellExcept, ISNULL(SUM(Base.TH037), 0) AS NowSellExcept_NoTax, Base.TG004 AS CustID
 	                FROM TblSO Base
 	                 INNER JOIN [PKEF].dbo.Rebate_Data DT ON Base.TG004 COLLATE Chinese_Taiwan_Stroke_BIN = DT.CustID
-	                WHERE (Base.TG001 IN ('2341'))
+	                WHERE (Base.TG001 IN ('2341')) AND (LEFT(Base.TH004, 3) <> 'B00')
 	                 AND (DT.DataYear = @paramYear) AND (DT.CompID = 'CHN') AND (LEFT(Base.TG003, 6) = @paramYear+@paramMonth)
 	                GROUP BY Base.TG004
                 )
@@ -173,8 +183,10 @@ namespace CustRebate_China_Data.Controllers
                  , (ISNULL(TblCnt_Now.NowSell, 0) - ISNULL(TblCnt_NowBack.NowSellBack, 0)) AS CntBase_C --[C] 當月業績(含稅)
                  , (ISNULL(TblCnt_Now.NowSell_NoTax, 0) - ISNULL(TblCnt_NowBack.NowSellBack_NoTax, 0)) AS CntBase_utC --[utC] 當月業績(未稅)
                  , ISNULL(TblCnt_Except.RangeSellExcept, 0) AS CntBase_F --[F] 2341整年(含稅)
+                 , ISNULL(TblCnt_ExItem1.ItemMoney, 0) AS CntBase_Fa --[Fa] B009整年(含稅)
                  , ISNULL(TblCnt_NowExcept.NowSellExcept, 0) AS CntBase_G --[G] 2341當月(含稅)
                  , ISNULL(TblCnt_Except.RangeSellExcept_NoTax, 0) AS CntBase_utF --[F] 2341整年(未稅)
+                 , ISNULL(TblCnt_ExItem1.ItemMoney_NoTax, 0) AS CntBase_utFa --[Fa] B009整年(未稅)
                  , ISNULL(TblCnt_NowExcept.NowSellExcept_NoTax, 0) AS CntBase_utG --[G] 2341當月(未稅)
                 FROM TblBase
                  INNER JOIN TblCnt_Range ON TblBase.CustID = TblCnt_Range.CustID
@@ -185,6 +197,7 @@ namespace CustRebate_China_Data.Controllers
                  LEFT JOIN TblCnt_RangeBack ON TblBase.CustID = TblCnt_RangeBack.CustID
                  LEFT JOIN TblCnt_NowBack ON TblBase.CustID = TblCnt_NowBack.CustID
                  LEFT JOIN TblCnt_Except ON TblBase.CustID = TblCnt_Except.CustID
+                 LEFT JOIN TblCnt_ExItem1 ON TblBase.CustID = TblCnt_ExItem1.CustID
                  LEFT JOIN TblCnt_NowExcept ON TblBase.CustID = TblCnt_NowExcept.CustID
                 WHERE (1=1)
                 ";
@@ -244,8 +257,10 @@ namespace CustRebate_China_Data.Controllers
                         double _cntBase_D = 0;   //--[D] 與挑戰目標差額(A-g)
                         double _cntBase_E = 0;   //--[E] 與責任目標差額(A-e)
                         double _cntBase_F = Convert.ToDouble(item.Field<decimal>("CntBase_F"));    //--[F] 2341整年(含稅)
+                        double _cntBase_Fa = Convert.ToDouble(item.Field<decimal>("CntBase_Fa"));    //--[Fa] B009整年(含稅)
                         double _cntBase_G = Convert.ToDouble(item.Field<decimal>("CntBase_G"));    //--[G] 2341當月(含稅)
                         double _cntBase_utF = Convert.ToDouble(item.Field<decimal>("CntBase_utF"));    //--[utF] 2341整年(未稅)
+                        double _cntBase_utFa = Convert.ToDouble(item.Field<decimal>("CntBase_utFa"));    //--[utFa] B009整年(未稅)
                         double _cntBase_utG = Convert.ToDouble(item.Field<decimal>("CntBase_utG"));    //--[utG] 2341當月(未稅)
                         double _cnt_a = 0, _cnt_uta = 0, _cnt_b = 0, _cnt_c = 0, _cnt_utc = 0, _cnt_d = 0;
                         double _cnt_e = item.Field<double>("RespMoney");
@@ -399,6 +414,7 @@ namespace CustRebate_China_Data.Controllers
                             CntBase_D = _cntBase_D,
                             CntBase_E = _cntBase_E,
                             CntBase_F = _cntBase_F,
+                            CntBase_Fa = _cntBase_Fa,
                             CntBase_G = _cntBase_G,
                             CntBase_utF = _cntBase_utF,
                             CntBase_utG = _cntBase_utG,

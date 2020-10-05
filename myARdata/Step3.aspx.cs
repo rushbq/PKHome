@@ -488,7 +488,7 @@ public partial class myARdata_ImportStep3 : SecurityCheck
                 }
 
                 //固定BCC:系統收件箱(功能穩定後可考慮移除)
-                Msg.Bcc.Add(new MailAddress("ITInform@mail.prokits.com.tw"));
+                //Msg.Bcc.Add(new MailAddress("infosec@mail.prokits.com.tw"));
 
                 //主旨
                 Msg.Subject = subject;

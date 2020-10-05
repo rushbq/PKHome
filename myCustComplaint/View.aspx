@@ -92,10 +92,16 @@
                                             <asp:Literal ID="lt_Qty" runat="server"></asp:Literal>
                                         </div>
                                     </div>
-                                    <div class="twelve wide field">
+                                    <div class="six wide field">
                                         <label>客訴判斷說明</label>
                                         <div class="ui basic large fluid label">
                                             <asp:Literal ID="lt_Remark_Check" runat="server"><small class="grey-text text-darken-1">(一線人員填寫正確的客訴內容)</small></asp:Literal>
+                                        </div>
+                                    </div>
+                                    <div class="six wide field">
+                                        <label>不良原因</label>
+                                        <div class="ui basic large fluid label">
+                                            <asp:Literal ID="lt_BadReason" runat="server"></asp:Literal>
                                         </div>
                                     </div>
                                 </div>

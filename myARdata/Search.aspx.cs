@@ -35,14 +35,14 @@ public partial class myARdata_Search : SecurityCheck
 
                 switch (getCorpUid)
                 {
-                    case "2":
-                        //深圳寶工
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3701");
+                    case "3":
+                        //SH
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3782");
                         break;
 
                     default:
-                        //SH
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3702");
+                        //TW
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3781");
                         break;
                 }
 

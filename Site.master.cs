@@ -178,13 +178,14 @@ public partial class Site : System.Web.UI.MasterPage
                     {
                         string urlTarget = itemLv3.Target;
 
-                        //判斷連結(redirect:舊EF的URL)
+                        //判斷連結(redirect:舊EF的URL / local:原站指定連結)
                         html.Append("<a href=\"{0}\" target=\"{2}\"><h6>{1}</h6></a>".FormatThis(
                             urlTarget.Equals("redirect")
-                                ? url
-                                : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, url)
+                                ? url //EF Url
+                                 : urlTarget.Equals("local") ? "{0}{1}".FormatThis(webUrl, url) //Local Url
+                                  : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, url) //Route Url
                             , itemLv3.MenuName
-                            , urlTarget.Equals("redirect") ? "_blank" : urlTarget));
+                            , urlTarget.Equals("redirect") || urlTarget.Equals("local") ? "_blank" : urlTarget));  //href target
                     }
 
 
@@ -203,13 +204,14 @@ public partial class Site : System.Web.UI.MasterPage
                         string urlLv4 = itemLv4.Url;
                         string urlTarget = itemLv4.Target;
 
-                        //判斷連結
+                        //判斷連結(redirect:舊EF的URL / local:原站指定連結)
                         html.Append("<a href=\"{0}\" class=\"collection-item\" target=\"{2}\">{1}</a>".FormatThis(
                             urlTarget.Equals("redirect")
                                 ? urlLv4
-                                : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, urlLv4)
+                                 : urlTarget.Equals("local") ? "{0}{1}".FormatThis(webUrl, urlLv4) //Local Url
+                                  : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, urlLv4)
                             , itemLv4.MenuName
-                            , urlTarget.Equals("redirect") ? "_blank" : urlTarget
+                            , urlTarget.Equals("redirect") || urlTarget.Equals("local") ? "_blank" : urlTarget
                             ));
 
                     }

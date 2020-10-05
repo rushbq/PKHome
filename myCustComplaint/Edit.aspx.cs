@@ -162,7 +162,7 @@ public partial class myCustComplaint_Edit : SecurityCheck
         {
             lt_Remark_Check.Text = query.Remark_Check.Replace("\r", "<br/>");
         }
-
+        lt_BadReason.Text = query.BadReasonName;
 
         //--- 一線F201 ---
         ddl_Flow201_Type.SelectedValue = query.Flow201_Type.ToString();
@@ -294,7 +294,9 @@ public partial class myCustComplaint_Edit : SecurityCheck
         string _procTypeName = "";
         string _procType = "";
         string _procDesc = "";
-        bool _descCheck = true;
+        string _badReason = ddl_BadReason.SelectedValue;
+        bool _descCheck = true; //各流程處理說明檢查 (預設true)
+        bool _reasonCheck = false; //二線維修,不良原因檢查 (預設false)
         string errTxt = "";
 
 
@@ -313,6 +315,8 @@ public partial class myCustComplaint_Edit : SecurityCheck
             case 301:
                 _procType = ddl_Flow301_Type.SelectedValue;
                 _procDesc = tb_Flow301_Desc.Text;
+                //不良原因要檢查
+                _reasonCheck = true;
 
                 break;
 
@@ -327,12 +331,14 @@ public partial class myCustComplaint_Edit : SecurityCheck
             case 501:
                 _procType = ddl_Flow501_Type.SelectedValue;
                 _procDesc = tb_Flow501_Desc.Text;
+                //處理說明不檢查
                 _descCheck = false;
 
                 break;
 
         }
         #endregion
+
 
         #region ** 欄位判斷 **
 
@@ -343,6 +349,10 @@ public partial class myCustComplaint_Edit : SecurityCheck
         if (string.IsNullOrWhiteSpace(_procDesc) && _descCheck)
         {
             errTxt += "請填寫「處理說明」\\n";
+        }
+        if (string.IsNullOrWhiteSpace(_badReason) && _reasonCheck)
+        {
+            errTxt += "請填寫「不良原因」\\n";
         }
 
         #endregion
@@ -392,7 +402,6 @@ public partial class myCustComplaint_Edit : SecurityCheck
         string _ERP_No4 = tb_ERP_No4.Text;
         string _ERP_No5 = tb_ERP_No5.Text;
         string _ERP_No6 = tb_ERP_No6.Text;
-        string _badReason = ddl_BadReason.SelectedValue;
 
         //----- 設定:資料欄位 -----
         var dataItem = new CCPItem

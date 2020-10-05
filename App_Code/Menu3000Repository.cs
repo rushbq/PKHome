@@ -1180,10 +1180,10 @@ namespace Menu3000Data.Controllers
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_TW.MB057 + INVMB_TW.MB058 + INVMB_TW.MB059 + INVMB_TW.MB060), 0)) AS PaperCost_TW");
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_SH.MB057 + INVMB_SH.MB058 + INVMB_SH.MB059 + INVMB_SH.MB060), 0)) AS PaperCost_SH");
                     sql.AppendLine("	, ISNULL(");
-                    sql.AppendLine("      ROUND((INVMB_TW.MB053 / 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)");
+                    sql.AppendLine("      (CONVERT(FLOAT, ROUND((INVMB_TW.MB053 / 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)))");
                     sql.AppendLine("		, 0) AS AgentPrice_TW");
                     sql.AppendLine("    , ISNULL(");
-                    sql.AppendLine("      ROUND(((INVMB_SH.MB053 / 8) * 1.3 * 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)");
+                    sql.AppendLine("      (CONVERT(FLOAT, ROUND(((INVMB_SH.MB053 / 8) * 1.3 * 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)))");
                     sql.AppendLine("		, 0) AS AgentPrice_SH");
                     sql.AppendLine("    , ROW_NUMBER() OVER(ORDER BY TblQuote.CustID, TblQuote.ModelNo) AS RowIdx");
                     sql.AppendLine(" FROM TblQuote");
@@ -1278,7 +1278,7 @@ namespace Menu3000Data.Controllers
         }
 
 
-        #endregion *** 客戶歷史報價 S ***
+        #endregion *** 客戶歷史報價 E ***
 
 
 

@@ -114,6 +114,7 @@
                                     <th class="grey-bg lighten-3 center aligned" data-content="h">回饋方式 <span class="blue-text text-darken-1">(h)</span></th>
                                     <th class="grey-bg lighten-3 right aligned" data-content="A">目前系統業績 <span class="blue-text text-darken-1">(A)</span></th>
                                     <th class="grey-bg lighten-3 right aligned" data-content="F">單別2341 <span class="blue-text text-darken-1">(F)</span></th>
+                                    <th class="grey-bg lighten-3 right aligned" data-content="Fa">B009 <span class="blue-text text-darken-1">(Fa)</span></th>
                                     <th class="grey-bg lighten-3 right aligned" data-content="a">
                                         <asp:Literal ID="lt_headerYear" runat="server"></asp:Literal>實際返利業績(含已返利) <span class="blue-text text-darken-1">(a)</span></th>
                                     <th class="grey-bg lighten-3">備註</th>
@@ -156,6 +157,7 @@
                                     <th class="red-bg lighten-5 center aligned"></th>
                                     <th class="red-bg lighten-5 right aligned" title="A" aria-label="目前系統業績"></th>
                                     <th class="red-bg lighten-5 right aligned" title="F" aria-label="單別2341"></th>
+                                    <th class="red-bg lighten-5 right aligned" title="Fa" aria-label="B009"></th>
                                     <th class="red-bg lighten-5 right aligned" title="a" aria-label="實際返利業績"></th>
                                     <th class="red-bg lighten-5 center aligned"></th>
                                     <th class="red-bg lighten-5 right aligned" title="D" aria-label="與挑戰目標差額"></th>
@@ -198,6 +200,9 @@
                         </td>
                         <td class="right aligned" data-content="F">
                             <%#Eval("CntBase_F").ToString().ToMoneyString() %>
+                        </td>
+                        <td class="right aligned" data-content="Fa">
+                            <%#Eval("CntBase_Fa").ToString().ToMoneyString() %>
                         </td>
                         <td class="right aligned" data-content="a" title="a = A + B - F">
                             <%#Eval("Cnt_a").ToString().ToMoneyString() %>
@@ -336,15 +341,15 @@
 
                     //實際返利業績(a)
                     total_a = api
-                        .column(8)
+                        .column(9)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
                         }, 0);
-   
+
                     //與挑戰目標差額
                     total_D = api
-                        .column(10)
+                        .column(11)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -352,7 +357,7 @@
 
                     //與責任目標差額
                     total_E = api
-                        .column(11)
+                        .column(12)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -361,7 +366,7 @@
 
                     //應回饋金額
                     total_c = api
-                        .column(12)
+                        .column(13)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -369,7 +374,7 @@
 
                     //已回饋金額
                     total_B = api
-                        .column(13)
+                        .column(14)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -377,7 +382,7 @@
 
                     //剩餘回饋金額
                     total_d = api
-                        .column(14)
+                        .column(15)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -386,7 +391,7 @@
 
                     //月銷售金額
                     total_C = api
-                        .column(15)
+                        .column(16)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -394,7 +399,7 @@
 
                     //當月最高返利
                     total_b = api
-                        .column(16)
+                        .column(17)
                         .data()
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
@@ -406,14 +411,14 @@
                     $(api.column(4).footer()).html(thousandComma(total_f));
                     $(api.column(6).footer()).html(thousandComma(total_A));
                     $(api.column(7).footer()).html(thousandComma(total_F));
-                    $(api.column(8).footer()).html(thousandComma(total_a));
-                    $(api.column(10).footer()).html(thousandComma(total_D));
-                    $(api.column(11).footer()).html(thousandComma(total_E));
-                    $(api.column(12).footer()).html(thousandComma(total_c));
-                    $(api.column(13).footer()).html(thousandComma(total_B));
-                    $(api.column(14).footer()).html(thousandComma(total_d));
-                    $(api.column(15).footer()).html(thousandComma(total_C));
-                    $(api.column(16).footer()).html(thousandComma(total_b));
+                    $(api.column(9).footer()).html(thousandComma(total_a));
+                    $(api.column(11).footer()).html(thousandComma(total_D));
+                    $(api.column(12).footer()).html(thousandComma(total_E));
+                    $(api.column(13).footer()).html(thousandComma(total_c));
+                    $(api.column(14).footer()).html(thousandComma(total_B));
+                    $(api.column(15).footer()).html(thousandComma(total_d));
+                    $(api.column(16).footer()).html(thousandComma(total_C));
+                    $(api.column(17).footer()).html(thousandComma(total_b));
                 }
             });
 

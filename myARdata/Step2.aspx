@@ -83,6 +83,7 @@
                                             <th>銷貨(銷退)單號</th>
                                             <th>結帳單號</th>
                                             <th>結帳日期</th>
+                                            <th>付款條件</th>
                                             <th>預計收款日</th>
                                             <th class="no-sort">原幣應收帳款</th>
                                             <th class="no-sort">原幣未收帳款</th>
@@ -110,6 +111,9 @@
                                     </td>
                                     <td>
                                         <%#Eval("ArDate") %>
+                                    </td>
+                                    <td>
+                                        <%#Eval("TermName") %>
                                     </td>
                                     <td>
                                         <%#Eval("PreGetDay") %>

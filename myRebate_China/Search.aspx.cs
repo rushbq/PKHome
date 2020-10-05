@@ -212,6 +212,7 @@ public partial class myRebate_Search : SecurityCheck
                 Cnt_h = fld.Cnt_h,
                 CntBase_A = fld.CntBase_A,
                 CntBase_F = fld.CntBase_F,
+                CntBase_Fa = fld.CntBase_Fa,
                 Cnt_a = fld.Cnt_a,
                 Remark = fld.Remark,
                 CntBase_D = fld.CntBase_D,
@@ -264,6 +265,7 @@ public partial class myRebate_Search : SecurityCheck
             myDT.Columns["Cnt_h"].ColumnName = "回饋方式(挑戰)";
             myDT.Columns["CntBase_A"].ColumnName = "目前系統業績";
             myDT.Columns["CntBase_F"].ColumnName = "單別2341 ";
+            myDT.Columns["CntBase_Fa"].ColumnName = "B009 ";
             myDT.Columns["Cnt_a"].ColumnName = Req_Year + "實際返利業績(含已返利)";
             myDT.Columns["Remark"].ColumnName = "備註";
             myDT.Columns["CntBase_D"].ColumnName = "與挑戰目標差額";
@@ -286,14 +288,14 @@ public partial class myRebate_Search : SecurityCheck
         dtRow[4] = Total.sumg;
         dtRow[6] = Total.sumA;
         dtRow[7] = Total.sumF;
-        dtRow[8] = Total.suma;
-        dtRow[10] = Total.sumD;
-        dtRow[11] = Total.sumE;
-        dtRow[12] = Total.sumc;
-        dtRow[13] = Total.sumB;
-        dtRow[14] = Total.sumd;
-        dtRow[15] = Total.sumC;
-        dtRow[16] = Total.sumb;
+        dtRow[9] = Total.suma;
+        dtRow[11] = Total.sumD;
+        dtRow[12] = Total.sumE;
+        dtRow[13] = Total.sumc;
+        dtRow[14] = Total.sumB;
+        dtRow[15] = Total.sumd;
+        dtRow[16] = Total.sumC;
+        dtRow[17] = Total.sumb;
 
         myDT.Rows.Add(dtRow);
 
