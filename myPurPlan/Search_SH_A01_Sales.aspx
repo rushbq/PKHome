@@ -134,6 +134,7 @@
                             <th class="grey-bg lighten-3 right aligned numFmt">整箱材積</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">銷售MOQ</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">產銷訊息</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">12倉庫存</th>
                         </tr>
                     </thead>
                 </table>
@@ -508,6 +509,7 @@
                                  return html;
                              }, className: "collapsing center aligned"
                          },
+                         { data: "StockQty_12", className: "collapsing center aligned" }  /* 庫存<StockQty_12> */
                      ],
                      //自訂欄位格式
                      "columnDefs": [

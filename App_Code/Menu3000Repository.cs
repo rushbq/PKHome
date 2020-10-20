@@ -916,8 +916,7 @@ namespace Menu3000Data.Controllers
 
 
         #endregion *** 訂單庫存狀況 E ***
-
-
+        
 
         #region *** 客戶歷史報價 S ***
         /// <summary>
@@ -2966,8 +2965,7 @@ namespace Menu3000Data.Controllers
             return sqlParamList;
         }
 
-
-
+        
         /// <summary>
         /// [開案中客訴] 匯出
         /// </summary>
@@ -3103,8 +3101,7 @@ namespace Menu3000Data.Controllers
 
         }
 
-
-
+        
         /// <summary>
         /// [未開案客訴] 取得收貨圖片
         /// </summary>
@@ -4406,6 +4403,139 @@ namespace Menu3000Data.Controllers
                 return dataList.AsQueryable();
             }
         }
+
+
+        /// <summary>
+        /// [客訴] 取得圖表統計資料
+        /// </summary>
+        /// <param name="type">客訴來源</param>
+        /// <param name="jobType">資料來源</param>
+        /// <param name="search"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public IQueryable<CCP_ChartData> GetCCP_ChartData(string type, string jobType, Dictionary<string, string> search, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            List<CCP_ChartData> dataList = new List<CCP_ChartData>();
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料取得 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                switch (jobType.ToUpper())
+                {
+                    case "A":
+                        //客戶類別, 結案(999)
+                        sql.AppendLine(" SELECT (Cls.Class_Name_zh_TW) AS Label, COUNT(Base.Data_ID) AS GroupCnt");
+                        sql.AppendLine(" FROM Cust_Complaint Base WITH(NOLOCK)");
+                        sql.AppendLine("  INNER JOIN Cust_Complaint_RefClass Cls WITH(NOLOCK) ON Base.CustType = Cls.Class_ID");
+                        sql.AppendLine(" WHERE (Base.FlowStatus = 999) AND (Cls.Display = 'Y')");
+                        sql.AppendLine("  AND (Cls.Class_Type = 2)");
+
+                        break;
+
+                    case "B":
+                        //客服資料不良原因, 已開案(Y)
+                        sql.AppendLine(" SELECT (Cls.Class_Name_zh_TW) AS Label, COUNT(Base.Data_ID) AS GroupCnt");
+                        sql.AppendLine(" FROM Cust_Complaint_Temp Base WITH(NOLOCK)");
+                        sql.AppendLine("  INNER JOIN Cust_Complaint_RefClass Cls WITH(NOLOCK) ON Base.BadReason = Cls.Class_ID");
+                        sql.AppendLine(" WHERE (Base.IsInvoke = 'Y') AND (Cls.Display = 'Y')");
+                        sql.AppendLine("  AND (Cls.Class_Type = 12)");
+
+                        break;
+
+                    case "C":
+                        //二線維修不良原因, 結案(999)
+                        sql.AppendLine(" SELECT (Cls.Class_Name_zh_TW) AS Label, COUNT(Base.Data_ID) AS GroupCnt");
+                        sql.AppendLine(" FROM Cust_Complaint Base WITH(NOLOCK)");
+                        sql.AppendLine("  INNER JOIN Cust_Complaint_RefClass Cls WITH(NOLOCK) ON Base.BadReason = Cls.Class_ID");
+                        sql.AppendLine(" WHERE (Base.FlowStatus = 999) AND (Cls.Display = 'Y')");
+                        sql.AppendLine("  AND (Cls.Class_Type = 13)");
+
+                        break;
+                }
+
+                /* Search */
+                #region >> filter <<
+
+                //固定參數:客訴來源
+                sql.Append(" AND (Base.CC_Type = @ccType)");
+                cmd.Parameters.AddWithValue("ccType", type);
+
+
+                if (search != null)
+                {
+                    //過濾空值
+                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                    //查詢內容
+                    foreach (var item in thisSearch)
+                    {
+                        switch (item.Key)
+                        {
+                            case "sDate":
+                                //日期-Start
+                                sql.Append(" AND (Base.Create_Time >= @sDate)");
+
+                                cmd.Parameters.AddWithValue("sDate", item.Value + " 00:00");
+
+                                break;
+
+                            case "eDate":
+                                //日期-End
+                                sql.Append(" AND (Base.Create_Time <= @eDate)");
+
+                                cmd.Parameters.AddWithValue("eDate", item.Value + " 23:59:59");
+
+                                break;
+
+                        }
+                    }
+                }
+                #endregion
+
+                //Group BY
+                switch (type.ToUpper())
+                {
+                    default:
+                        //依類別
+                        sql.AppendLine(" GROUP BY Cls.Class_Name_zh_TW");
+
+                        break;
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                //cmd.CommandTimeout = 60;   //單位:秒
+
+                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
+                {
+                    //LinQ 查詢
+                    var query = DT.AsEnumerable();
+
+                    //資料迴圈
+                    foreach (var item in query)
+                    {
+                        //加入項目
+                        var data = new CCP_ChartData
+                        {
+                            Label = item.Field<string>("Label"),
+                            Cnt = item.Field<int>("GroupCnt")
+                        };
+
+                        //將項目加入至集合
+                        dataList.Add(data);
+                    }
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+
+        }
+
+
 
 
         #endregion *** 客訴 E ***
@@ -5802,8 +5932,7 @@ namespace Menu3000Data.Controllers
 
         #endregion *** 出貨明細表(內銷) E ***
 
-
-
+        
         #region *** 出貨明細表(上海) S ***
 
         /// <summary>

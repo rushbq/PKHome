@@ -556,6 +556,16 @@ namespace Menu3000Data.Models
         public string Create_Name { get; set; }
     }
 
+
+    /// <summary>
+    /// 圖表資料欄
+    /// </summary>
+    public class CCP_ChartData
+    {
+        public string Label { get; set; }
+        public int Cnt { get; set; }
+    }
+
     #endregion
 
 

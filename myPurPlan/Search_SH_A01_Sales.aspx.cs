@@ -115,6 +115,7 @@ public partial class myPurPlan_Search_SH_A01_Sales : SecurityCheck
         _col.Add("OutBox_Cuft", "整箱材積");
         _col.Add("MOQ", "銷售MOQ");
         _col.Add("ProdMsg", "產銷訊息");
+        _col.Add("StockQty_12", "庫存12");
 
 
         //將指定的欄位,轉成陣列

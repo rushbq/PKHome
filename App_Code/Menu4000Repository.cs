@@ -2478,7 +2478,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 sqlDeclare.AppendLine("SET @nDays = @setDays");
 
 
-                #region >> [前置作業] 條件組合 <<
+                #region >> [前置作業] 篩選條件組合 <<
 
                 //庫別固定條件
                 string stockTarget = "";

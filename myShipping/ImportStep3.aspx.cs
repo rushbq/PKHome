@@ -145,10 +145,10 @@ public partial class myShipping_ImportStep3 : SecurityCheck
             Update_Who = fn_Param.CurrentUser
         };
 
-        //轉流單轉入
+        //物流單轉入
         if (!_data.UpdateShipImport_A(baseData, Req_CompID, out ErrMsg))
         {
-            string msg = "轉流單轉入失敗 (Step3);" + ErrMsg;
+            string msg = "物流單轉入失敗 (Step3);" + ErrMsg;
 
             //Show Error
             this.ph_ErrMessage.Visible = true;

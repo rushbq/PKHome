@@ -349,6 +349,11 @@
                 { "lang", "auto" }
                 , { "rootID", "3000" }
                 , { "typeID", "10" }});
+        routes.MapPageRoute("CCPchart", "{lang}/{rootID}/CustComplaint/{typeID}/Chart", "~/myCustComplaint/Chart.aspx", false,
+            new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "typeID", "10" }});
 
         //電商平台業績-深圳
         routes.MapPageRoute("SZ_ECDsearchY", "{lang}/{rootID}/eCommerceData/{typeID}/Year", "~/myECdata_SZ/SearchByYear.aspx", false,

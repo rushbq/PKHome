@@ -26,7 +26,11 @@
                 <asp:PlaceHolder ID="ph_ExportFlow301" runat="server">
                     <asp:LinkButton ID="btn_Excel_301" runat="server" CssClass="item" OnClick="btn_Excel_301_Click"><i class="file excel icon"></i><span class="mobile hidden">匯出二線清單</span></asp:LinkButton>
                 </asp:PlaceHolder>
-
+                
+                <a class="item" href="<%=FuncPath() %>/Chart">
+                    <i class="chart bar icon"></i>
+                    <span class="mobile hidden">分析圖表</span>
+                </a>
                 <a class="item" href="<%=FuncPath() %>/Inform">
                     <i class="envelope icon"></i>
                     <span class="mobile hidden">通知設定</span>
