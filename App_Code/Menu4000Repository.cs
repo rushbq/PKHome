@@ -4484,7 +4484,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     //----- SQL 執行 -----
                     cmd.CommandText = sql.ToString();
                     cmd.Parameters.Clear();
-                    cmd.CommandTimeout = 120;   //單位:秒
+                    cmd.CommandTimeout = 360;   //單位:秒
 
                     //----- SQL 固定參數 -----
                     sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
@@ -4528,7 +4528,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     //----- SQL 執行 -----
                     cmdCnt.CommandText = sql.ToString();
                     cmdCnt.Parameters.Clear();
-                    //cmd.CommandTimeout = 60;   //單位:秒
+                    cmdCnt.CommandTimeout = 360;   //單位:秒
 
                     //----- SQL 條件參數 -----
                     //加入參數陣列

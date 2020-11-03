@@ -11,7 +11,7 @@ using PKLib_Method.Methods;
 public class fn_Menu
 {
     /// <summary>
-    /// 
+    /// 發貨統計
     /// </summary>
     /// <param name="lang"></param>
     /// <param name="rootID"></param>
@@ -24,19 +24,19 @@ public class fn_Menu
         string url = "{0}{1}/{2}/ShipFreight/{3}".FormatThis(fn_Param.WebUrl, lang, rootID, compID);
 
         //發貨明細
-        menu += "<a class=\"item {2}\" href=\"{0}/?tab=1\">發貨明細</a>".FormatThis(url, "", tabID.Equals("1") ? "active" : "");
+        menu += "<a class=\"item {1}\" href=\"{0}/?tab=1\">發貨明細</a>".FormatThis(url, tabID.Equals("1") ? "active" : "");
 
         //發貨資料傳送
         url = "{0}{1}/{2}/ShipFreightSend/{3}".FormatThis(fn_Param.WebUrl, lang, rootID, compID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?tab=2\">發貨資料傳送</a>".FormatThis(url, "", tabID.Equals("2") ? "active" : "");
+        menu += "<a class=\"item {1}\" href=\"{0}/?tab=2\">發貨資料傳送</a>".FormatThis(url, tabID.Equals("2") ? "active" : "");
 
         //運費統計
         url = "{0}{1}/{2}/ShipFreightStat_Y/{3}".FormatThis(fn_Param.WebUrl, lang, rootID, compID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?tab=3\">運費統計</a>".FormatThis(url, "", tabID.Equals("3") ? "active" : "");
+        menu += "<a class=\"item {1}\" href=\"{0}/?tab=3\">運費統計</a>".FormatThis(url, tabID.Equals("3") ? "active" : "");
 
         //週統計
         url = "{0}{1}/{2}/ShipFreightStat_W/{3}".FormatThis(fn_Param.WebUrl, lang, rootID, compID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?tab=4\">週統計</a>".FormatThis(url, "", tabID.Equals("4") ? "active" : "");
+        menu += "<a class=\"item {1}\" href=\"{0}/?tab=4\">週統計</a>".FormatThis(url, tabID.Equals("4") ? "active" : "");
 
         //舊版程式
         menu += "<a class=\"item\" href=\"{0}\" target=\"_blank\">歷史明細(深圳)</a>".FormatThis("http://ef.prokits.com.tw/employee/prounion/DailySalesGrid.asp");
@@ -45,6 +45,69 @@ public class fn_Menu
     }
 
 
+    /// <summary>
+    /// 發貨統計-中國內銷
+    /// </summary>
+    /// <param name="lang"></param>
+    /// <param name="rootID"></param>
+    /// <param name="tabID">選單tab</param>
+    /// <param name="dataType">1工具/2玩具</param>
+    /// <returns></returns>
+    public static string GetTopMenu_ShipFreight_CHN(string lang, string rootID, string tabID, string dataType)
+    {
+        string menu = "";
+        string url = "{0}{1}/{2}/ShipFreight_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+
+        //發貨明細
+        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=1\">發貨明細</a>".FormatThis(url, dataType, tabID.Equals("1") ? "active" : "");
+
+        //發貨資料傳送
+        url = "{0}{1}/{2}/ShipFreightSend_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=2\">發貨資料傳送</a>".FormatThis(url, dataType, tabID.Equals("2") ? "active" : "");
+
+        //運費統計
+        url = "{0}{1}/{2}/ShipFreightStat_Y_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=3\">運費統計</a>".FormatThis(url, dataType, tabID.Equals("3") ? "active" : "");
+
+        //週統計
+        url = "{0}{1}/{2}/ShipFreightStat_W_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=4\">週統計</a>".FormatThis(url, dataType, tabID.Equals("4") ? "active" : "");
+
+        return menu;
+    }
+
+
+    /// <summary>
+    /// 發貨統計-中國內銷 (運費方式)
+    /// </summary>
+    /// <param name="val"></param>
+    /// <returns></returns>
+    public static string GetItem_ShipFrieghtWay(string val)
+    {
+        switch (val.ToUpper())
+        {
+            case "A":
+                return "自付";
+
+            case "B":
+                return "墊付";
+
+            case "C":
+                return "到付";
+
+            default:
+                return "";
+        }
+    }
+
+
+    /// <summary>
+    /// 客訴來源
+    /// </summary>
+    /// <param name="lang"></param>
+    /// <param name="typeID"></param>
+    /// <param name="ErrMsg"></param>
+    /// <returns></returns>
     public static ClassItem GetOne_RefType(string lang, Int32 typeID, out string ErrMsg)
     {
         //----- 宣告:資料參數 -----
@@ -61,7 +124,7 @@ public class fn_Menu
     }
 
     /// <summary>
-    /// 電商平台數據 - 來源類型
+    /// 來源類型
     /// </summary>
     /// <param name="typeID"></param>
     /// <returns></returns>

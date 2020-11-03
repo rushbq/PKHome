@@ -1,57 +1,43 @@
-﻿<%@ WebHandler Language="C#" Class="GetData_ChartData_CCP" %>
+﻿<%@ WebHandler Language="C#" Class="GetData_ShipComp" %>
 
 using System;
 using System.Web;
 using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Menu3000Data.Controllers;
+using ShipFreight_CN.Controllers;
 
-public class GetData_ChartData_CCP : IHttpHandler
+public class GetData_ShipComp : IHttpHandler
 {
     /// <summary>
-    /// 客訴資料分析圖
+    /// 取得物流公司資料(Ajax)
+    /// 使用Semantic UI的Search UI
     /// </summary>
-    /// <remarks>
-    /// (件數統計) 客戶類別 / F101不良原因 / F301不良原因
-    /// 
-    /// </remarks>
     public void ProcessRequest(HttpContext context)
     {
-        //waiting for 1 sec.
-        System.Threading.Thread.Sleep(1000);
-
         //[接收參數] 查詢字串
+        string searchVal = context.Request["q"];
         string ErrMsg = "";
-        string _type = context.Request["type"];
-        string _jobtype = context.Request["jobtype"];
-        string _sDate = context.Request["sdate"];
-        string _eDate = context.Request["edate"];
 
         //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
+        ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
         Dictionary<string, string> search = new Dictionary<string, string>();
 
 
         //----- 原始資料:條件篩選 -----
-        if (!string.IsNullOrWhiteSpace(_sDate))
+        if (!string.IsNullOrEmpty(searchVal))
         {
-            search.Add("sDate", _sDate);
+            search.Add("Keyword", searchVal);
         }
-        if (!string.IsNullOrWhiteSpace(_eDate))
-        {
-            search.Add("eDate", _eDate);
-        }
-      
 
         //----- 原始資料:取得所有資料 -----
-        var results = _data.GetCCP_ChartData(_type, _jobtype, search, out ErrMsg)
+        var results = _data.GetShipComp(search, out ErrMsg)
                 .Select(fld =>
                     new
                     {
-                        Label = fld.Label,
-                        Cnt = fld.Cnt
-                    });
+                        ID = fld.ID,
+                        Label = fld.Label
+                    }).Take(50);
 
         var data = new { results };
 

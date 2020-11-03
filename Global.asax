@@ -258,6 +258,50 @@
                 , { "rootID", "3000" }
                 , { "CompID", "SZ" }});
 
+        //發貨CHN
+         routes.MapPageRoute("SFsearch_CHN", "{lang}/{rootID}/ShipFreight_CHN", "~/myShipping_CHN/Search.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFedit_CHN", "{lang}/{rootID}/ShipFreight_CHN/Edit/{id}", "~/myShipping_CHN/Edit.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }
+                , { "id", "new" }});
+        routes.MapPageRoute("SFSendsearch_CHN", "{lang}/{rootID}/ShipFreightSend_CHN", "~/myShipping_CHN/SendList.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFStatY_CHN", "{lang}/{rootID}/ShipFreightStat_Y_CHN", "~/myShipping_CHN/StatFreight.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFStatW_CHN", "{lang}/{rootID}/ShipFreightStat_W_CHN", "~/myShipping_CHN/StatWeek.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFImpList_CHN", "{lang}/{rootID}/ShipImportCHN", "~/myShipping_CHN/ImportList.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFImpS1_CHN", "{lang}/{rootID}/ShipImportCHN/Step1", "~/myShipping_CHN/ImportStep1.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFImpS2_CHN", "{lang}/{rootID}/ShipImportCHN/Step2/{id}", "~/myShipping_CHN/ImportStep2.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFImpS3_CHN", "{lang}/{rootID}/ShipImportCHN/Step3/{id}", "~/myShipping_CHN/ImportStep3.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+        routes.MapPageRoute("SFImpS4_CHN", "{lang}/{rootID}/ShipImportCHN/Step4/{id}", "~/myShipping_CHN/ImportStep4.aspx", false,
+         new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "3000" }});
+
+
 
         //銷貨單庫存狀況
         routes.MapPageRoute("SalesOrderStockStat", "{lang}/{rootID}/SalesOrderStockStat/{CompID}", "~/mySalesOrderStock/Search.aspx", false,

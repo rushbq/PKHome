@@ -17,6 +17,7 @@ using PKLib_Method.Methods;
   [客訴]-CustComplaint
   [電商數據]-eCommerceData
   [出貨明細表]-ShipData
+  [外銷客戶歷史報價]-GetQuote_History
 */
 namespace Menu3000Data.Controllers
 {
@@ -1016,8 +1017,8 @@ namespace Menu3000Data.Controllers
 
                 #region >> [前置作業] SQL主體 <<
                 /*
-                 TW:不含稅
-                 SH:含稅([MB013] = 'Y')
+                 TW:含稅條件不判斷
+                 SH:外銷不含稅([MB013] = 'N')
                   利潤率 = ((Agent價 * 匯率) - 成本) / (Agent價 * 匯率)
                 */
                 mainSql = @"
@@ -1081,7 +1082,7 @@ namespace Menu3000Data.Controllers
 		                    ) AS RankSeq  --依生效日排序,取最新的日期
 	                    FROM [SHPK2].[dbo].[COPMB] WITH (NOLOCK)
 	                    --[條件], 含稅
-	                    WHERE ([MB013] = 'Y')
+	                    WHERE ([MB013] = 'N')
 	                     AND (MB001 NOT IN ('LEONARD', 'SHINYPOWER', 'SUNGLOW', 'YFL', 'Z08', 'T1', 'T2', 'T3', 'T4', '1111111', '7422200', 'SA001', 'SA002', 'SA003', 'SA004', 'SA005', 'SA006', 'SA007'))
 	                     /* [篩選條件], 品號 */
 	                     ##strQuoteModel##
@@ -1179,10 +1180,10 @@ namespace Menu3000Data.Controllers
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_TW.MB057 + INVMB_TW.MB058 + INVMB_TW.MB059 + INVMB_TW.MB060), 0)) AS PaperCost_TW");
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_SH.MB057 + INVMB_SH.MB058 + INVMB_SH.MB059 + INVMB_SH.MB060), 0)) AS PaperCost_SH");
                     sql.AppendLine("	, ISNULL(");
-                    sql.AppendLine("      (CONVERT(FLOAT, ROUND((INVMB_TW.MB053 / 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)))");
+                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_TW.MB053/32) * (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END), 2))");
                     sql.AppendLine("		, 0) AS AgentPrice_TW");
                     sql.AppendLine("    , ISNULL(");
-                    sql.AppendLine("      (CONVERT(FLOAT, ROUND(((INVMB_SH.MB053 / 8) * 1.3 * 32) * (CONVERT(FLOAT, (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END))), 2)))");
+                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_SH.MB053/8) * (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END), 2))");
                     sql.AppendLine("		, 0) AS AgentPrice_SH");
                     sql.AppendLine("    , ROW_NUMBER() OVER(ORDER BY TblQuote.CustID, TblQuote.ModelNo) AS RowIdx");
                     sql.AppendLine(" FROM TblQuote");
@@ -5762,7 +5763,7 @@ namespace Menu3000Data.Controllers
             sql.AppendLine(" FROM [prokit2].dbo.COPTG AS SO WITH(NOLOCK)");
             sql.AppendLine("  INNER JOIN [prokit2].dbo.COPMA AS Cust WITH(NOLOCK) ON SO.TG004 = Cust.MA001");
             sql.AppendLine("  LEFT JOIN [prokit2].dbo.CMSMV AS Emp WITH(NOLOCK) ON SO.TG006 = Emp.MV001");
-            sql.AppendLine(" WHERE (SO.TG005 = '130')");
+            sql.AppendLine(" WHERE (SO.TG005 IN ('125','130'))");
 
             /* Search */
             #region >> filter <<
@@ -8258,8 +8259,7 @@ namespace Menu3000Data.Controllers
         #endregion *** 客訴 E ***
 
         #endregion
-
-
+        
 
         #region -----// Others //-----
 
