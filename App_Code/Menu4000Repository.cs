@@ -1767,10 +1767,10 @@ namespace Menu4000Data.Controllers
 
                             break;
 
-                        case "sDateA":
+                        case "sDate":
                             sql.Append(" AND (WriteTime >= @sDate)");
                             break;
-                        case "eDateA":
+                        case "eDate":
                             sql.Append(" AND (WriteTime <= @eDate)");
                             break;
                     }
@@ -1824,10 +1824,10 @@ namespace Menu4000Data.Controllers
 
                             break;
 
-                        case "sDateA":
+                        case "sDate":
                             sqlParamList.Add(new SqlParameter("@sDate", item.Value + " 00:00:00"));
                             break;
-                        case "eDateA":
+                        case "eDate":
                             sqlParamList.Add(new SqlParameter("@eDate", item.Value + " 23:59:59"));
                             break;
 

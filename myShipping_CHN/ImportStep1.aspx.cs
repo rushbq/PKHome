@@ -24,16 +24,27 @@ public partial class myShipping_ImportStep1 : SecurityCheck
                 //[權限判斷] Start
                 bool isPass = false;
 
+                //A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
                 switch (Req_DataType)
                 {
-                    case "1":
+                    case "A":
                         //工具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3703");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3775");
                         break;
 
-                    default:
+                    case "B":
                         //玩具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3704");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3776");
+                        break;
+
+                    case "C":
+                        //工具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3777");
+                        break;
+
+                    case "D":
+                        //玩具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3778");
                         break;
                 }
 
@@ -44,20 +55,12 @@ public partial class myShipping_ImportStep1 : SecurityCheck
                 }
 
                 //取得公司別
-                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetECData_RefType(Convert.ToInt16(Req_DataType)));
+                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetShipping_RefType(Req_DataType));
                 lt_CorpName.Text = _corpName;
                 Page.Title += "-" + _corpName;
 
                 //[權限判斷] End
-                #endregion
-
-
-                //Get TraceID
-                string _traceID = NewTraceID();
-                lb_TraceID.Text = _traceID;
-                hf_TraceID.Value = _traceID;
-
-
+                #endregion                
 
             }
             catch (Exception)
@@ -71,13 +74,36 @@ public partial class myShipping_ImportStep1 : SecurityCheck
 
     #region -- 按鈕事件 --
 
+
     /// <summary>
-    /// 下一步
+    /// 經銷商匯入
     /// </summary>
-    protected void lbtn_Next_Click(object sender, EventArgs e)
+    protected void lbtn_Job_B_Click(object sender, EventArgs e)
+    {
+        doImport("B");
+    }
+
+    /// <summary>
+    /// 電商匯入
+    /// </summary>
+    protected void lbtn_Job_A_Click(object sender, EventArgs e)
+    {
+        doImport("A");
+    }
+
+
+    private void doImport(string _type)
     {
         //Check
-        HttpPostedFile hpf = fu_File.PostedFile;
+        HttpPostedFile hpf;
+        if (_type.Equals("A"))
+        {
+            hpf = fu_File_A.PostedFile;
+        }
+        else
+        {
+            hpf = fu_File_B.PostedFile;
+        }
 
         if (hpf.ContentLength == 0)
         {
@@ -86,7 +112,7 @@ public partial class myShipping_ImportStep1 : SecurityCheck
         }
 
         //資料處理
-        string[] myData = Add_Data();
+        string[] myData = Add_Data(_type);
 
         //取得回傳參數
         string DataID = myData[0];
@@ -106,7 +132,6 @@ public partial class myShipping_ImportStep1 : SecurityCheck
             Response.Redirect("{0}/Step2/{1}?dt={2}".FormatThis(FuncPath(), DataID, Req_DataType));
             return;
         }
-
     }
 
     #endregion
@@ -118,14 +143,14 @@ public partial class myShipping_ImportStep1 : SecurityCheck
     /// 資料新增
     /// </summary>
     /// <returns></returns>
-    private string[] Add_Data()
+    private string[] Add_Data(string _type)
     {
         //回傳參數初始化
         string DataID = "";
         string ProcCode = "0";
         string Message = "";
-        //TraceID
-        string myTraceID = hf_TraceID.Value;
+        //Get TraceID
+        string myTraceID = NewTraceID();
 
 
         #region -- 檔案處理 --
@@ -244,6 +269,7 @@ public partial class myShipping_ImportStep1 : SecurityCheck
         {
             Data_ID = new Guid(guid),
             TraceID = myTraceID,
+            Upload_Type = _type, //A=電商, B=經銷商
             Upload_File = ITempList[0].Param_FileName,
             Create_Who = fn_Param.CurrentUser
         };
@@ -336,13 +362,13 @@ public partial class myShipping_ImportStep1 : SecurityCheck
 
 
     /// <summary>
-    /// 資料判別:1=工具/2=玩具
+    /// 資料判別:A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
     /// </summary>
     public string Req_DataType
     {
         get
         {
-            string data = Request.QueryString["dt"] == null ? "1" : Request.QueryString["dt"].ToString();
+            string data = Request.QueryString["dt"] == null ? "A" : Request.QueryString["dt"].ToString();
             return data;
         }
         set
@@ -498,4 +524,5 @@ public partial class myShipping_ImportStep1 : SecurityCheck
 
     }
     #endregion
+
 }

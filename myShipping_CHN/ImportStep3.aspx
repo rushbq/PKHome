@@ -46,7 +46,10 @@
                         <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
                     </div>
                     <div class="eight wide field">
-                       
+                        <label>
+                            匯入類型</label>
+                        <asp:Label ID="lb_TypeName" runat="server" CssClass="ui blue basic large label"></asp:Label>
+                        <asp:HiddenField ID="hf_Type" runat="server" />
                     </div>
                 </div>
                 <div class="field">

@@ -35,12 +35,16 @@
                         </select>
                         <asp:TextBox ID="val_Custs" runat="server" Style="display: none"></asp:TextBox>
                     </div>
-                    <div class="eight wide field">
+                    <%--<div class="eight wide field">
                         <label>品號&nbsp;<small>輸入品號,選擇項目</small></label>
                         <select id="menuProd" class="ac-drpProd ui fluid search selection dropdown" multiple="">
                             <option value="">請選擇</option>
                         </select>
                         <asp:TextBox ID="val_Prods" runat="server" Style="display: none"></asp:TextBox>
+                    </div>--%>
+                    <div class="eight wide field">
+                        <label>品號關鍵字</label>
+                        <asp:TextBox ID="filter_Keyword" runat="server" placeholder="輸入關鍵字" MaxLength="50" autocomplete="off"></asp:TextBox>
                     </div>
                 </div>
             </div>
@@ -165,7 +169,7 @@
                 return;
 
                 //Get values of models
-                doGetDrpVals();
+                //doGetDrpVals();
                 doGetCustDrpVals();
 
                 //Check Null
@@ -225,7 +229,7 @@
     </script>
 
     <%-- 產品選單 --%>
-    <script>
+    <%--<script>
         /*
           search dropdown多選
           注意事項:
@@ -261,7 +265,7 @@
             }
         }
 
-    </script>
+    </script>--%>
 
     <%-- DataTables Start --%>
     <link href="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.18/datatables.min.css" rel="stylesheet" />
@@ -282,7 +286,7 @@
             /* Click事件 - 查詢 */
             $("#doSearch").on("click", function () {
                 //判斷多選選單,填入隱藏欄位
-                doGetDrpVals();
+                //doGetDrpVals();
                 doGetCustDrpVals();
 
                 //Check Null
@@ -310,7 +314,8 @@
             function doSearch() {
                 /* 取得資料 - 各欄位 */
                 var _Cust = $("#MainContent_val_Custs").val();
-                var _ModelNo = $("#MainContent_val_Prods").val();
+                //var _ModelNo = $("#MainContent_val_Prods").val();
+                var _keyword = $("#MainContent_filter_Keyword").val();
 
                 //畫面處理 - 顯示或隱藏
                 s_data.addClass("loading");
@@ -330,13 +335,14 @@
                          "type": "POST",
                          "data": {
                              Cust: _Cust,
-                             ModelNo: _ModelNo
+                             Keyword: _keyword
+                             //ModelNo: _ModelNo
                          }
                      },
                      "searching": false,  //搜尋
                      "ordering": false,   //排序
-                     "paging": true,     //分頁
-                     "info": true,      //頁數資訊
+                     "paging": false,     //分頁
+                     "info": false,      //頁數資訊
                      "lengthChange": false,  //是否顯示筆數選單
                      //自訂顯示欄位
                      "columns": [
@@ -361,7 +367,7 @@
                                  var showVal = source.ProfitTW;
 
                                  //組成html
-                                 var html = showVal == 0 ? '' : Math.round(showVal * 100) + ' %';
+                                 var html = showVal == 0 ? '' : Math.round(showVal * 1000)/10 + ' %';
 
                                  return html;
                              }, className: "collapsing center aligned"
@@ -377,7 +383,7 @@
                                  var showVal = source.ProfitSH;
 
                                  //組成html
-                                 var html = showVal == 0 ? '' : showVal * 100 + ' %';
+                                 var html = showVal == 0 ? '' : Math.round(showVal * 1000)/10 + ' %';
 
                                  return html;
                              }, className: "collapsing center aligned"

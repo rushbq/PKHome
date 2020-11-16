@@ -19,1001 +19,545 @@ namespace ShipFreight_CN.Controllers
 
         #region -----// Read //-----
 
-        #region *** 發貨 S ***
+        #region *** 出貨資料 S ***
         /// <summary>
-        /// 發貨總表(ShipFreight_CHN)
+        /// [出貨明細表](內銷) 指定資料
         /// </summary>
-        /// <param name="search">查詢參數</param>
-        /// <param name="sort">排序參數</param>
-        /// <param name="type">資料區分:1=工具 / 2=玩具</param>
+        /// <param name="search">search集合</param>
+        /// <param name="type">A=內銷工具 / B=內銷科學玩具</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
-        public IQueryable<ShipFreightItem> GetShipFreightList(Dictionary<string, string> search, Dictionary<string, string> sort
-            , string type, out string ErrMsg)
+        public IQueryable<ShipFreightItem> GetOneShipData(Dictionary<string, string> search, string type, out string ErrMsg)
         {
-            //----- 宣告 -----
-            List<ShipFreightItem> dataList = new List<ShipFreightItem>();
-            StringBuilder sql = new StringBuilder();
+            int dataCnt = 0;
+            return GetShipData(search, type, 0, 1, out dataCnt, out ErrMsg);
+        }
 
-            //----- 資料取得 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                /*
-                 已確認的銷貨單
-                */
-                sql.AppendLine(" ;WITH TblBase AS(");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, Base.TG003 AS SO_Date, Base.TG004 AS CustID");
-                sql.AppendLine("  , CAST((Base.TG045 + Base.TG046) AS money) AS TotalPrice");
-                sql.AppendLine("  , 'SH' AS StockType");
-                sql.AppendLine("  , Base.TG066 AS ContactWho");
-                sql.AppendLine("  , 'A' AS DataType");
-                sql.AppendLine(" FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002");
-                sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
-
-                switch (type)
-                {
-                    case "1":
-                        //指定銷貨單別:內銷工具
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','23B2','23B3','23B6'))");
-                        break;
-
-                    default:
-                        //指定銷貨單別:內銷科學玩具
-                        sql.Append(" AND (Base.TG001 IN ('2380','2381','2382','2383'))");
-                        break;
-
-                }
-
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046");
-
-                sql.AppendLine(" UNION ALL");
-                /*
-                 無銷貨單的借出單
-                 單別TG001 = 1302
-                 確認碼TG022 = Y
-                 結案碼TG024 <> Y
-                */
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID");
-                sql.AppendLine("  , CAST(SUM(Base.TG013) AS money) AS TotalPrice");
-                sql.AppendLine("  , 'SH' AS StockType");
-                sql.AppendLine("  , OrdBase.TF015 AS ContactWho");
-                sql.AppendLine("  , 'B' AS DataType");
-                sql.AppendLine(" FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002");
-                sql.AppendLine(" WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015");
-                sql.AppendLine(" )");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  ISNULL((SELECT Parent_ID FROM [PKEF].dbo.ShipFreightRel_CHN WHERE (ShipBase.Data_ID = Rel_ID)), ShipBase.Data_ID) AS RelID");
-                sql.AppendLine("  , TblBase.*");
-                sql.AppendLine("  , RTRIM(Cust.MA002) AS CustName");
-                sql.AppendLine("  , ShipBase.Data_ID");
-                sql.AppendLine("  , ShipBase.ShipDate, ShipBase.ShipComp, ShipBase.ShipWay");
-                sql.AppendLine(" , (");
-                sql.AppendLine("  CASE WHEN ISNULL(ShipBase.ShipWho, TblBase.ContactWho) = '' THEN");
-                sql.AppendLine("   CASE WHEN TblBase.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE TblBase.ContactWho END");
-                sql.AppendLine("   ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblBase.ContactWho) END");
-                sql.AppendLine(" ) AS ShipWho");
-                sql.AppendLine("  , ShipBase.Remark");
-                sql.AppendLine("  , ShipDT.Data_ID AS DT_UID, ShipDT.ShipNo, ShipDT.ShipCnt, ISNULL(ShipDT.Freight, 0) Freight, ISNULL(ShipDT.FreightWay, '') FreightWay");
-                sql.AppendLine("  , ShipComp.DisplayName AS ShipCompName");
-                sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Create_Who)) AS Create_Name");
-                //是否已被合併
-                sql.AppendLine("  , (SELECT COUNT(*) FROM [PKEF].dbo.ShipFreightRel_CHN WHERE (ShipBase.Data_ID = Rel_ID)) AS IsReled");
-                sql.AppendLine(" FROM TblBase");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON TblBase.CustID = Cust.MA001");
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreight_CHN ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreightDetail_CHN ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.Logistics ShipComp ON ShipBase.ShipComp = ShipComp.Data_ID");
-                sql.AppendLine(" WHERE (1=1)");
-
-
-                /* Search */
-                #region >> filter <<
-
-                if (search != null)
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
-
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        switch (item.Key)
-                        {
-                            case "DataID":
-                                sql.Append(" AND (ShipBase.Data_ID = @dataID)");
-
-                                cmd.Parameters.AddWithValue("dataID", item.Value);
-                                break;
-
-                            case "ErpNo":
-                                //--ERP單號(資料新增時使用)
-                                sql.Append(" AND (");
-                                sql.Append("  (UPPER(TblBase.SO_Fid) + UPPER(TblBase.SO_Sid) = UPPER(@SOID))");
-                                sql.Append("  OR (UPPER(TblBase.SO_Fid) +'-'+ UPPER(TblBase.SO_Sid) = UPPER(@SOID))");
-                                sql.Append(" )");
-
-                                cmd.Parameters.AddWithValue("SOID", item.Value);
-                                break;
-
-                            case "sDate":
-                                //--單據日
-                                sql.Append(" AND (TblBase.SO_Date >= @sDate)");
-
-                                cmd.Parameters.AddWithValue("sDate", item.Value);
-                                break;
-
-                            case "eDate":
-                                //--單據日
-                                sql.Append(" AND (TblBase.SO_Date <= @eDate)");
-
-                                cmd.Parameters.AddWithValue("eDate", item.Value);
-                                break;
-
-                            case "Way":
-                                //--物流途徑
-                                sql.Append(" AND (UPPER(ShipBase.ShipWay) = UPPER(@ShipWay))");
-
-                                cmd.Parameters.AddWithValue("ShipWay", item.Value);
-                                break;
-
-                            case "Cust":
-                                //--客戶ID / Name
-                                sql.Append(" AND (");
-                                sql.Append("  (UPPER(TblBase.CustID) LIKE '%' + UPPER(@Cust) + '%')");
-                                sql.Append("  OR (UPPER(RTRIM(Cust.MA002)) LIKE '%' + UPPER(@Cust) + '%')");
-                                sql.Append(" )");
-
-                                cmd.Parameters.AddWithValue("Cust", item.Value);
-
-                                break;
-
-                            case "CustID":
-                                //--客戶ID
-                                sql.Append(" AND (");
-                                sql.Append("  (UPPER(TblBase.CustID) = UPPER(@CustID))");
-                                sql.Append(" )");
-
-                                cmd.Parameters.AddWithValue("CustID", item.Value);
-
-                                break;
-
-                            case "Keyword":
-                                //--單號keyword/物流單號/收件人
-                                sql.Append(" AND (");
-                                sql.Append("  (UPPER(TblBase.SO_Fid) + UPPER(TblBase.SO_Sid) LIKE '%' + UPPER(@keyword) + '%')");
-                                sql.Append("  OR (UPPER(TblBase.SO_Fid) +'-'+ UPPER(TblBase.SO_Sid) LIKE '%' + UPPER(@keyword) + '%')");
-                                sql.Append("  OR (ShipDT.ShipNo LIKE '%'+ @keyword +'%')");
-                                sql.Append("  OR ((");
-                                sql.Append("       CASE WHEN ISNULL(ShipBase.ShipWho, TblBase.ContactWho) = '' THEN");
-                                sql.Append("       CASE WHEN TblBase.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE TblBase.ContactWho END");
-                                sql.Append("       ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblBase.ContactWho) END");
-                                sql.Append("   ) LIKE '%'+ @keyword +'%')");
-                                sql.Append(" )");
-
-                                cmd.Parameters.AddWithValue("keyword", item.Value);
-
-                                break;
-
-                            case "ShipsDate":
-                                //--發貨日
-                                sql.Append(" AND (ShipBase.ShipDate >= @ShipsDate)");
-
-                                cmd.Parameters.AddWithValue("ShipsDate", item.Value);
-                                break;
-
-                            case "ShipeDate":
-                                //--發貨日
-                                sql.Append(" AND (ShipBase.ShipDate <= @ShipeDate)");
-
-                                cmd.Parameters.AddWithValue("ShipeDate", item.Value);
-                                break;
-
-                            case "Rel":
-                                //--未關聯的單號 & 未填寫的發貨資料
-                                sql.Append(" AND (TblBase.SO_Fid+TblBase.SO_Sid NOT IN (");
-                                sql.Append("  SELECT ERP_SO_Fid+ERP_SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN FROM [PKEF].dbo.ShipFreightRel_CHN");
-                                sql.Append(" ))");
-                                sql.Append(" AND (ShipBase.ERP_SO_Fid IS NULL)");
-
-                                break;
-
-                            case "ShipComp":
-                                //貨運公司
-                                sql.Append(" AND (ShipBase.ShipComp = @ShipComp)");
-
-                                cmd.Parameters.AddWithValue("ShipComp", item.Value);
-                                break;
-
-                            case "FreightWay":
-                                sql.Append(" AND (ShipDT.FreightWay = @FreightWay)");
-
-                                cmd.Parameters.AddWithValue("FreightWay", item.Value);
-                                break;
-                        }
-                    }
-                }
-                #endregion
-
-
-                /* Sort */
-                #region >> Sorting <<
-
-                if (sort != null)
-                {
-                    //過濾空值
-                    var thisSort = sort.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
-                    string thisSortField = "";
-                    string thisSortWay = "";
-
-                    //查詢內容
-                    foreach (var item in thisSort)
-                    {
-                        switch (item.Key)
-                        {
-                            case "Field":
-                                switch (item.Value)
-                                {
-                                    case "A":
-                                        thisSortField = "TblBase.SO_Fid + TblBase.SO_Sid";
-                                        break;
-
-                                    default:
-                                        thisSortField = "ShipBase.ShipDate";
-                                        break;
-                                }
-
-                                break;
-
-                            case "Way":
-                                switch (item.Value)
-                                {
-                                    case "A":
-                                        thisSortWay = "ASC";
-                                        break;
-
-                                    default:
-                                        thisSortWay = "DESC";
-                                        break;
-                                }
-
-                                break;
-                        }
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(thisSortField))
-                    {
-                        sql.AppendLine(" ORDER BY {0} {1}".FormatThis(thisSortField, thisSortWay));
-                    }
-                    else
-                    {
-                        //預設排序(1=RelID)
-                        sql.AppendLine(" ORDER BY TblBase.SO_Date, TblBase.CustID, TblBase.SO_Fid, TblBase.SO_Sid");
-                    }
-
-                }
-                #endregion
-
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.CommandTimeout = 90;   //單位:秒
-
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
-                {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
-
-                    //資料迴圈
-                    foreach (var item in query)
-                    {
-                        //加入項目
-                        var data = new ShipFreightItem
-                        {
-                            Data_ID = item.Field<Guid?>("Data_ID"),
-                            Erp_SO_FID = item.Field<string>("SO_Fid"),
-                            Erp_SO_SID = item.Field<string>("SO_Sid"),
-                            Erp_SO_Date = item.Field<string>("SO_Date"),
-                            CustID = item.Field<string>("CustID"),
-                            CustName = item.Field<string>("CustName"),
-                            TotalPrice = item.Field<decimal>("TotalPrice"),
-                            StockType = item.Field<string>("StockType"),
-                            ShipDate = item.Field<DateTime?>("ShipDate").ToString().ToDateString("yyyy/MM/dd"),
-                            ShipComp = item.Field<Int32?>("ShipComp"),
-                            ShipCompName = item.Field<string>("ShipCompName"),
-                            ShipWay = item.Field<string>("ShipWay"),
-                            ShipWho = item.Field<string>("ShipWho"),
-                            ShipCnt = item.Field<Int32?>("ShipCnt"),
-                            Remark = item.Field<string>("Remark"),
-                            Create_Name = item.Field<string>("Create_Name"),
-                            IsReled = item.Field<int>("IsReled"),
-                            ShipNo = item.Field<string>("ShipNo"),
-                            Freight = item.Field<double?>("Freight"),
-                            FreightWay = item.Field<string>("FreightWay")
-
-                        };
-
-                        //將項目加入至集合
-                        dataList.Add(data);
-
-                    }
-                }
-
-                //回傳集合
-                return dataList.AsQueryable();
-            }
-
+        /// <summary>
+        /// [出貨明細表](內銷) 所有資料
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="type">A=內銷工具 / B=內銷科學玩具</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public IQueryable<ShipFreightItem> GetAllShipData(Dictionary<string, string> search, string type, out string ErrMsg)
+        {
+            int dataCnt = 0;
+            return GetShipData(search, type, 0, 9999999, out dataCnt, out ErrMsg);
         }
 
 
         /// <summary>
-        /// 取得明細資料 - 發貨(ShipFreight_CHN)
+        /// [出貨明細表](內銷) 資料清單
         /// </summary>
-        /// <param name="id">主編號</param>
+        /// <param name="search">search集合</param>
+        /// <param name="type">A=內銷工具 / B=內銷科學玩具</param>
+        /// <param name="startRow">StartRow</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
         /// <returns></returns>
-        public IQueryable<ShipFreightDetail> GetShipFreightDetail(string id)
+        public IQueryable<ShipFreightItem> GetShipData(Dictionary<string, string> search, string type
+            , int startRow, int endRow
+            , out int DataCnt, out string ErrMsg)
         {
-            //----- 宣告 -----
-            List<ShipFreightDetail> dataList = new List<ShipFreightDetail>();
-            StringBuilder sql = new StringBuilder();
+            ErrMsg = "";
 
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
+            try
             {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" SELECT Data_ID, ShipNo, ShipCnt, Freight, FreightWay");
-                sql.AppendLine(" FROM ShipFreightDetail_CHN WITH(NOLOCK)");
-                sql.AppendLine(" WHERE (Parent_ID = @ParentID)");
-                sql.AppendLine(" ORDER BY ShipNo");
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                List<ShipFreightItem> dataList = new List<ShipFreightItem>(); //資料容器
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> subParamList = new List<SqlParameter>(); //SQL參數取得
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                StringBuilder subSql = new StringBuilder(); //條件SQL取得
+                DataCnt = 0;    //資料總數
+
+                //取得SQL語法
+                string cteSql = GetSQL_CTE(type);
+                subSql = GetSQL_ShipData(search);
+
+                //取得SQL參數集合
+                subParamList = GetParams_ShipData(search);
 
 
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("ParentID", id);
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    //CTE SQL
+                    sql.Append(cteSql);
+
+
+                    sql.AppendLine(" SELECT COUNT(TblAll.SO_Date) AS TotalCnt FROM (");
+                    //子查詢SQL
+                    sql.Append(subSql);
+                    sql.AppendLine(" ) AS TblAll");
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+                    sqlParamList.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    //sqlParamList.Add(new SqlParameter("@DataType", DataType));
+
+                    //----- SQL 條件參數 -----
+                    //加入篩選後的參數
+                    sqlParamList.AddRange(subParamList);
+
+                    //加入參數陣列
+                    cmdCnt.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, dbConn.DBS.PKExcel, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
 
                 //----- 資料取得 -----
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
+                using (SqlCommand cmd = new SqlCommand())
                 {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
 
-                    //資料迴圈
-                    foreach (var item in query)
+                    //CTE SQL
+                    sql.Append(cteSql);
+
+                    sql.AppendLine(" SELECT TblAll.* FROM (");
+                    //子查詢SQL
+                    sql.Append(subSql);
+                    sql.AppendLine(" ) AS TblAll");
+                    sql.AppendLine(" WHERE (TblAll.RowIdx >= @startRow) AND (TblAll.RowIdx <= @endRow)");
+                    //sql.AppendLine(" ORDER BY TblAll.RowIdx");
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+                    sqlParamList.Clear();
+                    //cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    //sqlParamList.Add(new SqlParameter("@DataType", DataType));
+                    sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                    sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    //----- SQL 條件參數 -----
+                    //加入篩選後的參數
+                    sqlParamList.AddRange(subParamList);
+
+                    //加入參數陣列
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKExcel, out ErrMsg))
                     {
-                        //加入項目
-                        var data = new ShipFreightDetail
+                        //LinQ 查詢
+                        var query = DT.AsEnumerable();
+
+                        //資料迴圈
+                        foreach (var item in query)
                         {
-                            Data_ID = item.Field<int>("Data_ID"),
-                            ShipNo = item.Field<string>("ShipNo"),
-                            ShipCnt = item.Field<Int32>("ShipCnt"),
-                            Freight = item.Field<double>("Freight"),
-                            FreightWay = item.Field<string>("FreightWay")
-                        };
-
-                        //將項目加入至集合
-                        dataList.Add(data);
-
-                    }
-                }
-            }
-
-            //回傳集合
-            return dataList.AsQueryable();
-        }
-
-
-        /// <summary>
-        /// 取得關聯資料 - 發貨(ShipFreight_CHN)
-        /// </summary>
-        /// <param name="id">主編號</param>
-        /// <returns></returns>
-        public IQueryable<ShipFreightRel> GetShipFreightRel(string id)
-        {
-            //----- 宣告 -----
-            List<ShipFreightRel> dataList = new List<ShipFreightRel>();
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" SELECT Rel_ID, Data_ID, ERP_SO_Fid, ERP_SO_Sid");
-                sql.AppendLine(" FROM ShipFreightRel_CHN WITH(NOLOCK)");
-                sql.AppendLine(" WHERE (Parent_ID = @ParentID)");
-                sql.AppendLine(" ORDER BY ERP_SO_Fid, ERP_SO_Sid");
-
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("ParentID", id);
-
-                //----- 資料取得 -----
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
-                {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
-
-                    //資料迴圈
-                    foreach (var item in query)
-                    {
-                        //加入項目
-                        var data = new ShipFreightRel
-                        {
-                            Data_ID = item.Field<int>("Data_ID"),
-                            Rel_ID = item.Field<Guid>("Rel_ID"),
-                            Erp_SO_FID = item.Field<string>("ERP_SO_Fid"),
-                            Erp_SO_SID = item.Field<string>("ERP_SO_Sid")
-                        };
-
-                        //將項目加入至集合
-                        dataList.Add(data);
-
-                    }
-                }
-            }
-
-            //回傳集合
-            return dataList.AsQueryable();
-        }
-
-
-        /// <summary>
-        /// 發貨EMAIL傳送(ShipFreightSend)
-        /// </summary>
-        /// <param name="search">查詢參數</param>
-        /// <param name="type">資料區分:1=工具 / 2=玩具</param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public IQueryable<ShipFreightItem> GetShipFreightSendList(Dictionary<string, string> search, string type, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            List<ShipFreightItem> dataList = new List<ShipFreightItem>();
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料取得 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                /*
-                 已確認的銷貨單
-                */
-                sql.AppendLine(" ;WITH TblBase AS(");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, Base.TG003 AS SO_Date, Base.TG004 AS CustID");
-                sql.AppendLine("  , CAST((Base.TG045 + Base.TG046) AS money) AS TotalPrice");
-                sql.AppendLine("  , 'SH' AS StockType");
-                sql.AppendLine("  , Base.TG066 AS ContactWho");
-                sql.AppendLine("  , 'A' AS DataType");
-                sql.AppendLine(" FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002");
-                sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
-                switch (type)
-                {
-                    case "1":
-                        //指定銷貨單別:內銷工具
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','23B2','23B3','23B6'))");
-                        break;
-
-                    default:
-                        //指定銷貨單別:內銷科學玩具
-                        sql.Append(" AND (Base.TG001 IN ('2380','2381','2382','2383'))");
-                        break;
-
-                }
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046");
-
-                sql.AppendLine(" UNION ALL");
-                /*
-                 無銷貨單的借出單
-                 單別TG001 = 1302
-                 確認碼TG022 = Y
-                 結案碼TG024 <> Y
-                */
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID");
-                sql.AppendLine("  , CAST(SUM(Base.TG013) AS money) AS TotalPrice");
-                sql.AppendLine("  , 'SH' AS StockType");
-                sql.AppendLine("  , OrdBase.TF015 AS ContactWho");
-                sql.AppendLine("  , 'B' AS DataType");
-                sql.AppendLine(" FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002");
-                sql.AppendLine(" WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015");
-                sql.AppendLine(" )");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  ISNULL((SELECT Parent_ID FROM [PKEF].dbo.ShipFreightRel_CHN WHERE (ShipBase.Data_ID = Rel_ID)), ShipBase.Data_ID) AS RelID");
-                sql.AppendLine("  , TblBase.*");
-                sql.AppendLine("  , RTRIM(Cust.MA002) AS CustName");
-                /* CompID無資料時,帶入目前的ReqCompID */
-                sql.AppendLine("  , ShipBase.Data_ID");
-                sql.AppendLine("  , ShipBase.ShipDate, ShipBase.ShipComp, ShipBase.ShipWay");
-                sql.AppendLine("  , (CASE WHEN TblBase.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblBase.ContactWho) END) AS ShipWho");
-                sql.AppendLine("  , ShipBase.Remark");
-                sql.AppendLine("  , ShipDT.Data_ID AS DT_UID, ShipDT.ShipNo, ShipDT.ShipCnt, ISNULL(ShipDT.Freight, 0) Freight, ISNULL(ShipDT.FreightWay, '') FreightWay");
-                sql.AppendLine("  , ShipComp.DisplayName AS ShipCompName");
-                sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Create_Who)) AS Create_Name");
-                //是否已被合併
-                sql.AppendLine("  , (SELECT COUNT(*) FROM [PKEF].dbo.ShipFreightRel_CHN WHERE (ShipBase.Data_ID = Rel_ID)) AS IsReled");
-                sql.AppendLine(" FROM TblBase");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON TblBase.CustID = Cust.MA001");
-                sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreight_CHN ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.ShipFreightDetail_CHN ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
-                sql.AppendLine("  LEFT JOIN [PKEF].dbo.Logistics ShipComp ON ShipBase.ShipComp = ShipComp.Data_ID");
-                sql.AppendLine(" WHERE (1=1)");
-
-                /* Search */
-                #region >> filter <<
-
-                if (search != null)
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
-
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        switch (item.Key)
-                        {
-                            case "Way":
-                                //--物流途徑
-                                sql.Append(" AND (UPPER(ShipBase.ShipWay) = UPPER(@ShipWay))");
-
-                                cmd.Parameters.AddWithValue("ShipWay", item.Value);
-                                break;
-
-                            case "ShipsDate":
-                                //--發貨日
-                                sql.Append(" AND (ShipBase.ShipDate >= @ShipsDate)");
-
-                                cmd.Parameters.AddWithValue("ShipsDate", item.Value);
-                                break;
-
-                            case "ShipeDate":
-                                //--發貨日
-                                sql.Append(" AND (ShipBase.ShipDate <= @ShipeDate)");
-
-                                cmd.Parameters.AddWithValue("ShipeDate", item.Value);
-                                break;
-
-                                //case "ShipFrom":
-                                //    //出貨地
-                                //    sql.Append(" AND (TblBase.StockType = @ShipFrom)");
-
-                                //    cmd.Parameters.AddWithValue("ShipFrom", item.Value);
-
-                                //    break;
-
-                        }
-                    }
-                }
-                #endregion
-
-
-                /* Sort */
-                sql.AppendLine(" ORDER BY 1 DESC, ShipDT.ShipNo DESC, TblBase.SO_Date DESC, TblBase.SO_Fid, TblBase.SO_Sid");
-
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.CommandTimeout = 90;   //單位:秒
-
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
-                {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
-
-                    //資料迴圈
-                    foreach (var item in query)
-                    {
-                        //加入項目
-                        var data = new ShipFreightItem
-                        {
-                            Data_ID = item.Field<Guid?>("Data_ID"),
-                            Erp_SO_FID = item.Field<string>("SO_Fid"),
-                            Erp_SO_SID = item.Field<string>("SO_Sid"),
-                            Erp_SO_Date = item.Field<string>("SO_Date"),
-                            CustID = item.Field<string>("CustID"),
-                            CustName = item.Field<string>("CustName"),
-                            TotalPrice = item.Field<decimal>("TotalPrice"),
-                            StockType = item.Field<string>("StockType"),
-                            ShipDate = item.Field<DateTime?>("ShipDate").ToString().ToDateString("yyyy/MM/dd"),
-                            ShipComp = item.Field<Int32?>("ShipComp"),
-                            ShipCompName = item.Field<string>("ShipCompName"),
-                            ShipWay = item.Field<string>("ShipWay"),
-                            ShipWho = item.Field<string>("ShipWho"),
-                            ShipCnt = item.Field<Int32?>("ShipCnt"),
-                            Remark = item.Field<string>("Remark"),
-                            Create_Name = item.Field<string>("Create_Name"),
-                            IsReled = item.Field<int>("IsReled"),
-                            ShipNo = item.Field<string>("ShipNo"),
-                            Freight = item.Field<double?>("Freight"),
-                            FreightWay = item.Field<string>("FreightWay")
-                        };
-
-                        //將項目加入至集合
-                        dataList.Add(data);
-
-                    }
-                }
-
-                //回傳集合
-                return dataList.AsQueryable();
-            }
-
-        }
-
-
-        /// <summary>
-        /// 運費統計(ShipFreightStat_Y)
-        /// </summary>
-        /// <param name="type">資料區分:1=工具 / 2=玩具</param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public IQueryable<ShipStat_Year> GetShipStat_Year(string type, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            List<ShipStat_Year> dataList = new List<ShipStat_Year>();
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料取得 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                /*
-                 已確認的銷貨單(一年內)
-                */
-                sql.AppendLine(" ;WITH TblBase AS(");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  CAST(SUM(DT.TH037 + DT.TH038) AS money) AS TotalPrice");
-                sql.AppendLine("  , COUNT(DT.TH004) AS ItemCnt");
-                sql.AppendLine("  , RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid");
-                sql.AppendLine(" FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002");
-                sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
-                sql.AppendLine("  AND SUBSTRING(Base.TG003,1,4) BETWEEN YEAR(GETDATE()-365) and YEAR(GETDATE())");
-
-                switch (type)
-                {
-                    case "1":
-                        //指定銷貨單別:內銷工具
-                        sql.Append(" AND (Base.TG001 IN ('2313','2341','2342','2343','2345','23B2','23B3','23B6'))");
-                        break;
-
-                    default:
-                        //指定銷貨單別:內銷科學玩具
-                        sql.Append(" AND (Base.TG001 IN ('2380','2381','2382','2383'))");
-                        break;
-
-                }
-
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002");
-
-                sql.AppendLine(" UNION ALL");
-                /*
-                 無銷貨單的借出單(一年內)
-                 單別TG001 = 1302
-                 確認碼TG022 = Y
-                 結案碼TG024 <> Y
-                */
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  SUM(Base.TG013) AS TotalPrice");
-                sql.AppendLine("  , COUNT(Base.TG004) AS ItemCnt");
-                sql.AppendLine("  , RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid");
-                sql.AppendLine(" FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002");
-                sql.AppendLine(" WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')");
-                sql.AppendLine("  AND SUBSTRING(OrdBase.TF003, 1, 4) BETWEEN YEAR(GETDATE()-365) and YEAR(GETDATE())");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002");
-                sql.AppendLine(" )");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  ISNULL(YEAR(ShipBase.ShipDate), 9999) AS ShipYear");
-                sql.AppendLine("  , ISNULL(MONTH(ShipBase.ShipDate), 99) AS ShipMonth");
-                sql.AppendLine("  , SUM(TblBase.TotalPrice) AS TotalPrice");
-                sql.AppendLine("  , SUM(ItemCnt) AS ItemCnt");
-                sql.AppendLine("  , SUM(ShipDT.ShipCnt) AS ShipCnt");
-                sql.AppendLine("  , SUM(ISNULL(ShipDT.Freight, 0)) AS Freight");
-                sql.AppendLine("  , ISNULL(SUM(ShipDT.Freight),0) AS AllPay");
-                sql.AppendLine(" FROM TblBase");
-                sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreight_CHN ShipBase ON TblBase.SO_Fid = ShipBase.ERP_So_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND TblBase.SO_Sid = ShipBase.ERP_So_Sid COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine("  INNER JOIN [PKEF].dbo.ShipFreightDetail_CHN ShipDT ON ShipBase.Data_ID = ShipDT.Parent_ID");
-                sql.AppendLine(" WHERE (1=1)");
-                sql.AppendLine(" GROUP BY ROLLUP(YEAR(ShipBase.ShipDate), MONTH(ShipBase.ShipDate))");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.CommandTimeout = 60;   //單位:秒
-
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
-                {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
-
-                    //資料迴圈
-                    foreach (var item in query)
-                    {
-                        int getYear = item.Field<int>("ShipYear");
-                        int getMonth = item.Field<int>("ShipMonth");
-                        string sDate = "";
-                        string eDate = "";
-                        double totalPrice = Convert.ToDouble(item.Field<decimal>("TotalPrice"));
-
-                        //不顯示總計
-                        if (!getYear.Equals(9999))
-                        {
-                            //設定開始/結束日(Url使用)
-                            if (!getMonth.Equals(99))
-                            {
-                                //月初
-                                DateTime dateStart = new DateTime(getYear, getMonth, 1);
-                                //月底
-                                DateTime dateEnd = dateStart.AddMonths(1).AddDays(-1);
-
-                                sDate = dateStart.ToString().ToDateString("yyyy/MM/dd");
-                                eDate = dateEnd.ToString().ToDateString("yyyy/MM/dd");
-                            }
-                            else
-                            {
-                                sDate = "{0}/1/1".FormatThis(getYear);
-                                eDate = "{0}/12/31".FormatThis(getYear);
-                            }
+                            #region ** 欄位 **
 
                             //加入項目
-                            var data = new ShipStat_Year
+                            var data = new ShipFreightItem
                             {
-                                showYM = "{0}-{1}".FormatThis(getYear, getMonth.Equals(99) ? "小計" : getMonth.ToString()),
-                                Month = getMonth,
-                                sDate = sDate,
-                                eDate = eDate,
-                                TotalPrice = totalPrice,
-                                ItemCnt = item.Field<Int32>("ItemCnt"),
-                                ShipCnt = item.Field<Int32>("ShipCnt"),
-                                Freight = item.Field<double>("Freight"),
-                                avgPercent = totalPrice > 0
-                                  ? Math.Round((item.Field<double>("AllPay") / totalPrice) * 100, 2, MidpointRounding.AwayFromZero)
-                                  : 0,
+                                Data_ID = item.Field<Guid?>("Data_ID"),
+                                Erp_SO_FID = item.Field<string>("SO_Fid"),
+                                Erp_SO_SID = item.Field<string>("SO_Sid"),
+                                Erp_SO_FullID = "{0}-{1}".FormatThis(item.Field<string>("SO_Fid"), item.Field<string>("SO_Sid")),
+                                Erp_SO_Date = item.Field<string>("SO_Date"),
+                                CustID = item.Field<string>("CustID"),
+                                CustName = item.Field<string>("CustName"),
+                                TotalPrice = item.Field<decimal>("TotalPrice"),
+                                CfmCode = item.Field<string>("CfmCode"),
+                                ShipNo = item.Field<string>("ShipNo"),
+                                Freight = item.Field<double?>("Freight"),
+                                BoxCnt = item.Field<int?>("BoxCnt"),
+                                ShipWho = item.Field<string>("ShipWho"),
+                                ShipDate = item.Field<DateTime?>("ShipDate").ToString().ToDateString("yyyy/MM/dd"),
+                                ShipTel = item.Field<string>("ShipTel"),
+                                ShipAddr1 = item.Field<string>("ShipAddr1"),
+                                ShipAddr2 = item.Field<string>("ShipAddr2"),
+                                CfmWhoName = item.Field<string>("CfmWhoName"),
+
+                                ShipComp = item.Field<Int32?>("ShipComp") ?? 0,
+                                ShipCompName = item.Field<string>("ShipCompName"),
+                                ShipWay = item.Field<Int32?>("ShipWay") ?? 0,
+                                ShipWayName = item.Field<string>("ShipWayName"),
+                                SendType = item.Field<Int32?>("SendType") ?? 0,
+                                SendTypeName = item.Field<string>("SendTypeName"),
+
+                                UserCheck1 = item.Field<string>("UserCheck1"),
+                                Remark = item.Field<string>("Remark"),
+                                Create_Time = item.Field<DateTime?>("Create_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
+                                Update_Time = item.Field<DateTime?>("Update_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
+                                Create_Name = item.Field<string>("Create_Name"),
+                                Update_Name = item.Field<string>("Update_Name")
                             };
+
+
+                            #endregion
+
 
                             //將項目加入至集合
                             dataList.Add(data);
                         }
                     }
+
+                    //回傳集合
+                    return dataList.AsQueryable();
                 }
 
-                //回傳集合
-                return dataList.AsQueryable();
-            }
-
-        }
-
-
-        /// <summary>
-        /// 週統計(ShipFreightStat_W)
-        /// </summary>
-        /// <param name="search"></param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public DataTable GetShipStat_Week(Dictionary<string, string> search, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料取得 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-
-                sql.Append(" DECLARE @year INT");
-                sql.Append(" SET @year = @setYear;");
-
-                sql.Append(" WITH YearWeekRange AS");
-                sql.Append(" (");
-                sql.Append("  SELECT DATEDIFF(wk,0, STR(@year) + '/1/1') AS startWeekNum");
-                sql.Append("   , DATEADD(wk, DATEDIFF(wk,0, STR(@year) + '/1/1'), -1) AS startDate");
-                sql.Append("   , 0 AS seq");
-
-                sql.Append(" UNION ALL");
-
-                sql.Append("  SELECT startWeekNum");
-                sql.Append("   , DATEADD(wk, startWeekNum + seq + 1, -1) AS startDate");
-                sql.Append("   , seq + 1 AS seq");
-                sql.Append("  FROM YearWeekRange YW");
-                sql.Append("  WHERE seq < 51");
-                sql.Append(" )");
-                sql.Append(" , TblData AS (");
-                sql.Append("  SELECT COUNT(*) AS Cnt, DATEPART(wk, ShipBase.ShipDate) AS myWeek, ShipBase.CustID");
-                sql.Append("  FROM [PKEF].dbo.ShipFreight_CHN ShipBase");
-                sql.Append("  WHERE (YEAR(ShipBase.ShipDate) = @year)");
-
-                #region >> filter <<
-
-                if (search != null)
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrEmpty(fld.Value));
-
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        switch (item.Key)
-                        {
-                            case "Year":
-                                //年份(必填)
-                                cmd.Parameters.AddWithValue("setYear", item.Value);
-
-                                break;
-
-                                //case "ShipFrom":
-                                //    //出貨地
-                                //    sql.Append(" AND (ShipBase.ShipFrom = @ShipFrom)");
-
-                                //    cmd.Parameters.AddWithValue("ShipFrom", item.Value);
-
-                                //    break;
-                        }
-                    }
-                }
                 #endregion
 
-                sql.Append("  GROUP BY DATEPART(wk, ShipBase.ShipDate), ShipBase.CustID");
-                sql.Append(" )");
-                // --補上該週的最後一天的日期(endDate)
-                sql.Append(" SELECT * FROM (");
-                sql.Append(" 	SELECT");
-                sql.Append(" 	(seq+1) AS showWeek");
-                sql.Append(" 	, RTRIM(Cust.MA002) AS CustName");
-                sql.Append(" 	, ISNULL(TblData.Cnt, 0) AS ItemCnt");
-                sql.Append(" 	FROM YearWeekRange YWR");
-                sql.Append(" 	 INNER JOIN TblData ON (YWR.seq + 1) = TblData.myWeek");
-                sql.Append(" 	 LEFT JOIN Customer Cust ON TblData.CustID = Cust.MA001 AND DBS = DBC");
-                sql.Append(" ) AS P");
-                sql.Append(" PIVOT");
-                sql.Append(" (");
-                sql.Append("  SUM(ItemCnt)");
-                sql.Append("  FOR showWeek");
-                sql.Append("  IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24],[25],[26],[27],[28],[29],[30],[31],[32],[33],[34],[35],[36],[37],[38],[39],[40],[41],[42],[43],[44],[45],[46],[47],[48],[49],[50],[51],[52])");
-                sql.Append(" ) AS Pvt");
-
-
-
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.CommandTimeout = 60;   //單位:秒
-
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Local, out ErrMsg))
-                {
-                    return DT;
-                }
             }
-
-        }
-
-
-        /// <summary>
-        /// 取得物流公司
-        /// </summary>
-        /// <param name="search"></param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Logistics 為共用Table, 使用CompID判別
-        /// </remarks>
-        public IQueryable<ShipComp> GetShipComp(Dictionary<string, string> search, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            List<ShipComp> dataList = new List<ShipComp>();
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
+            catch (Exception ex)
             {
-                //----- SQL 查詢語法 -----
-                sql.Append(" SELECT Data_ID AS ID, DisplayName AS Label, Display, Sort");
-                sql.Append(" FROM Logistics");
-                sql.Append(" WHERE (CompID = 'CHN')");
 
-                /* Search */
-                #region >> filter <<
-
-                if (search == null)
-                {
-                    //無條件時使用 (ex:列表頁)
-                    sql.Append(" AND (Display = 'Y')");
-                }
-                else
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrEmpty(fld.Value));
-
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        switch (item.Key)
-                        {
-                            case "ID":
-                                sql.Append(" AND (Data_ID = @ID)");
-
-                                cmd.Parameters.AddWithValue("ID", item.Value);
-                                break;
-
-                            case "Keyword":
-                                sql.Append(" AND (Display = 'Y')");
-                                sql.Append(" AND (");
-                                sql.Append("  (UPPER(DisplayName) LIKE '%' + UPPER(@Keyword) + '%')");
-                                sql.Append(" )");
-
-                                cmd.Parameters.AddWithValue("Keyword", item.Value);
-                                break;
-
-                            case "Show":
-                                //維護頁使用
-
-                                break;
-                        }
-                    }
-                }
-                #endregion
-
-                sql.Append(" ORDER BY Sort");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-
-                //----- 資料取得 -----
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
-                {
-                    //LinQ 查詢
-                    var query = DT.AsEnumerable();
-
-                    //資料迴圈
-                    foreach (var item in query)
-                    {
-                        //加入項目
-                        var data = new ShipComp
-                        {
-                            ID = item.Field<Int32>("ID"),
-                            Label = item.Field<string>("Label"),
-                            Display = item.Field<string>("Display"),
-                            Sort = item.Field<Int16>("Sort")
-                        };
-
-                        //將項目加入至集合
-                        dataList.Add(data);
-
-                    }
-                }
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
             }
-
-            //回傳集合
-            return dataList.AsQueryable();
         }
 
-
         /// <summary>
-        /// 取得物流途徑(ShipFreight_CHN)
+        /// 取得SQL CTE區語法
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="type">A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具</param>
         /// <returns></returns>
-        public string GetShipWay(string value)
+        private string GetSQL_CTE(string type)
         {
-            switch (value)
+            string param1 = "";
+            switch (type.ToUpper())
             {
                 case "A":
-                    return "自發";
+                    /* 指定條件:電商工具 */
+                    param1 = " AND (Base.TG001 IN ('2341','2342','2343','2345','23B2','23B3','23B6'))";
+                    break;
 
                 case "B":
-                    return "代發";
+                    /* 指定條件:電商科學玩具 */
+                    param1 = " AND (Base.TG001 IN ('2380','2381','2382','2383'))";
+                    break;
 
-                default:
-                    return "其它";
+                case "C":
+                    /* 指定條件:經銷商工具 */
+                    param1 = " AND (Base.TG001 IN ('2341','2342','2343','2345','23B2','23B3','23B6'))";
+                    param1 += @" AND (Base.TG004 NOT IN (
+                      'C010010','C021068','C02022','C28016','C027025','024008','C029016','C316002','C020040','C021086'
+                      ,'C021085','C021055','C021063','C020041','C020042','C021038','C021064','C021101','C021100'))";
+                    break;
+
+                case "D":
+                    /* 指定條件:經銷商科學玩具 */
+                    param1 = " AND (Base.TG001 IN ('2380','2381','2382','2383'))";
+                    param1 += @" AND (Base.TG004 NOT IN (
+                      '60000002','60000003','60000004','60000005','60000006','60000007','60000008','60000009','60000010'
+                      ,'60000011','60000012','60000013','60000014'))";
+                    break;
             }
+
+            string sql = @"
+                /*
+                銷貨單(730 Days)
+                */
+                 ;WITH TblERP AS(
+                 SELECT
+                    RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, Base.TG003 AS SO_Date, Base.TG004 AS CustID
+                  , CAST((Base.TG045 + Base.TG046) AS money) AS TotalPrice
+                  , Base.TG066 AS ContactWho
+                  , Base.TG078 AS ShipTel
+                  , Base.TG008 AS ShipAddr1
+                  , Base.TG009 AS ShipAddr2
+                  , Base.TG023 AS CfmCode
+                  , Base.TG043 AS CfmWho
+                  , (CASE WHEN CHARINDEX('-', REVERSE(Base.TG020)) > 0 THEN
+                     REVERSE(SUBSTRING(REVERSE(Base.TG020), 1, CHARINDEX('-', REVERSE(Base.TG020))-1 ))
+                    ELSE '' END
+                  ) AS ShipNo
+                 FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)
+                  INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002
+                 WHERE (DT.TH007 <> 'C01') AND (SUBSTRING(Base.TG003,1,4) BETWEEN YEAR(GETDATE()-730) AND YEAR(GETDATE()))
+
+                 ##param1##
+
+                 GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG045, Base.TG046, Base.TG023, Base.TG078, Base.TG008, Base.TG009, Base.TG043, Base.TG020
+
+                 UNION ALL
+                /*
+                無銷貨單的借出單
+                單別TG001 = 1302
+                結案碼TG024 <> Y
+                */
+                 SELECT
+                  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid, OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID
+                  , CAST(SUM(Base.TG013) AS money) AS TotalPrice
+                  , OrdBase.TF015 AS ContactWho
+                  , '' AS Tel
+                  , OrdBase.TF016 AS Addr1
+                  , OrdBase.TF017 AS Addr2
+                  , Base.TG022 AS CfmCode
+                  , OrdBase.TF025
+                  , (CASE WHEN CHARINDEX('-', REVERSE(OrdBase.TF014)) > 0 THEN
+                      REVERSE(SUBSTRING(REVERSE(OrdBase.TF014), 1, CHARINDEX('-', REVERSE(OrdBase.TF014))-1 ))
+                     ELSE '' END
+                  ) AS ShipNo
+                 FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)
+                  INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002
+                 WHERE (Base.TG001 = '1302') AND (Base.TG024 <> 'Y')
+                 GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015, Base.TG022, OrdBase.TF016, OrdBase.TF017, OrdBase.TF025, OrdBase.TF014
+                 )";
+
+            //指定單別
+            sql = sql.Replace("##param1##", param1);
+
+            return sql;
         }
 
+
+        /// <summary>
+        /// [出貨明細表](內銷) 取得SQL查詢
+        /// ** TSQL查詢條件寫在此 **
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <returns></returns>
+        /// <see cref="GetShipData"/>
+        private StringBuilder GetSQL_ShipData(Dictionary<string, string> search)
+        {
+            StringBuilder sql = new StringBuilder();
+
+            //SQL查詢
+            string strSql = @" SELECT
+              TblERP.SO_Fid, TblERP.SO_Sid, TblERP.SO_Date
+              , TblERP.CustID, RTRIM(Cust.MA002) AS CustName, TblERP.TotalPrice, TblERP.CfmCode
+              , ShipBase.Data_ID
+              , (
+               CASE WHEN ISNULL(ShipBase.ShipWho, TblERP.ContactWho) = '' THEN
+                CASE WHEN TblERP.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE TblERP.ContactWho END
+                ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblERP.ContactWho) END
+              ) AS ShipWho
+              , ISNULL(ShipBase.ShipTel, TblERP.ShipTel) AS ShipTel
+              , ISNULL(ShipBase.ShipAddr1, TblERP.ShipAddr1) AS ShipAddr1
+              , ISNULL(ShipBase.ShipAddr2, TblERP.ShipAddr2) AS ShipAddr2
+              , ISNULL(ShipBase.ShipNo, TblERP.ShipNo) AS ShipNo
+              , ShipBase.ShipDate, ISNULL(ShipBase.BoxCnt, 1) BoxCnt, ISNULL(ShipBase.Freight, 0) Freight
+              , ShipBase.ShipComp, ShipBase.ShipWay, ShipBase.SendType
+              , ISNULL(RefShipComp.Class_Name_zh_CN, '') AS ShipCompName
+              , ISNULL(RefShipWay.Class_Name_zh_CN, '') AS ShipWayName
+              , ISNULL(RefSendType.Class_Name_zh_CN, '') AS SendTypeName
+              , ShipBase.Remark
+              , ShipBase.UserCheck1
+              , RTRIM(Emp.MA002) AS CfmWhoName
+              , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Create_Who)) AS Create_Name
+              , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Update_Who)) AS Update_Name
+              , ShipBase.Create_Time, ShipBase.Update_Time
+              , RANK() OVER (ORDER BY TblERP.SO_Date DESC, TblERP.SO_Fid, TblERP.SO_Sid) AS RowIdx
+             FROM TblERP
+              INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON TblERP.CustID = Cust.MA001
+              INNER JOIN [DSCSYS].dbo.DSCMA Emp WITH(NOLOCK) ON TblERP.CfmWho = Emp.MA001
+              LEFT JOIN [PKExcel].dbo.Shipment_Data_CHN ShipBase ON TblERP.SO_Fid = ShipBase.SO_FID COLLATE Chinese_Taiwan_Stroke_BIN AND TblERP.SO_Sid = ShipBase.SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
+              LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipComp ON ShipBase.ShipComp = RefShipComp.Class_ID
+              LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipWay ON ShipBase.ShipWay = RefShipWay.Class_ID
+              LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefSendType ON ShipBase.SendType = RefSendType.Class_ID
+            WHERE (1=1)";
+
+            //append SQL
+            sql.Append(strSql);
+
+            /* Search */
+            #region >> filter <<
+
+            if (search != null)
+            {
+                //過濾空值
+                var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                //查詢內容
+                foreach (var item in thisSearch)
+                {
+                    switch (item.Key)
+                    {
+                        case "sDate":
+                            //--單據日S
+                            sql.Append(" AND (TblERP.SO_Date >= @sDate)");
+                            break;
+
+                        case "eDate":
+                            //--單據日E
+                            sql.Append(" AND (TblERP.SO_Date <= @eDate)");
+                            break;
+
+                        case "Cust":
+                            //--客戶ID / Name
+                            sql.Append(" AND (");
+                            sql.Append("  (UPPER(TblERP.CustID) LIKE '%' + UPPER(@Cust) + '%')");
+                            sql.Append("  OR (UPPER(RTRIM(Cust.MA002)) LIKE '%' + UPPER(@Cust) + '%')");
+                            sql.Append(" )");
+
+                            break;
+
+                        //case "CustID":
+                        //    //--客戶ID
+                        //    sql.Append(" AND (");
+                        //    sql.Append("  (UPPER(TblERP.CustID) = UPPER(@CustID))");
+                        //    sql.Append(" )");
+
+                        //    break;
+
+                        case "Keyword":
+                            //--單號keyword/物流單號/收件人
+                            sql.Append(" AND (");
+                            sql.Append("  (UPPER(TblERP.SO_Fid) + UPPER(TblERP.SO_Sid) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append("  OR (UPPER(TblERP.SO_Fid) +'-'+ UPPER(TblERP.SO_Sid) LIKE '%' + UPPER(@keyword) + '%')");
+                            sql.Append("  OR (ShipBase.ShipNo LIKE '%'+ @keyword +'%')");
+                            sql.Append("  OR ((");
+                            sql.Append("       CASE WHEN ISNULL(ShipBase.ShipWho, TblERP.ContactWho) = '' THEN");
+                            sql.Append("       CASE WHEN TblERP.ContactWho = Cust.MA002 THEN Cust.MA005 ELSE TblERP.ContactWho END");
+                            sql.Append("       ELSE ISNULL(ShipBase.ShipWho COLLATE Chinese_Taiwan_Stroke_BIN, TblERP.ContactWho) END");
+                            sql.Append("   ) LIKE '%'+ @keyword +'%')");
+                            sql.Append(" )");
+
+                            break;
+
+                        case "ShipsDate":
+                            //--發貨日
+                            sql.Append(" AND (ShipBase.ShipDate >= @ShipsDate)");
+                            break;
+
+                        case "ShipeDate":
+                            //--發貨日
+                            sql.Append(" AND (ShipBase.ShipDate <= @ShipeDate)");
+                            break;
+
+                        case "ShipComp":
+                            //貨運公司
+                            sql.Append(" AND (ShipBase.ShipComp = @ShipComp)");
+                            break;
+
+                        case "Way":
+                            //--物流途徑
+                            sql.Append(" AND (ShipBase.ShipWay = @ShipWay)");
+                            break;
+
+                        case "FreightWay":
+                            //運費方式
+                            sql.Append(" AND (ShipBase.SendType = @FreightWay)");
+                            break;
+
+                    }
+                }
+            }
+            #endregion
+
+
+            //return
+            return sql;
+        }
+
+
+        /// <summary>
+        /// [出貨明細表](內銷) 取得條件參數
+        /// ** SQL參數設定寫在此 **
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <returns></returns>
+        /// <see cref="GetSQL_ShipData"/>
+        private List<SqlParameter> GetParams_ShipData(Dictionary<string, string> search)
+        {
+            //declare
+            List<SqlParameter> sqlParamList = new List<SqlParameter>();
+
+            //get values
+            if (search != null)
+            {
+                //過濾空值
+                var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                //查詢內容
+                foreach (var item in thisSearch)
+                {
+                    switch (item.Key)
+                    {
+                        case "sDate":
+                            //--單據日S
+                            sqlParamList.Add(new SqlParameter("@sDate", item.Value));
+                            break;
+
+                        case "eDate":
+                            //--單據日E
+                            sqlParamList.Add(new SqlParameter("@eDate", item.Value));
+                            break;
+
+                        case "Cust":
+                            //--客戶ID / Name
+                            sqlParamList.Add(new SqlParameter("@Cust", item.Value));
+
+                            break;
+
+                        case "Keyword":
+                            //--單號keyword/物流單號/收件人
+                            sqlParamList.Add(new SqlParameter("@keyword", item.Value));
+
+                            break;
+
+                        case "ShipsDate":
+                            //--發貨日
+                            sqlParamList.Add(new SqlParameter("@ShipsDate", item.Value));
+                            break;
+
+                        case "ShipeDate":
+                            //--發貨日
+                            sqlParamList.Add(new SqlParameter("@ShipeDate", item.Value));
+                            break;
+
+                        case "ShipComp":
+                            //貨運公司
+                            sqlParamList.Add(new SqlParameter("@ShipComp", item.Value));
+                            break;
+
+                        case "Way":
+                            //--物流途徑
+                            sqlParamList.Add(new SqlParameter("@ShipWay", item.Value));
+                            break;
+
+                        case "FreightWay":
+                            //運費方式
+                            sqlParamList.Add(new SqlParameter("@FreightWay", item.Value));
+                            break;
+
+                    }
+                }
+            }
+
+
+            return sqlParamList;
+        }
+
+
+
+        #endregion *** 出貨資料 E ***
+
+
+        #region *** 匯入 S ***
 
         /// <summary>
         /// 取得Excel必要欄位,用來轉入單身資料
@@ -1021,8 +565,9 @@ namespace ShipFreight_CN.Controllers
         /// <param name="filePath">完整磁碟路徑</param>
         /// <param name="sheetName">工作表名稱</param>
         /// <param name="traceID">trace id</param>
+        /// <param name="_type">A=電商, B=經銷商</param>
         /// <returns></returns>
-        public IQueryable<ShipImportDataDT> GetExcel_DT(string filePath, string sheetName, string traceID)
+        public IQueryable<ShipImportDataDT> GetExcel_DT(string filePath, string sheetName, string traceID, string _type)
         {
             try
             {
@@ -1040,44 +585,29 @@ namespace ShipFreight_CN.Controllers
                 int myQty = 0;
                 double myPrice = 0;
 
-                //[處理合併儲存格] - 暫存欄:ID
-                string tmp_OrderID = "";
 
                 //資料迴圈
                 foreach (var val in queryVals)
                 {
-                    #region >> 欄位處理:單號 <<
+                    #region >> 欄位處理 <<
 
-                    //[處理合併儲存格] - 目前的單號(Key)
-                    string curr_OrderID;
-
-                    curr_OrderID = val[0].ToString();
-
-                    //[處理合併儲存格] - 目前欄位非空值, 填入暫存值
-                    if (!string.IsNullOrEmpty(curr_OrderID))
+                    if (_type.Equals("A"))
                     {
-                        tmp_OrderID = curr_OrderID;
+                        //電商
+                        myShipNo = val[0]; //物流單號
+                        myShipDate = val[1].ToString().ToDateString("yyyy/MM/dd");
+                        myQty = Convert.ToInt32(val[2]);
+                        myPrice = Convert.ToDouble(val[3]);
                     }
-
-                    //[設定參數] - ID
-                    myShipNo = string.IsNullOrEmpty(curr_OrderID) ? tmp_OrderID : curr_OrderID;
-
-                    //Check null
-                    if (string.IsNullOrEmpty(myShipNo))
+                    else
                     {
-                        break;
+                        //經銷商
+                        myErpID = val[35]; //銷貨單別-單號
+                        myShipNo = val[4]; //物流單號
+                        myShipDate = val[6].ToString().ToDateString("yyyy/MM/dd");
+                        myQty = Convert.ToInt32(val[20]);
+                        myPrice = Convert.ToDouble(val[40]);
                     }
-
-                    #endregion
-
-
-                    #region >> 欄位處理:其他欄位 <<
-
-                    myErpID = val[35]; //單別-單號
-                    myShipNo = val[4];
-                    myShipDate = val[6].ToString().ToDateString("yyyy/MM/dd");
-                    myQty = Convert.ToInt32(val[20]);
-                    myPrice = Convert.ToDouble(val[40]);
 
                     #endregion
 
@@ -1114,13 +644,14 @@ namespace ShipFreight_CN.Controllers
         /// </summary>
         /// <param name="filePath">完整磁碟路徑</param>
         /// <param name="sheetName">工作表名稱</param>
+        /// <param name="_type">A=電商, B=經銷商</param>
         /// <returns></returns>
         /// <example>
         /// <table id="listTable" class="stripe" cellspacing="0" width="100%" style="width:100%;">
         ///     <asp:Literal ID="lt_tbBody" runat="server"></asp:Literal>
         /// </table>
         /// </example>
-        public StringBuilder GetExcel_Html(string filePath, string sheetName)
+        public StringBuilder GetExcel_Html(string filePath, string sheetName, string _type)
         {
             try
             {
@@ -1133,7 +664,16 @@ namespace ShipFreight_CN.Controllers
                 //[HTML] - 指定標題欄
                 html.Append("<thead>");
                 html.Append("<tr>");
-                html.Append("<th>运单号</th><th>开单时间</th><th>货物件数</th><th>订单号</th><th>总运费</th>");
+                if (_type.Equals("A"))
+                {
+                    //電商
+                    html.Append("<th>运单号</th><th>出貨日期</th><th>件数</th><th>总运费</th>");
+                }
+                else
+                {
+                    //經銷商
+                    html.Append("<th>运单号</th><th>开单时间</th><th>货物件数</th><th>订单号</th><th>总运费</th>");
+                }
                 html.Append("</tr>");
                 html.Append("</thead>");
 
@@ -1141,18 +681,36 @@ namespace ShipFreight_CN.Controllers
                 var queryVals = excelFile.Worksheet(sheetName);
 
                 html.Append("<tbody>");
-                foreach (var val in queryVals)
+                if (_type.Equals("A"))
                 {
-                    //內容迴圈
-                    html.Append("<tr>");
-                    html.Append("<td>{0}</td>".FormatThis(val[4]));
-                    html.Append("<td>{0}</td>".FormatThis(val[6]));
-                    html.Append("<td>{0}</td>".FormatThis(val[20]));
-                    html.Append("<td>{0}</td>".FormatThis(val[35]));
-                    html.Append("<td>{0}</td>".FormatThis(val[40]));
-
-                    html.Append("</tr>");
+                    //電商
+                    foreach (var val in queryVals)
+                    {
+                        //內容迴圈
+                        html.Append("<tr>");
+                        html.Append("<td>{0}</td>".FormatThis(val[0]));
+                        html.Append("<td>{0}</td>".FormatThis(val[1]));
+                        html.Append("<td>{0}</td>".FormatThis(val[2]));
+                        html.Append("<td>{0}</td>".FormatThis(val[3]));
+                        html.Append("</tr>");
+                    }
                 }
+                else
+                {
+                    //經銷商
+                    foreach (var val in queryVals)
+                    {
+                        //內容迴圈
+                        html.Append("<tr>");
+                        html.Append("<td>{0}</td>".FormatThis(val[4]));
+                        html.Append("<td>{0}</td>".FormatThis(val[6]));
+                        html.Append("<td>{0}</td>".FormatThis(val[20]));
+                        html.Append("<td>{0}</td>".FormatThis(val[35]));
+                        html.Append("<td>{0}</td>".FormatThis(val[40]));
+                        html.Append("</tr>");
+                    }
+                }
+
 
                 html.Append("</tbody>");
 
@@ -1184,7 +742,7 @@ namespace ShipFreight_CN.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" SELECT Base.Data_ID, Base.TraceID");
-                sql.AppendLine("   , Base.erpSDate, Base.erpEDate, Base.Status, Base.Upload_File, Base.Sheet_Name");
+                sql.AppendLine("   , Base.Upload_Type, Base.Status, Base.Upload_File, Base.Sheet_Name");
                 sql.AppendLine("   , Base.Create_Who, Base.Create_Time, Base.Update_Who, Base.Update_Time");
                 sql.AppendLine("   , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Create_Who)) AS Create_Name");
                 sql.AppendLine("   , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Update_Who)) AS Update_Name");
@@ -1246,11 +804,11 @@ namespace ShipFreight_CN.Controllers
                         {
                             Data_ID = item.Field<Guid>("Data_ID"),
                             TraceID = item.Field<string>("TraceID"),
-                            erpSDate = item.Field<string>("erpSDate"),
-                            erpEDate = item.Field<string>("erpEDate"),
                             Status = item.Field<Int16>("Status"),
                             StatusName = GetShipStatusName(item.Field<Int16>("Status")),
                             Upload_File = item.Field<string>("Upload_File"),
+                            Upload_Type = item.Field<string>("Upload_Type"),
+                            Upload_TypeName = item.Field<string>("Upload_Type").Equals("A") ? "電商" : "經銷商",
                             Sheet_Name = item.Field<string>("Sheet_Name"),
 
                             Create_Time = item.Field<DateTime?>("Create_Time").ToString().ToDateString("yyyy/MM/dd HH:mm:ss"),
@@ -1300,8 +858,65 @@ namespace ShipFreight_CN.Controllers
             }
         }
 
-        #endregion *** 發貨 E ***
+        #endregion *** 匯入 E ***
 
+
+        /// <summary>
+        /// 取得參考類別
+        /// </summary>
+        /// <param name="lang">語系(zh-TW)</param>
+        /// <param name="type">類型</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 1:貨運公司, 2:物流途徑, 3:運費方式
+        /// </remarks>
+        public IQueryable<ClassItem> GetRefClass(string lang, string type, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            List<ClassItem> dataList = new List<ClassItem>();
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料取得 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" SELECT Class_ID AS ID, Class_Name_{0} AS Label"
+                    .FormatThis(fn_Language.Get_LangCode(lang).Replace("-", "_")));
+                sql.AppendLine(" FROM Shipment_RefClass_CHN WITH(NOLOCK)");
+                sql.AppendLine(" WHERE (Display = 'Y') AND (Class_Type = @type)");
+                sql.AppendLine(" ORDER BY Sort");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("type", type);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKExcel, out ErrMsg))
+                {
+                    //LinQ 查詢
+                    var query = DT.AsEnumerable();
+
+                    //資料迴圈
+                    foreach (var item in query)
+                    {
+                        //加入項目
+                        var data = new ClassItem
+                        {
+                            ID = item.Field<int>("ID"),
+                            Label = item.Field<string>("Label")
+                        };
+
+                        //將項目加入至集合
+                        dataList.Add(data);
+
+                    }
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+
+            }
+        }
 
         #endregion
 
@@ -1309,210 +924,7 @@ namespace ShipFreight_CN.Controllers
 
         #region -----// Create //-----
 
-        #region *** 發貨 S ***
-
-        /// <summary>
-        /// 建立發貨資料
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <returns></returns>
-        public bool CreateShipFreight(ShipFreightItem instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" INSERT INTO ShipFreight_CHN( ");
-                sql.AppendLine("  Data_ID, CustID");
-                sql.AppendLine("  , ERP_SO_Fid, ERP_SO_Sid, ShipDate");
-                sql.AppendLine("  , ShipComp, ShipWay, ShipWho");
-                sql.AppendLine("  , Remark");
-                sql.AppendLine("  , Create_Who, Create_Time");
-                sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @Data_ID, @CustID");
-                sql.AppendLine("  , @ERP_SO_Fid, @ERP_SO_Sid, @ShipDate");
-                sql.AppendLine("  , @ShipComp, @ShipWay, @ShipWho");
-                sql.AppendLine("  , @Remark");
-                sql.AppendLine("  , @Create_Who, GETDATE()");
-                sql.AppendLine(" );");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("Data_ID", instance.Data_ID);
-                cmd.Parameters.AddWithValue("CustID", instance.CustID);
-                cmd.Parameters.AddWithValue("ERP_SO_Fid", instance.Erp_SO_FID);
-                cmd.Parameters.AddWithValue("ERP_SO_Sid", instance.Erp_SO_SID);
-                cmd.Parameters.AddWithValue("ShipDate", instance.ShipDate);
-                cmd.Parameters.AddWithValue("ShipComp", instance.ShipComp == null ? (object)DBNull.Value : instance.ShipComp);
-                cmd.Parameters.AddWithValue("ShipWay", instance.ShipWay);
-                cmd.Parameters.AddWithValue("ShipWho", instance.ShipWho);
-                cmd.Parameters.AddWithValue("Remark", instance.Remark);
-                cmd.Parameters.AddWithValue("Create_Who", instance.Create_Who);
-
-
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-
-        }
-
-
-        /// <summary>
-        /// 建立物流單號 (發貨)
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public bool CreateShipFreightDetail(ShipFreightDetail instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" DECLARE @NewDataID AS INT");
-                sql.AppendLine(" SET @NewDataID = (");
-                sql.AppendLine("  SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM ShipFreightDetail_CHN WHERE (Parent_ID = @ParentID)");
-                sql.AppendLine(" );");
-                sql.AppendLine(" INSERT INTO ShipFreightDetail_CHN( ");
-                sql.AppendLine("  Parent_ID, Data_ID");
-                sql.AppendLine("  , ShipNo, ShipCnt, Freight, FreightWay");
-                sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @ParentID, @NewDataID");
-                sql.AppendLine("  , @ShipNo, @ShipCnt, @Freight, @FreightWay");
-                sql.AppendLine(" );");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("ParentID", instance.Parent_ID);
-                cmd.Parameters.AddWithValue("ShipNo", instance.ShipNo);
-                cmd.Parameters.AddWithValue("ShipCnt", instance.ShipCnt);
-                cmd.Parameters.AddWithValue("Freight", instance.Freight);
-                cmd.Parameters.AddWithValue("FreightWay", instance.FreightWay);
-
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-
-        }
-
-
-        /// <summary>
-        /// 建立關聯單號 (發貨)(合併運費)
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public bool CreateShipFreightRel(ShipFreightRel instance, ShipFreightItem baseInst, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" IF (SELECT COUNT(*) FROM ShipFreightRel_CHN WHERE Rel_ID = @RelID) = 0");
-                sql.AppendLine(" BEGIN");
-                sql.AppendLine(" DECLARE @NewDataID AS INT");
-                sql.AppendLine(" SET @NewDataID = (");
-                sql.AppendLine("  SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM ShipFreightRel_CHN");
-                sql.AppendLine(" );");
-                sql.AppendLine(" INSERT INTO ShipFreightRel_CHN( ");
-                sql.AppendLine("  Parent_ID, Rel_ID, Data_ID");
-                sql.AppendLine("  , ERP_SO_Fid, ERP_SO_Sid");
-                sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @ParentID, @RelID, @NewDataID");
-                sql.AppendLine("  , @Erp_SO_FID, @Erp_SO_SID");
-                sql.AppendLine(" );");
-                sql.AppendLine(" END");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("ParentID", instance.Parent_ID);
-                cmd.Parameters.AddWithValue("RelID", instance.Rel_ID);
-                cmd.Parameters.AddWithValue("Erp_SO_FID", instance.Erp_SO_FID);
-                cmd.Parameters.AddWithValue("Erp_SO_SID", instance.Erp_SO_SID);
-
-                if (!dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg))
-                {
-                    ErrMsg = "關聯建立失敗." + ErrMsg;
-                    return false;
-                }
-            }
-
-            //自動新增關聯單號的發貨資料
-            if (!CreateShipFreight(baseInst, out ErrMsg))
-            {
-                ErrMsg = "目標單號資料建立失敗." + ErrMsg;
-                return false;
-            }
-
-            //ok
-            return true;
-        }
-
-
-        /// <summary>
-        /// 建立貨運公司
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Logistics 為共用Table, 使用CompID判別
-        /// </remarks>
-        public Int32 CreateShipComp(ShipComp instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //[SQL] - 取得最新編號
-                Int32 New_ID;
-                sql.AppendLine(" SELECT (ISNULL(MAX(Data_ID), 0) + 1) AS New_ID FROM Logistics");
-                cmd.CommandText = sql.ToString();
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
-                {
-                    New_ID = Convert.ToInt32(DT.Rows[0]["New_ID"]);
-                }
-
-                //[SQL] - 清除參數設定
-                cmd.Parameters.Clear();
-                sql.Clear();
-
-
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" INSERT INTO Logistics(");
-                sql.AppendLine("  Data_ID, CompID, DisplayName, Display, Sort");
-                sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @DataID, 'CHN', @DisplayName, @Display, @Sort");
-                sql.AppendLine(" );");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("DataID", New_ID);
-                cmd.Parameters.AddWithValue("DisplayName", instance.Label);
-                cmd.Parameters.AddWithValue("Display", instance.Display);
-                cmd.Parameters.AddWithValue("Sort", instance.Sort);
-
-
-                if (!dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg))
-                {
-                    return 0;
-                }
-                else
-                {
-                    return New_ID;
-                }
-            }
-
-        }
-
+        #region *** 匯入 S ***
 
         /// <summary>
         /// 建立匯入基本資料 - Step1執行
@@ -1533,10 +945,10 @@ namespace ShipFreight_CN.Controllers
             {
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" INSERT INTO Ship_ImportData( ");
-                sql.AppendLine("  Data_ID, TraceID, Status, Upload_File");
+                sql.AppendLine("  Data_ID, TraceID, Status, Upload_File, Upload_Type");
                 sql.AppendLine("  , Create_Who, Create_Time, CompID");
                 sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @Data_ID, @TraceID, 10, @Upload_File");
+                sql.AppendLine("  @Data_ID, @TraceID, 10, @Upload_File, @Upload_Type");
                 sql.AppendLine("  , @Create_Who, GETDATE(), @CompID");
                 sql.AppendLine(" );");
 
@@ -1547,6 +959,7 @@ namespace ShipFreight_CN.Controllers
                 cmd.Parameters.AddWithValue("Data_ID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("TraceID", instance.TraceID);
                 cmd.Parameters.AddWithValue("Upload_File", instance.Upload_File);
+                cmd.Parameters.AddWithValue("Upload_Type", instance.Upload_Type);
                 cmd.Parameters.AddWithValue("Create_Who", instance.Create_Who);
 
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
@@ -1608,8 +1021,7 @@ namespace ShipFreight_CN.Controllers
         }
 
 
-
-        #endregion *** 發貨 E ***
+        #endregion *** 匯入 E ***
 
         #endregion
 
@@ -1617,111 +1029,7 @@ namespace ShipFreight_CN.Controllers
 
         #region -----// Update //-----
 
-        #region *** 發貨 S ***
-
-        /// <summary>
-        /// 更新發貨資料
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <returns></returns>
-        public bool UpdateShipFreight(ShipFreightItem instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" UPDATE ShipFreight_CHN SET");
-                sql.AppendLine("  ShipDate = @ShipDate, ShipComp = @ShipComp, ShipWay = @ShipWay");
-                sql.AppendLine("  , ShipWho = @ShipWho, Remark = @Remark");
-                sql.AppendLine("  , Update_Who = @Update_Who, Update_Time = GETDATE()");
-                sql.AppendLine(" WHERE (Data_ID = @DataID)");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("DataID", instance.Data_ID);
-                cmd.Parameters.AddWithValue("ShipDate", instance.ShipDate);
-                cmd.Parameters.AddWithValue("ShipComp", instance.ShipComp);
-                cmd.Parameters.AddWithValue("ShipWay", instance.ShipWay);
-                cmd.Parameters.AddWithValue("ShipWho", instance.ShipWho);
-                cmd.Parameters.AddWithValue("Remark", instance.Remark);
-                cmd.Parameters.AddWithValue("Update_Who", instance.Update_Who);
-
-                //execute
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-
-        }
-
-
-        /// <summary>
-        /// 更新資料 - 物流單號
-        /// </summary>
-        /// <returns></returns>
-        public bool UpdateShipFreightDetail(ShipFreightDetail instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" UPDATE ShipFreightDetail_CHN SET");
-                sql.AppendLine("  ShipNo = @ShipNo, ShipCnt = @ShipCnt");
-                sql.AppendLine("  , Freight = @Freight");
-                sql.AppendLine(" WHERE (Parent_ID = @Parent_ID) AND (Data_ID = @DataID)");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("Parent_ID", instance.Parent_ID);
-                cmd.Parameters.AddWithValue("DataID", instance.Data_ID);
-                cmd.Parameters.AddWithValue("ShipNo", instance.ShipNo);
-                cmd.Parameters.AddWithValue("ShipCnt", instance.ShipCnt);
-                cmd.Parameters.AddWithValue("Freight", instance.Freight);
-
-                //execute
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-
-        }
-
-
-        /// <summary>
-        /// 更新貨運公司資料
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Logistics 為共用Table, 使用CompID判別
-        /// </remarks>
-        public bool UpdateShipComp(ShipComp instance, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" UPDATE Logistics SET ");
-                sql.AppendLine("  DisplayName = @DisplayName, Display = @Display, Sort = @Sort");
-                sql.AppendLine(" WHERE (Data_ID = @DataID)");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("DataID", instance.ID);
-                cmd.Parameters.AddWithValue("DisplayName", instance.Label);
-                cmd.Parameters.AddWithValue("Display", instance.Display);
-                cmd.Parameters.AddWithValue("Sort", instance.Sort);
-
-                //execute
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-        }
-
+        #region *** 匯入 S ***
 
         /// <summary>
         /// [發貨匯入] 物流單資料
@@ -1733,99 +1041,222 @@ namespace ShipFreight_CN.Controllers
         {
             //----- 宣告 -----
             StringBuilder sql = new StringBuilder();
+            string strSQL = "";
 
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" ;WITH TblData AS (");
-                sql.AppendLine(" 	SELECT Data_ID AS ImpID, ShipNo, ShipDate, Qty, Freight, ERP_ID");
-                sql.AppendLine(" 	FROM [PKEF].[dbo].[Ship_ImportData_DT]");
-                sql.AppendLine(" 	WHERE (Parent_ID = @RefID)");
-                sql.AppendLine(" )");
-                sql.AppendLine(" , TblBase AS (");
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid");
-                sql.AppendLine("  , Base.TG003 AS SO_Date, Base.TG004 AS CustID");
-                sql.AppendLine("  , Base.TG066 AS ContactWho");
-                sql.AppendLine(" FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002");
-                sql.AppendLine("  INNER JOIN TblData ON (RTRIM(Base.TG001) + '-' + RTRIM(Base.TG002)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine(" WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066");
+                if (instance.Upload_Type.Equals("A"))
+                {
+                    //電商
+                    #region -- 電商 --
 
-                sql.AppendLine(" UNION ALL");
+                    strSQL += @"
+;WITH TblData AS (
+	SELECT Data_ID AS ImpID, ShipNo, ShipDate, Qty, Freight, ERP_ID
+	FROM [PKEF].[dbo].[Ship_ImportData_DT]
+	WHERE (Parent_ID = @RefID)
+)
+, TblBase AS (
+SELECT
+ RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid
+ , Base.TG003 AS SO_Date, Base.TG004 AS CustID
+ , Base.TG066 AS ContactWho
+ , (CASE WHEN CHARINDEX('-', REVERSE(Base.TG020)) > 0 THEN 
+    REVERSE(SUBSTRING(REVERSE(Base.TG020), 1, CHARINDEX('-', REVERSE(Base.TG020))-1 )) 
+   ELSE '' END
+ ) AS ShipNo
+ , Base.TG078 AS ShipTel
+ , Base.TG008 AS ShipAddr1
+ , Base.TG009 AS ShipAddr2
+FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)
+ INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002
+WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')
 
-                sql.AppendLine(" SELECT");
-                sql.AppendLine("  RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid");
-                sql.AppendLine("  , OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID");
-                sql.AppendLine("  , OrdBase.TF015 AS ContactWho");
-                sql.AppendLine(" FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)");
-                sql.AppendLine("  INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002");
-                sql.AppendLine("  INNER JOIN TblData ON (RTRIM(Base.TG001) + '-' + RTRIM(Base.TG002)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine(" WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')");
-                sql.AppendLine(" GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015");
-                sql.AppendLine(" )");
+AND (SUBSTRING(Base.TG003,1,4) BETWEEN YEAR(GETDATE()-730) AND YEAR(GETDATE()))
+GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG020, Base.TG078, Base.TG008, Base.TG009
 
-                /* 新增至主檔 (確認Insert及Select欄位是否相符) */
-                sql.AppendLine(" INSERT INTO [PKEF].dbo.ShipFreight_CHN(");
-                sql.AppendLine("  Data_ID, CustID");
-                sql.AppendLine("  , ERP_SO_Fid, ERP_SO_Sid, ShipDate");
-                sql.AppendLine("  , ShipWay, ShipWho");
-                sql.AppendLine("  , Create_Who, Create_Time");
-                sql.AppendLine("  , IsAuto, IsUpdate");
-                sql.AppendLine("  , AutoShipNo, ShipCnt, ShipFreight");
-                sql.AppendLine("  , RefID");
-                sql.AppendLine(" )");
-                sql.AppendLine(" SELECT NEWID(), TblBase.CustID");
-                sql.AppendLine("  , TblBase.SO_Fid, TblBase.SO_Sid, TblData.ShipDate");
-                sql.AppendLine("  , 'A' AS ShipWay, LEFT(TblBase.ContactWho, 50) AS ShipWho");
-                sql.AppendLine("  , @Who AS CreateWho, GETDATE() AS CreateTime");
-                sql.AppendLine("  , 'Y' AS IsAuto, 'N' AS IsUpdate");
-                sql.AppendLine("  , LEFT(TblData.ShipNo, 50) AS AutoShipNo, TblData.Qty, TblData.Freight");
-                sql.AppendLine("  , @RefID");
-                sql.AppendLine(" FROM TblBase");
-                sql.AppendLine("  INNER JOIN TblData ON (RTRIM(TblBase.SO_Fid) + '-' + RTRIM(TblBase.SO_Sid)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN");
-                sql.AppendLine(" WHERE (TblData.ShipNo <> '')");
-                sql.AppendLine("  AND ((TblBase.SO_Fid + TblBase.SO_Sid) COLLATE Chinese_Taiwan_Stroke_BIN NOT IN (");
-                sql.AppendLine("   SELECT ERP_SO_Fid + ERP_SO_Sid");
-                sql.AppendLine("   FROM [PKEF].dbo.ShipFreight_CHN");
-                sql.AppendLine("  ))");
+UNION ALL
 
-                /* 新增資料至物流關聯檔 */
-                sql.AppendLine(" BEGIN");
-                sql.AppendLine("  INSERT INTO [PKEF].dbo.ShipFreightDetail_CHN(");
-                sql.AppendLine("   Parent_ID, Data_ID");
-                sql.AppendLine("   , ShipNo, ShipCnt, Freight, FreightWay");
-                sql.AppendLine("  )");
-                sql.AppendLine("  SELECT Data_ID");
-                sql.AppendLine("   , (SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKEF].dbo.ShipFreightDetail_CHN WHERE (Parent_ID = Src.Data_ID))");
-                sql.AppendLine("   , Src.AutoShipNo, Src.ShipCnt, Src.ShipFreight, 'A'");
-                sql.AppendLine("  FROM [PKEF].dbo.ShipFreight_CHN Src");
-                sql.AppendLine("  WHERE (RefID = @RefID)");
-                sql.AppendLine(" END");
+SELECT
+ RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid
+ , OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID
+ , OrdBase.TF015 AS ContactWho
+ , (CASE WHEN CHARINDEX('-', REVERSE(OrdBase.TF014)) > 0 THEN 
+    REVERSE(SUBSTRING(REVERSE(OrdBase.TF014), 1, CHARINDEX('-', REVERSE(OrdBase.TF014))-1 )) 
+   ELSE '' END
+ ) AS ShipNo
+  , '' AS Tel
+  , OrdBase.TF016 AS Addr1
+  , OrdBase.TF017 AS Addr2
+FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)
+ INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002
+WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')
 
-                /* 更新狀態 IsUpdate=Y */
-                sql.AppendLine(" BEGIN");
-                sql.AppendLine("  UPDATE [PKEF].dbo.ShipFreight_CHN");
-                sql.AppendLine("  SET IsUpdate = 'Y'");
-                sql.AppendLine("  WHERE (RefID = @RefID)");
-                sql.AppendLine(" END");
+AND (SUBSTRING(Base.TG003,1,4) BETWEEN YEAR(GETDATE()-365) AND YEAR(GETDATE()))
+GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015, OrdBase.TF014, OrdBase.TF016, OrdBase.TF017
+)
+/* 新增至暫存檔 (確認Insert及Select欄位是否相符) */
+INSERT INTO [PKExcel].dbo.Shipment_Data_CHN_Temp(
+ Data_ID
+ , SO_FID, SO_SID, ShipDate
+ , ShipComp, ShipWay, SendType
+ , ShipWho, BoxCnt, ShipNo, Freight, UserCheck1
+ , ShipTel, ShipAddr1, ShipAddr2
+ , Create_Who, Create_Time
+ , Ref_ID
+)
+SELECT
+ NEWID()
+ , TblBase.SO_Fid, TblBase.SO_Sid, TblData.ShipDate
+ , 1 AS ShipComp, 8 AS ShipWay, 10 AS SendType /*預設值(貨運=1德邦;8=自發;10=自付)*/
+ , LEFT(TblBase.ContactWho, 50) AS ShipWho
+ , TblData.Qty AS BoxCnt
+ , LEFT(TblData.ShipNo, 50) AS ShipNo
+ , TblData.Freight, 'Y' /*預設值UserCheck1=Y*/
+ , TblBase.ShipTel, TblBase.ShipAddr1, TblBase.ShipAddr2
+ , @Who AS CreateWho, GETDATE() AS CreateTime
+ , @RefID
+FROM TblBase
+ INNER JOIN TblData ON TblBase.ShipNo = TblData.ShipNo COLLATE Chinese_Taiwan_Stroke_BIN
+WHERE (TblData.ShipNo <> '')
+";
 
-                //Update 匯入檔
-                sql.AppendLine(" UPDATE Ship_ImportData_DT");
-                sql.AppendLine(" SET IsPass = 'Y'");
-                sql.AppendLine(" WHERE (Parent_ID = @RefID)");
-                sql.AppendLine(" AND (ShipNo IN");
-                sql.AppendLine("  (SELECT ShipNo FROM ShipFreightDetail_CHN)");
-                sql.AppendLine(" );");
 
-                sql.AppendLine(" UPDATE Ship_ImportData");
-                sql.AppendLine(" SET Status = 30, Update_Who = @Who, Update_Time = GETDATE()");
-                sql.AppendLine(" WHERE (Data_ID = @RefID)");
+                    #endregion
+                }
+                else
+                {
+                    //經銷商
+                    #region -- 經銷商 --
+
+                    strSQL += @"
+;WITH TblData AS (
+	SELECT Data_ID AS ImpID, ShipNo, ShipDate, Qty, Freight, ERP_ID
+	FROM [PKEF].[dbo].[Ship_ImportData_DT]
+	WHERE (Parent_ID = @RefID)
+)
+, TblBase AS (
+SELECT
+ RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid
+ , Base.TG003 AS SO_Date, Base.TG004 AS CustID
+ , Base.TG066 AS ContactWho
+ , Base.TG078 AS ShipTel
+ , Base.TG008 AS ShipAddr1
+ , Base.TG009 AS ShipAddr2
+FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)
+ INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002
+ INNER JOIN TblData ON (RTRIM(Base.TG001) + '-' + RTRIM(Base.TG002)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN
+WHERE (Base.TG023 = 'Y') AND (DT.TH007 <> 'C01')
+GROUP BY Base.TG001, Base.TG002, Base.TG003, Base.TG004, Base.TG066, Base.TG078, Base.TG008, Base.TG009
+
+UNION ALL
+
+SELECT
+ RTRIM(Base.TG001) AS SO_Fid, RTRIM(Base.TG002) AS SO_Sid
+ , OrdBase.TF003 AS SO_Date, OrdBase.TF005 AS CustID
+ , OrdBase.TF015 AS ContactWho
+ , '' AS Tel
+ , OrdBase.TF016 AS Addr1
+ , OrdBase.TF017 AS Addr2
+FROM [SHPK2].dbo.INVTG Base WITH(NOLOCK)
+ INNER JOIN [SHPK2].dbo.INVTF OrdBase WITH(NOLOCK) ON Base.TG001 = OrdBase.TF001 AND Base.TG002 = OrdBase.TF002
+ INNER JOIN TblData ON (RTRIM(Base.TG001) + '-' + RTRIM(Base.TG002)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN
+WHERE (Base.TG001 = '1302') AND (Base.TG022 = 'Y') AND (Base.TG024 <> 'Y')
+GROUP BY Base.TG001, Base.TG002, Base.TG007, OrdBase.TF003, OrdBase.TF005, OrdBase.TF015, OrdBase.TF016, OrdBase.TF017
+)
+
+/* 新增至暫存檔 (確認Insert及Select欄位是否相符) */
+INSERT INTO [PKExcel].dbo.Shipment_Data_CHN_Temp(
+ Data_ID
+ , SO_FID, SO_SID, ShipDate
+ , ShipComp, ShipWay, SendType
+ , ShipWho, BoxCnt, ShipNo, Freight, UserCheck1
+ , ShipTel, ShipAddr1, ShipAddr2
+ , Create_Who, Create_Time
+ , Ref_ID
+)
+SELECT
+ NEWID()
+ , TblBase.SO_Fid, TblBase.SO_Sid, TblData.ShipDate
+ , 1 AS ShipComp, 8 AS ShipWay, 10 AS SendType /*預設值(貨運=1德邦;8=自發;10=自付)*/
+ , LEFT(TblBase.ContactWho, 50) AS ShipWho
+ , TblData.Qty AS BoxCnt
+ , LEFT(TblData.ShipNo, 50) AS ShipNo
+ , TblData.Freight, 'N' /*預設值UserCheck1*/
+ , TblBase.ShipTel, TblBase.ShipAddr1, TblBase.ShipAddr2
+ , @Who AS CreateWho, GETDATE() AS CreateTime
+ , @RefID
+FROM TblBase
+ INNER JOIN TblData ON (RTRIM(TblBase.SO_Fid) + '-' + RTRIM(TblBase.SO_Sid)) = TblData.ERP_ID COLLATE Chinese_Taiwan_Stroke_BIN
+WHERE (TblData.ShipNo <> '')
+";
+
+
+                    #endregion
+                }
+
+                strSQL += @"
+/* 新增資料至主檔(重複的銷貨單號不寫入) */
+INSERT INTO [PKExcel].dbo.Shipment_Data_CHN(
+ Data_ID
+ , SO_FID, SO_SID, ShipDate
+ , ShipComp, ShipWay, SendType
+ , ShipWho, BoxCnt, ShipNo, Freight, UserCheck1
+ , ShipTel, ShipAddr1, ShipAddr2
+ , Create_Who, Create_Time
+)
+SELECT Data_ID
+ , SO_FID, SO_SID, ShipDate
+ , ShipComp, ShipWay, SendType
+ , ShipWho, BoxCnt, ShipNo, Freight, UserCheck1
+ , ShipTel, ShipAddr1, ShipAddr2
+ , Create_Who, Create_Time
+FROM [PKExcel].dbo.Shipment_Data_CHN_Temp
+WHERE (Ref_ID = @RefID)
+ AND ((SO_FID + SO_SID) COLLATE Chinese_Taiwan_Stroke_BIN NOT IN (
+  SELECT SO_FID + SO_SID
+  FROM [PKExcel].dbo.Shipment_Data_CHN
+ ))
+
+/* Update其他欄位至主檔(重複的銷貨單號會更新) */
+UPDATE [PKExcel].dbo.Shipment_Data_CHN
+SET ShipDate = Ref.ShipDate
+ , BoxCnt = Ref.BoxCnt, ShipNo = Ref.ShipNo, Freight = Ref.Freight
+ , ShipWho = Ref.ShipWho, ShipTel = Ref.ShipTel, ShipAddr1 = Ref.ShipAddr1, ShipAddr2 = Ref.ShipAddr2
+ , Update_Who = @Who, Update_Time = GETDATE()
+FROM [PKExcel].dbo.Shipment_Data_CHN_Temp Ref
+WHERE (Shipment_Data_CHN.SO_FID = Ref.SO_FID) AND (Shipment_Data_CHN.SO_SID = Ref.SO_SID)
+ AND (Ref.Ref_ID = @RefID)
+ AND ((Ref.SO_FID + Ref.SO_SID) COLLATE Chinese_Taiwan_Stroke_BIN IN (
+  SELECT SO_FID + SO_SID
+  FROM [PKExcel].dbo.Shipment_Data_CHN
+ ))
+
+ 
+/* 清空暫存檔 */
+DELETE FROM [PKExcel].dbo.Shipment_Data_CHN_Temp WHERE (Ref_ID = @RefID)
+";
+
+
+                /* Update 匯入檔狀態 */
+                strSQL += @"
+UPDATE Ship_ImportData_DT
+SET IsPass = 'Y'
+WHERE (Parent_ID = @RefID)
+AND (ShipNo IN
+ (SELECT ShipNo FROM [PKExcel].dbo.Shipment_Data_CHN)
+);
+
+UPDATE Ship_ImportData
+SET Status = 30, Update_Who = @Who, Update_Time = GETDATE()
+WHERE (Data_ID = @RefID)
+";
+
 
                 //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
+                cmd.CommandText = strSQL;
                 cmd.Parameters.AddWithValue("RefID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("Who", instance.Update_Who);
 
@@ -1835,23 +1266,100 @@ namespace ShipFreight_CN.Controllers
         }
 
 
-        #endregion *** 發貨 E ***
+        #endregion *** 匯入 E ***
+
+        public bool Update_ShipData(List<ShipFreightItem> instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 語法 -----
+                for (int row = 0; row < instance.Count; row++)
+                {
+                    var item = instance[row];
+
+
+                    sql.AppendLine("IF (SELECT COUNT(*) FROM Shipment_Data_CHN WHERE (Data_ID = @Data_ID_#idx#)) > 0");
+                    sql.AppendLine("  BEGIN");
+                    sql.AppendLine("   UPDATE Shipment_Data_CHN");
+                    sql.AppendLine("   SET ShipComp = @ShipComp_#idx#, ShipWay = @ShipWay_#idx#, SendType = @SendType_#idx#");
+                    sql.AppendLine("    , ShipDate = @ShipDate_#idx#, ShipNo = @ShipNo_#idx#");
+                    sql.AppendLine("    , Remark = @Remark_#idx#, UserCheck1 = @UserCheck1_#idx#");
+                    sql.AppendLine("    , ShipTel = @ShipTel_#idx#, ShipAddr1 = @ShipAddr1_#idx#, ShipAddr2 = @ShipAddr2_#idx#");
+                    sql.AppendLine("    , BoxCnt = @BoxCnt_#idx#, Freight = @Freight_#idx#");
+                    sql.AppendLine("    , Update_Who = @Who, Update_Time = GETDATE()");
+                    sql.AppendLine("   WHERE (Data_ID = @Data_ID_#idx#)");
+                    sql.AppendLine("  END");
+                    sql.AppendLine(" ELSE");
+                    sql.AppendLine("  BEGIN");
+                    sql.AppendLine("    INSERT INTO Shipment_Data_CHN (");
+                    sql.AppendLine("        Data_ID, SO_FID, SO_SID, ShipDate");
+                    sql.AppendLine("        , ShipComp, ShipWay, SendType");
+                    sql.AppendLine("        , ShipWho, ShipNo, Remark");
+                    sql.AppendLine("        , ShipTel, ShipAddr1, ShipAddr2");
+                    sql.AppendLine("        , BoxCnt, Freight");
+                    sql.AppendLine("        , Create_Who");
+                    sql.AppendLine("    ) VALUES (");
+                    sql.AppendLine("        @Data_ID_#idx#, @SO_FID_#idx#, @SO_SID_#idx#, @ShipDate_#idx#");
+                    sql.AppendLine("        , @ShipComp_#idx#, @ShipWay_#idx#, @SendType_#idx#");
+                    sql.AppendLine("        , @ShipWho_#idx#, @ShipNo_#idx#, @Remark_#idx#");
+                    sql.AppendLine("        , @ShipTel_#idx#, @ShipAddr1_#idx#, @ShipAddr2_#idx#");
+                    sql.AppendLine("        , @BoxCnt_#idx#, @Freight_#idx#");
+                    sql.AppendLine("        , @Who");
+                    sql.AppendLine("    )");
+                    sql.AppendLine("  END");
+
+
+                    //replace idx number
+                    sql.Replace("#idx#", row.ToString());
+
+                    //add params
+                    cmd.Parameters.AddWithValue("Data_ID_" + row, item.Data_ID);
+                    cmd.Parameters.AddWithValue("SO_FID_" + row, item.Erp_SO_FID);
+                    cmd.Parameters.AddWithValue("SO_SID_" + row, item.Erp_SO_SID);
+                    cmd.Parameters.AddWithValue("ShipComp_" + row, item.ShipComp.Equals(0) ? DBNull.Value : (object)item.ShipComp);
+                    cmd.Parameters.AddWithValue("ShipWay_" + row, item.ShipWay.Equals(0) ? DBNull.Value : (object)item.ShipWay);
+                    cmd.Parameters.AddWithValue("SendType_" + row, item.SendType.Equals(0) ? DBNull.Value : (object)item.SendType);
+                    cmd.Parameters.AddWithValue("ShipWho_" + row, item.ShipWho);
+                    cmd.Parameters.AddWithValue("ShipNo_" + row, item.ShipNo);
+                    cmd.Parameters.AddWithValue("ShipDate_" + row, string.IsNullOrWhiteSpace(item.ShipDate) ? DBNull.Value : (object)item.ShipDate);
+                    
+                    cmd.Parameters.AddWithValue("ShipTel_" + row, item.ShipTel);
+                    cmd.Parameters.AddWithValue("ShipAddr1_" + row, item.ShipAddr1);
+                    cmd.Parameters.AddWithValue("ShipAddr2_" + row, item.ShipAddr2);
+                    cmd.Parameters.AddWithValue("BoxCnt_" + row, item.BoxCnt);
+                    cmd.Parameters.AddWithValue("Freight_" + row, item.Freight);
+                    
+                    cmd.Parameters.AddWithValue("UserCheck1_" + row, item.UserCheck1);
+                    cmd.Parameters.AddWithValue("Remark_" + row, item.Remark);
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Who", instance[0].Create_Who);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+
+        }
+
 
         #endregion
 
 
 
         #region -----// Delete //-----
-
-        #region *** 發貨 S ***
         /// <summary>
-        /// 刪除資料 - 物流單號
+        /// 刪除
         /// </summary>
-        /// <param name="parentID">上層編號</param>
-        /// <param name="dataID">ID</param>
-        /// <param name="ErrMsg"></param>
+        /// <param name="dataID"></param>
         /// <returns></returns>
-        public bool DeleteShipFreightDetail(string parentID, string dataID, out string ErrMsg)
+        public bool Delete(string dataID)
         {
             //----- 宣告 -----
             StringBuilder sql = new StringBuilder();
@@ -1860,84 +1368,18 @@ namespace ShipFreight_CN.Controllers
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" DELETE FROM ShipFreightDetail_CHN WHERE (Parent_ID = @ParentID) AND (Data_ID = @DataID);");
+                sql.AppendLine(" DELETE FROM Shipment_Data_CHN WHERE (Data_ID = @Data_ID)");
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("ParentID", parentID);
-                cmd.Parameters.AddWithValue("DataID", dataID);
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
 
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
             }
         }
 
         /// <summary>
-        /// 刪除資料 - 關聯單號
-        /// </summary>
-        /// <param name="relID">被關聯的單頭ID</param>
-        /// <param name="dataID">關聯ID</param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        public bool DeleteShipFreightRel(string relID, string dataID, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" DELETE FROM ShipFreightRel_CHN WHERE (Data_ID = @DataID);");
-                sql.AppendLine(" DELETE FROM ShipFreight_CHN WHERE (Data_ID = @RelID);");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("DataID", dataID);
-                cmd.Parameters.AddWithValue("RelID", relID);
-
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-        }
-
-
-        /// <summary>
-        /// 刪除資料 - 貨運公司
-        /// </summary>
-        /// <param name="dataID">ID</param>
-        /// <param name="ErrMsg"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// 若資料已使用,則設為隱藏
-        /// </remarks>
-        public bool DeleteShipComp(string dataID, out string ErrMsg)
-        {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
-            //----- 資料查詢 -----
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                //----- SQL 查詢語法 -----
-                sql.AppendLine(" IF (SELECT COUNT(*) FROM ShipFreight_CHN WHERE (ShipComp = @DataID)) > 0");
-                sql.AppendLine("  BEGIN");
-                sql.AppendLine("   UPDATE Logistics SET Display = 'N' WHERE (Data_ID = @DataID);");
-                sql.AppendLine("  END");
-                sql.AppendLine(" ELSE");
-                sql.AppendLine("  BEGIN");
-                sql.AppendLine("   DELETE FROM Logistics WHERE (Data_ID = @DataID);");
-                sql.AppendLine("  END");
-
-                //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
-                cmd.Parameters.AddWithValue("DataID", dataID);
-
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
-            }
-        }
-
-
-        /// <summary>
-        /// [發貨] 刪除匯入
+        /// 刪除匯入
         /// </summary>
         /// <param name="dataID"></param>
         /// <returns></returns>
@@ -1960,9 +1402,6 @@ namespace ShipFreight_CN.Controllers
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
             }
         }
-
-
-        #endregion  *** 發貨 E ***
 
         #endregion
 

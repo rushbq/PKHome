@@ -12,90 +12,50 @@ namespace ShipFreight_CN.Models
     public class ShipFreightItem
     {
         public Guid? Data_ID { get; set; }
+        public string Erp_SO_FullID { get; set; }
         public string Erp_SO_FID { get; set; }
         public string Erp_SO_SID { get; set; }
         public string Erp_SO_Date { get; set; }
         public string CustID { get; set; }
         public string CustName { get; set; }
         public decimal TotalPrice { get; set; }
-        public string StockType { get; set; }
-        public string StockName { get; set; }
-
-        //發貨日期
-        public string ShipDate { get; set; }
-        //貨運公司
-        public Int32? ShipComp { get; set; }
-        public string ShipCompName { get; set; }
-        //物流途徑
-        public string ShipWay { get; set; }
+        public string CfmCode { get; set; }
+        //物流單號
+        public string ShipNo { get; set; }
         //收貨人
         public string ShipWho { get; set; }
+        //收貨Tel
+        public string ShipTel { get; set; }
+        //收貨Addr1
+        public string ShipAddr1 { get; set; }
+        //收貨Addr2
+        public string ShipAddr2 { get; set; }
+        //運費
+        public double? Freight { get; set; }
         //件數
-        public Int32? ShipCnt { get; set; }
-        //備註
+        public int? BoxCnt { get; set; }
+        //發貨日期
+        public string ShipDate { get; set; }
+        public string CfmWhoName { get; set; }
+
+        //貨運公司
+        public Int32? ShipComp { get; set; }
+        //物流途徑
+        public Int32? ShipWay { get; set; }
+        //運費方式
+        public Int32? SendType { get; set; }
+        public string ShipCompName { get; set; }
+        public string ShipWayName { get; set; }
+        public string SendTypeName { get; set; }
+
+        public string UserCheck1 { get; set; }
         public string Remark { get; set; }
+        public string Create_Time { get; set; }
+        public string Update_Time { get; set; }
         public string Create_Who { get; set; }
         public string Create_Name { get; set; }
         public string Update_Who { get; set; }
         public string Update_Name { get; set; }
-
-        #region 僅顯示
-        //物流單號
-        public string ShipNo { get; set; }
-        //運費
-        public double? Freight { get; set; }
-        public string FreightWay { get; set; }
-        #endregion
-
-        //是否已被關聯
-        public int IsReled { get; set; }
-    }
-
-    public class ShipFreightDetail
-    {
-        public Guid Parent_ID { get; set; }
-        public int Data_ID { get; set; }
-        //物流單號
-        public string ShipNo { get; set; }
-        public Int32 ShipCnt { get; set; }
-        public double? Freight { get; set; }
-        public string FreightWay { get; set; }
-    }
-
-    public class ShipFreightRel
-    {
-        //目前單子ID
-        public Guid Parent_ID { get; set; }
-        //關聯對象ID
-        public Guid Rel_ID { get; set; }
-        public int Data_ID { get; set; }
-        public string Erp_SO_FID { get; set; }
-        public string Erp_SO_SID { get; set; }
-    }
-
-    //流物公司(PKEF.Logistics)
-    public class ShipComp
-    {
-        public Int32 ID { get; set; }
-        public string Label { get; set; }
-        public string Display { get; set; }
-        public Int16 Sort { get; set; }
-    }
-
-    /// <summary>
-    /// 運費統計
-    /// </summary>
-    public class ShipStat_Year
-    {
-        public string showYM { get; set; }
-        public int Month { get; set; }
-        public string sDate { get; set; }
-        public string eDate { get; set; }
-        public double TotalPrice { get; set; }
-        public Int32 ItemCnt { get; set; }
-        public Int32 ShipCnt { get; set; }
-        public double Freight { get; set; }
-        public double avgPercent { get; set; }
     }
 
 
@@ -108,24 +68,18 @@ namespace ShipFreight_CN.Models
 
         public int SeqNo { get; set; }
         public Guid Data_ID { get; set; }
-        public string TraceID { get; set; }
-        public string erpSDate { get; set; } //(format:yyyyMMdd)
-        public string erpEDate { get; set; } //(format:yyyyMMdd)      
+        public string TraceID { get; set; }  
         public decimal Status { get; set; }
         public string StatusName { get; set; }
         public string Upload_File { get; set; }
+        public string Upload_Type { get; set; }
+        public string Upload_TypeName { get; set; }
         public string Sheet_Name { get; set; }
+        public string Remark { get; set; }
         public string Create_Who { get; set; }
         public string Create_Time { get; set; }
         public string Update_Who { get; set; }
         public string Update_Time { get; set; }
-        public string Remark { get; set; }
-
-
-        #endregion
-
-
-        #region -- 關聯欄位 --
 
         public string Create_Name { get; set; }
         public string Update_Name { get; set; }
@@ -146,6 +100,17 @@ namespace ShipFreight_CN.Models
         public string IsPass { get; set; }
         public string doWhat { get; set; }
         public string erpID { get; set; }
+    }
+
+
+    /// <summary>
+    /// Public Class Menu
+    /// </summary>
+    public class ClassItem
+    {
+        public int ID { get; set; }
+        public string Label { get; set; }
+
     }
 
     #endregion

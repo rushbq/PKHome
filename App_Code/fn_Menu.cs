@@ -45,60 +45,37 @@ public class fn_Menu
     }
 
 
-    /// <summary>
-    /// 發貨統計-中國內銷
-    /// </summary>
-    /// <param name="lang"></param>
-    /// <param name="rootID"></param>
-    /// <param name="tabID">選單tab</param>
-    /// <param name="dataType">1工具/2玩具</param>
-    /// <returns></returns>
-    public static string GetTopMenu_ShipFreight_CHN(string lang, string rootID, string tabID, string dataType)
-    {
-        string menu = "";
-        string url = "{0}{1}/{2}/ShipFreight_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+    ///// <summary>
+    ///// 發貨統計-中國內銷
+    ///// </summary>
+    ///// <param name="lang"></param>
+    ///// <param name="rootID"></param>
+    ///// <param name="tabID">選單tab</param>
+    ///// <param name="dataType">1工具/2玩具</param>
+    ///// <returns></returns>
+    //public static string GetTopMenu_ShipFreight_CHN(string lang, string rootID, string tabID, string dataType)
+    //{
+    //    string menu = "";
+    //    string url = "{0}{1}/{2}/ShipFreight_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
 
-        //發貨明細
-        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=1\">發貨明細</a>".FormatThis(url, dataType, tabID.Equals("1") ? "active" : "");
+    //    //發貨明細
+    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=1\">發貨明細</a>".FormatThis(url, dataType, tabID.Equals("1") ? "active" : "");
 
-        //發貨資料傳送
-        url = "{0}{1}/{2}/ShipFreightSend_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=2\">發貨資料傳送</a>".FormatThis(url, dataType, tabID.Equals("2") ? "active" : "");
+    //    //發貨資料傳送
+    //    url = "{0}{1}/{2}/ShipFreightSend_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=2\">發貨資料傳送</a>".FormatThis(url, dataType, tabID.Equals("2") ? "active" : "");
 
-        //運費統計
-        url = "{0}{1}/{2}/ShipFreightStat_Y_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=3\">運費統計</a>".FormatThis(url, dataType, tabID.Equals("3") ? "active" : "");
+    //    //運費統計
+    //    url = "{0}{1}/{2}/ShipFreightStat_Y_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=3\">運費統計</a>".FormatThis(url, dataType, tabID.Equals("3") ? "active" : "");
 
-        //週統計
-        url = "{0}{1}/{2}/ShipFreightStat_W_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-        menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=4\">週統計</a>".FormatThis(url, dataType, tabID.Equals("4") ? "active" : "");
+    //    //週統計
+    //    url = "{0}{1}/{2}/ShipFreightStat_W_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=4\">週統計</a>".FormatThis(url, dataType, tabID.Equals("4") ? "active" : "");
 
-        return menu;
-    }
+    //    return menu;
+    //}
 
-
-    /// <summary>
-    /// 發貨統計-中國內銷 (運費方式)
-    /// </summary>
-    /// <param name="val"></param>
-    /// <returns></returns>
-    public static string GetItem_ShipFrieghtWay(string val)
-    {
-        switch (val.ToUpper())
-        {
-            case "A":
-                return "自付";
-
-            case "B":
-                return "墊付";
-
-            case "C":
-                return "到付";
-
-            default:
-                return "";
-        }
-    }
 
 
     /// <summary>
@@ -125,6 +102,29 @@ public class fn_Menu
 
     /// <summary>
     /// 來源類型
+    /// </summary>
+    /// <param name="typeID">A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具</param>
+    /// <returns></returns>
+    public static string GetShipping_RefType(string typeID)
+    {
+        switch (typeID)
+        {
+            case "A":
+                return "電商工具";
+
+            case "B":
+                return "電商玩具";
+
+            case "C":
+                return "經銷商工具";
+
+            default:
+                return "經銷商玩具";
+        }
+    }
+
+    /// <summary>
+    /// 電商平台數據 - 來源類型
     /// </summary>
     /// <param name="typeID"></param>
     /// <returns></returns>

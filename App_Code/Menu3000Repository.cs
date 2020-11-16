@@ -917,7 +917,7 @@ namespace Menu3000Data.Controllers
 
 
         #endregion *** 訂單庫存狀況 E ***
-        
+
 
         #region *** 客戶歷史報價 S ***
         /// <summary>
@@ -967,26 +967,34 @@ namespace Menu3000Data.Controllers
                     {
                         switch (item.Key)
                         {
-                            case "ModelNo":
-                                //拆解輸入字串(1PK-036S#GE-123#MT-810)
-                                string[] aryID = Regex.Split(item.Value, "#");
-                                ArrayList aryLst = new ArrayList(aryID);
+                            //case "ModelNo":
+                            //    //拆解輸入字串(1PK-036S#GE-123#MT-810)
+                            //    string[] aryID = Regex.Split(item.Value, "#");
+                            //    ArrayList aryLst = new ArrayList(aryID);
 
-                                /*
-                                 GetSQLParam:SQL WHERE IN的方法  ,ex:UPPER(ModelNo) IN ({0})
-                                */
-                                filterModel = CustomExtension.GetSQLParam(aryLst, "pModel");
-                                /* [篩選條件], 品號 */
-                                strQuoteModel = "AND (MB002 IN ({0}))".FormatThis(filterModel);
-                                strOrderModel = "AND (COPTD.TD004 IN ({0}))".FormatThis(filterModel);
+                            //    /*
+                            //     GetSQLParam:SQL WHERE IN的方法  ,ex:UPPER(ModelNo) IN ({0})
+                            //    */
+                            //    filterModel = CustomExtension.GetSQLParam(aryLst, "pModel");
+                            //    /* [篩選條件], 品號 */
+                            //    strQuoteModel = "AND (MB002 IN ({0}))".FormatThis(filterModel);
+                            //    strOrderModel = "AND (COPTD.TD004 IN ({0}))".FormatThis(filterModel);
 
 
-                                //SQL參數組成
-                                for (int row = 0; row < aryID.Count(); row++)
-                                {
-                                    sqlParamList.Add(new SqlParameter("@pModel" + row, aryID[row]));
-                                    sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryID[row]));
-                                }
+                            //    //SQL參數組成
+                            //    for (int row = 0; row < aryID.Count(); row++)
+                            //    {
+                            //        sqlParamList.Add(new SqlParameter("@pModel" + row, aryID[row]));
+                            //        sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryID[row]));
+                            //    }
+                            //    break;
+                            case "Keyword":
+                                strQuoteModel = "AND (MB002 LIKE '%' + UPPER(@keyword) + '%')";
+                                strOrderModel = "AND (COPTD.TD004 LIKE '%' + UPPER(@keyword) + '%')";
+
+
+                                sqlParamList.Add(new SqlParameter("@keyword", item.Value));
+                                sqlParamList_Cnt.Add(new SqlParameter("@keyword", item.Value));
                                 break;
 
                             case "Cust":
@@ -1151,11 +1159,11 @@ namespace Menu3000Data.Controllers
 
                     //欄位select
                     sql.AppendLine("SELECT TbAll.*");
-                    /*((Agent價 * 匯率) - 成本) / (Agent價 * 匯率)*/
-                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_TW = 0 THEN 0 ELSE CAST(ROUND(((TbAll.AgentPrice_TW * @myRateTW) - TbAll.PaperCost_TW) / (TbAll.AgentPrice_TW * @myRateTW), 3) AS FLOAT) END) AS ProfitTW");
-                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_SH = 0 THEN 0 ELSE CAST(ROUND(((TbAll.AgentPrice_SH * @myRateSH) - TbAll.PaperCost_SH) / (TbAll.AgentPrice_SH * @myRateSH), 3) AS FLOAT) END) AS ProfitSH");
+                    /*利潤率=((Agent價 * 匯率) - 成本) / (Agent價 * 匯率)*/
+                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_TW = 0 THEN 0 ELSE CONVERT(FLOAT, ROUND(((TbAll.AgentPrice_TW * @myRateTW) - TbAll.PaperCost_TW) / (TbAll.AgentPrice_TW * @myRateTW), 3)) END) AS ProfitTW");
+                    sql.AppendLine(" , (CASE WHEN TbAll.AgentPrice_SH = 0 THEN 0 ELSE CONVERT(FLOAT, ROUND(((TbAll.AgentPrice_SH * @myRateSH) - TbAll.PaperCost_SH) / (TbAll.AgentPrice_SH * @myRateSH), 3)) END) AS ProfitSH");
                     sql.AppendLine(" FROM (");
-                 
+
                     sql.AppendLine(" SELECT TblQuote.DBS");
                     sql.AppendLine("	, RTRIM(TblQuote.CustID) AS CustID"); //--[客戶代號]
                     sql.AppendLine("	, RTRIM(TblQuote.CustName) AS CustName"); //--[客戶簡稱]
@@ -2966,7 +2974,7 @@ namespace Menu3000Data.Controllers
             return sqlParamList;
         }
 
-        
+
         /// <summary>
         /// [開案中客訴] 匯出
         /// </summary>
@@ -3102,7 +3110,7 @@ namespace Menu3000Data.Controllers
 
         }
 
-        
+
         /// <summary>
         /// [未開案客訴] 取得收貨圖片
         /// </summary>
@@ -3657,9 +3665,10 @@ namespace Menu3000Data.Controllers
                             sql.Append(" OR Base.ShipNo LIKE '%' + UPPER(@keyword) + '%'");
                             sql.Append(" OR Base.RefCustID LIKE '%' + UPPER(@keyword) + '%'");
                             sql.Append(" OR Cust.MA002 LIKE '%' + UPPER(@keyword) + '%'");
-                            //sql.Append(" OR Base.RefCustID IN (");
-                            //sql.Append(" (SELECT RTRIM(MA001) FROM PKSYS.dbo.Customer WITH(NOLOCK) WHERE (DBS = DBC) AND (MA002 LIKE '%' + UPPER(@keyword) + '%'))");
-                            //sql.Append(" )");
+                            sql.Append(" OR Base.TraceID IN ((");
+                            sql.Append("    SELECT TraceID FROM Cust_Complaint_Temp WITH(NOLOCK)");
+                            sql.Append("	WHERE ((ShipWho LIKE '%' + UPPER(@keyword) + '%') OR (FreightInput LIKE '%' + UPPER(@keyword) + '%'))");
+                            sql.Append("   ))");
                             sql.Append(")");
 
                             break;
@@ -5933,7 +5942,7 @@ namespace Menu3000Data.Controllers
 
         #endregion *** 出貨明細表(內銷) E ***
 
-        
+
         #region *** 出貨明細表(上海) S ***
 
         /// <summary>
@@ -8259,7 +8268,7 @@ namespace Menu3000Data.Controllers
         #endregion *** 客訴 E ***
 
         #endregion
-        
+
 
         #region -----// Others //-----
 

@@ -75,7 +75,7 @@
                     </div>
                     <div class="eight wide field">
                         <label><%:GetLocalResourceObject("sh_關鍵字查詢")%></label>
-                        <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="客訴編號, 品號, 經銷商客戶, 物流快遞單號"></asp:TextBox>
+                        <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="客訴編號, 品號, 經銷商客戶, 物流快遞單號, 收貨客户/備註"></asp:TextBox>
                     </div>
                 </div>
                 <div class="fields">

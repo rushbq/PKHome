@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="right menu">
-                <a href="<%=Page_SearchUrl %>" class="item"><i class="undo icon"></i><span class="mobile hidden">返回發貨明細</span></a>
+                <a href="<%=Page_SearchUrl %>" class="item"><i class="undo icon"></i><span class="mobile hidden">返回出貨明細</span></a>
                 <a href="<%=FuncPath() %>/Step1?dt=<%=Req_DataType %>" class="item"><i class="plus icon"></i><span class="mobile hidden">新增匯入</span></a>
 
             </div>
@@ -82,8 +82,8 @@
                             <thead>
                                 <tr>
                                     <th class="grey-bg lighten-3">追蹤編號</th>
+                                    <th class="grey-bg lighten-3 center aligned">匯入類型</th>
                                     <th class="grey-bg lighten-3 center aligned">狀態</th>
-                                    <th class="grey-bg lighten-3 center aligned">單據日期</th>
                                     <th class="grey-bg lighten-3 center aligned">時間</th>
                                     <th class="grey-bg lighten-3 center aligned">人員</th>
                                     <th class="grey-bg lighten-3"></th>
@@ -103,18 +103,18 @@
                 </LayoutTemplate>
                 <ItemTemplate>
                     <tr>
-                        <td class="left aligned collapsing">
+                        <td class="left aligned ">
                             <b class="red-text text-darken-2"><%#Eval("TraceID") %></b>
                         </td>
-                        <td class="center aligned collapsing">
+                        <td class="center aligned">
+                            <%#Eval("Upload_TypeName") %>
+                        </td>
+                        <td class="center aligned">
                             <div class="ui green basic fluid label">
                                 <%#Eval("StatusName") %>
                             </div>
                         </td>
-                        <td class="center aligned collapsing">
-                            <%#Eval("erpSDate") %> ~ <%#Eval("erpEDate") %>
-                        </td>
-                        <td class="left aligned collapsing">
+                        <td class="left aligned">
                             <div>
                                 <div class="ui basic fluid label">
                                     建立<div class="detail"><%#Eval("Create_Time") %></div>
@@ -126,7 +126,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="left aligned collapsing">
+                        <td class="left aligned">
                             <div>
                                 <div class="ui basic fluid label">
                                     建立<div class="detail"><%#Eval("Create_Name") %></div>

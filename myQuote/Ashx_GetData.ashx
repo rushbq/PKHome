@@ -36,7 +36,8 @@ public class Ashx_GetData : IHttpHandler
 
             //[接收參數] 自訂查詢
             string _Cust = context.Request["Cust"];
-            string _ModelNo = context.Request["ModelNo"];
+            //string _ModelNo = context.Request["ModelNo"];
+            string _keyword = context.Request["Keyword"];
 
             //----- 宣告:分頁參數 -----
             int TotalRow = 0;   //總筆數
@@ -49,10 +50,16 @@ public class Ashx_GetData : IHttpHandler
             int DataCnt;
 
             //----- 原始資料:條件篩選 -----
-            //[查詢條件] - ModelNo
-            if (!string.IsNullOrWhiteSpace(_ModelNo))
+            ////[查詢條件] - ModelNo
+            //if (!string.IsNullOrWhiteSpace(_ModelNo))
+            //{
+            //    search.Add("ModelNo", _ModelNo);
+            //}
+
+            //[查詢條件] - Keyword
+            if (!string.IsNullOrWhiteSpace(_keyword))
             {
-                search.Add("ModelNo", _ModelNo);
+                search.Add("Keyword", _keyword);
             }
 
             //[查詢條件] - Cust
@@ -62,6 +69,8 @@ public class Ashx_GetData : IHttpHandler
             }
 
             //----- 方法:取得資料 -----
+            start = 0;
+            length = 9999;
             using (DT = _data.GetQuote_History(search, start, length, out DataCnt, out ErrMsg))
             {
                 //----- 資料整理:取得總筆數 -----

@@ -23,16 +23,27 @@ public partial class myShipping_ImportStep4 : SecurityCheck
                 //[權限判斷] Start
                 bool isPass = false;
 
+                //A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
                 switch (Req_DataType)
                 {
-                    case "1":
+                    case "A":
                         //工具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3703");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3775");
                         break;
 
-                    default:
+                    case "B":
                         //玩具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3704");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3776");
+                        break;
+
+                    case "C":
+                        //工具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3777");
+                        break;
+
+                    case "D":
+                        //玩具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3778");
                         break;
                 }
 
@@ -43,7 +54,7 @@ public partial class myShipping_ImportStep4 : SecurityCheck
                 }
 
                 //取得公司別
-                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetECData_RefType(Convert.ToInt16(Req_DataType)));
+                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetShipping_RefType(Req_DataType));
                 lt_CorpName.Text = _corpName;
                 Page.Title += "-" + _corpName;
 
@@ -85,9 +96,7 @@ public partial class myShipping_ImportStep4 : SecurityCheck
         var query = _data.GetShipImportList(search, defComp, out ErrMsg).Take(1)
             .Select(fld => new
             {
-                TraceID = fld.TraceID,
-                erpSDate = fld.erpSDate,
-                erpEDate = fld.erpEDate
+                TraceID = fld.TraceID
 
             }).FirstOrDefault();
 
@@ -143,13 +152,13 @@ public partial class myShipping_ImportStep4 : SecurityCheck
     }
 
     /// <summary>
-    /// 資料判別:1=工具/2=玩具
+    /// 資料判別:A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
     /// </summary>
     public string Req_DataType
     {
         get
         {
-            string data = Request.QueryString["dt"] == null ? "1" : Request.QueryString["dt"].ToString();
+            string data = Request.QueryString["dt"] == null ? "A" : Request.QueryString["dt"].ToString();
             return data;
         }
         set

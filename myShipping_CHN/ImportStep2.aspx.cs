@@ -27,16 +27,27 @@ public partial class myShipping_ImportStep2 : SecurityCheck
                 //[權限判斷] Start
                 bool isPass = false;
 
+                //A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
                 switch (Req_DataType)
                 {
-                    case "1":
+                    case "A":
                         //工具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3703");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3775");
                         break;
 
-                    default:
+                    case "B":
                         //玩具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3704");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3776");
+                        break;
+
+                    case "C":
+                        //工具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3777");
+                        break;
+
+                    case "D":
+                        //玩具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3778");
                         break;
                 }
 
@@ -47,7 +58,7 @@ public partial class myShipping_ImportStep2 : SecurityCheck
                 }
 
                 //取得公司別
-                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetECData_RefType(Convert.ToInt16(Req_DataType)));
+                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetShipping_RefType(Req_DataType));
                 lt_CorpName.Text = _corpName;
                 Page.Title += "-" + _corpName;
 
@@ -91,6 +102,8 @@ public partial class myShipping_ImportStep2 : SecurityCheck
             {
                 TraceID = fld.TraceID,
                 FileName = fld.Upload_File,
+                UploadType = fld.Upload_Type,
+                UploadTypeName = fld.Upload_TypeName,
                 status = fld.Status
 
             }).FirstOrDefault();
@@ -98,6 +111,8 @@ public partial class myShipping_ImportStep2 : SecurityCheck
         //----- 資料整理:填入資料 -----
         string _traceID = query.TraceID;
         string _fileName = query.FileName;
+        string _typeID = query.UploadType;
+        string _typeName = query.UploadTypeName;
         decimal _status = query.status;
 
         query = null;
@@ -118,9 +133,11 @@ public partial class myShipping_ImportStep2 : SecurityCheck
             , _fileName);
 
         //填入表單欄位
-        this.lb_TraceID.Text = _traceID;
-        this.hf_FullFileName.Value = filePath; //完整路徑
-        this.hf_TraceID.Value = _traceID;
+        lb_TraceID.Text = _traceID;
+        hf_FullFileName.Value = filePath; //完整路徑
+        hf_TraceID.Value = _traceID;
+        hf_Type.Value = _typeID;
+        lb_TypeName.Text = _typeName;
 
         //----- [元件][LinqToExcel] - 取得工作表 -----
         Set_SheetMenu(filePath);
@@ -146,8 +163,6 @@ public partial class myShipping_ImportStep2 : SecurityCheck
         {
             this.ddl_Sheet.Items.Add(new ListItem(item.ToString(), item.ToString()));
         }
-
-
     }
     #endregion
 
@@ -212,6 +227,7 @@ public partial class myShipping_ImportStep2 : SecurityCheck
         string _traceID = hf_TraceID.Value;
         string _sheetName = ddl_Sheet.SelectedValue;
         string _filePath = hf_FullFileName.Value;
+        string _type = hf_Type.Value;
 
         //填入基本資料Inst
         var baseData = new ShipImportData
@@ -223,7 +239,7 @@ public partial class myShipping_ImportStep2 : SecurityCheck
         };
 
         //填入單身資料Inst - 取得Excel資料欄位
-        var query_Xls = _data.GetExcel_DT(_filePath, _sheetName, _traceID);
+        var query_Xls = _data.GetExcel_DT(_filePath, _sheetName, _traceID, _type);
 
 
         //寫入單身資料, 更新單頭欄位
@@ -255,13 +271,14 @@ public partial class myShipping_ImportStep2 : SecurityCheck
         {
             //宣告
             StringBuilder html = new StringBuilder();
-            var filePath = this.hf_FullFileName.Value;
-            string sheetName = this.ddl_Sheet.SelectedValue;
+            var filePath = hf_FullFileName.Value;
+            string sheetName = ddl_Sheet.SelectedValue;
+            string typeID = hf_Type.Value; //A=電商;B=經銷商
 
             //取得資料
             ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
 
-            html = _data.GetExcel_Html(filePath, sheetName);
+            html = _data.GetExcel_Html(filePath, sheetName, typeID);
 
             //Output Html
             this.lt_tbBody.Text = html.ToString();
@@ -311,13 +328,13 @@ public partial class myShipping_ImportStep2 : SecurityCheck
     }
 
     /// <summary>
-    /// 資料判別:1=工具/2=玩具
+    /// 資料判別:A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具具
     /// </summary>
     public string Req_DataType
     {
         get
         {
-            string data = Request.QueryString["dt"] == null ? "1" : Request.QueryString["dt"].ToString();
+            string data = Request.QueryString["dt"] == null ? "A" : Request.QueryString["dt"].ToString();
             return data;
         }
         set

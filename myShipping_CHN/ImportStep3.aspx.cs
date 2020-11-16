@@ -20,16 +20,27 @@ public partial class myShipping_ImportStep3 : SecurityCheck
                 //[權限判斷] Start
                 bool isPass = false;
 
+                //A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
                 switch (Req_DataType)
                 {
-                    case "1":
+                    case "A":
                         //工具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3703");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3775");
                         break;
 
-                    default:
+                    case "B":
                         //玩具
-                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3704");
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3776");
+                        break;
+
+                    case "C":
+                        //工具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3777");
+                        break;
+
+                    case "D":
+                        //玩具
+                        isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3778");
                         break;
                 }
 
@@ -40,7 +51,7 @@ public partial class myShipping_ImportStep3 : SecurityCheck
                 }
 
                 //取得公司別
-                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetECData_RefType(Convert.ToInt16(Req_DataType)));
+                string _corpName = "中國內銷({0})".FormatThis(fn_Menu.GetShipping_RefType(Req_DataType));
                 lt_CorpName.Text = _corpName;
                 Page.Title += "-" + _corpName;
 
@@ -83,14 +94,16 @@ public partial class myShipping_ImportStep3 : SecurityCheck
             .Select(fld => new
             {
                 TraceID = fld.TraceID,
-                erpSDate = fld.erpSDate,
-                erpEDate = fld.erpEDate,
+                UploadType = fld.Upload_Type,
+                UploadTypeName = fld.Upload_TypeName,
                 status = fld.Status
 
             }).FirstOrDefault();
 
         //----- 資料整理:填入資料 -----
         lb_TraceID.Text = query.TraceID;
+        hf_Type.Value = query.UploadType;
+        lb_TypeName.Text = query.UploadTypeName;
         decimal _status = query.status;
 
         query = null;
@@ -120,6 +133,7 @@ public partial class myShipping_ImportStep3 : SecurityCheck
         var baseData = new ShipImportData
         {
             Data_ID = new Guid(Req_DataID),
+            Upload_Type = hf_Type.Value,
             Update_Who = fn_Param.CurrentUser
         };
 
@@ -186,13 +200,13 @@ public partial class myShipping_ImportStep3 : SecurityCheck
     }
 
     /// <summary>
-    /// 資料判別:1=工具/2=玩具
+    /// 資料判別:A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具
     /// </summary>
     public string Req_DataType
     {
         get
         {
-            string data = Request.QueryString["dt"] == null ? "1" : Request.QueryString["dt"].ToString();
+            string data = Request.QueryString["dt"] == null ? "A" : Request.QueryString["dt"].ToString();
             return data;
         }
         set

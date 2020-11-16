@@ -1,7 +1,14 @@
-﻿<%@ Page Title="發貨明細表" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Search.aspx.cs" Inherits="myShipping_Search" %>
+﻿<%@ Page Title="出貨明細表" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="Search.aspx.cs" Inherits="myShipping_Search" %>
 
 <%@ Import Namespace="PKLib_Method.Methods" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="CssContent" runat="Server">
+    <style>
+        /* 複寫dropdown, 讓高度在表格裡正常顯示 */
+        .ui.selection.dropdown {
+            /*min-width: 8em !important;*/
+            min-height: 1em !important;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="Server">
     <!-- 工具列 Start -->
@@ -11,10 +18,10 @@
                 <div class="ui small breadcrumb">
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
-                    <div class="section">發貨/運費維護統計</div>
+                    <div class="section">發貨/運費</div>
                     <i class="right angle icon divider"></i>
                     <div class="active section red-text text-darken-2">
-                        發貨明細表 - 
+                        出貨明細表 - 
                         <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>
@@ -51,33 +58,18 @@
                             </div>
                         </div>
                     </div>
-                    <div class="four wide field">
+                    <div class="five wide field">
                         <label>關鍵字查詢 (ERP單號, 物流單號, 收件人)</label>
-                        <asp:TextBox ID="filter_ErpNo" runat="server" placeholder="輸入關鍵字" autocomplete="off"></asp:TextBox>
+                        <asp:TextBox ID="filter_Keyword" runat="server" placeholder="輸入關鍵字" autocomplete="off"></asp:TextBox>
                     </div>
-                    <div class="two wide field">
+                    <div class="three wide field">
                         <label>物流途徑</label>
-                        <asp:DropDownList ID="filter_ShipWay" runat="server" CssClass="fluid">
-                            <asp:ListItem Value="ALL">-- 全部 --</asp:ListItem>
-                            <asp:ListItem Value="A">自發</asp:ListItem>
-                            <asp:ListItem Value="B">代發</asp:ListItem>
-                        </asp:DropDownList>
-                    </div>
-                    <div class="two wide field">
-                        <label>運費方式</label>
-                        <asp:DropDownList ID="filter_FreightWay" runat="server" CssClass="fluid">
-                            <asp:ListItem Value="ALL">-- 全部 --</asp:ListItem>
-                            <asp:ListItem Value="A">自付</asp:ListItem>
-                            <asp:ListItem Value="B">墊付</asp:ListItem>
-                            <asp:ListItem Value="C">到付</asp:ListItem>
+                        <asp:DropDownList ID="filter_ShipWay" runat="server" CssClass="fluid topSearch">
                         </asp:DropDownList>
                     </div>
                     <div class="three wide field">
-                        <label class="green-text">排序欄位</label>
-                        <asp:DropDownList ID="sort_SortField" runat="server" CssClass="fluid">
-                            <asp:ListItem Value="">系統預設 (單據日)</asp:ListItem>
-                            <asp:ListItem Value="A">單別+單號</asp:ListItem>
-                            <asp:ListItem Value="B">發貨日期</asp:ListItem>
+                        <label>運費方式</label>
+                        <asp:DropDownList ID="filter_FreightWay" runat="server" CssClass="fluid topSearch">
                         </asp:DropDownList>
                     </div>
                 </div>
@@ -110,15 +102,10 @@
                     </div>
                     <div class="three wide field">
                         <label>貨運公司</label>
-                        <asp:DropDownList ID="filter_ShipComp" runat="server" CssClass="fluid">
+                        <asp:DropDownList ID="filter_ShipComp" runat="server" CssClass="fluid topSearch">
                         </asp:DropDownList>
                     </div>
                     <div class="three wide field">
-                        <label class="green-text">排序方式</label>
-                        <asp:DropDownList ID="sort_SortWay" runat="server" CssClass="fluid">
-                            <asp:ListItem Value="A">遞增(小到大)</asp:ListItem>
-                            <asp:ListItem Value="B" Selected="True">遞減(大到小)</asp:ListItem>
-                        </asp:DropDownList>
                     </div>
                 </div>
             </div>
@@ -148,72 +135,128 @@
 
         <!-- List Content Start -->
         <asp:PlaceHolder ID="ph_Data" runat="server">
-            <asp:ListView ID="lvDataList" runat="server" ItemPlaceholderID="ph_Items" OnItemDataBound="lvDataList_ItemDataBound">
-                <LayoutTemplate>
-                    <div class="ui green attached segment">
-                        <table class="ui celled selectable compact small table">
+            <div id="formData" class="ui small form">
+                <asp:ListView ID="lvDataList" runat="server" ItemPlaceholderID="ph_Items" OnItemCommand="lvDataList_ItemCommand" OnItemDataBound="lvDataList_ItemDataBound">
+                    <LayoutTemplate>
+                        <table id="tableList" class="ui celled compact small table nowrap">
                             <thead>
                                 <tr>
-                                    <th class="grey-bg lighten-3 center aligned" colspan="2">ERP資料</th>
-                                    <th class="grey-bg lighten-3 center aligned" colspan="9">發貨資料</th>
-                                    <th class="grey-bg lighten-3" rowspan="2">備註</th>
-                                    <th class="grey-bg lighten-3" rowspan="2"></th>
-                                </tr>
-                                <tr>
-                                    <th class="grey-bg lighten-3">客戶/單號</th>
-                                    <th class="grey-bg lighten-3">單據日</th>
+                                    <th class="grey-bg lighten-3">單據日期</th>
+                                    <th class="grey-bg lighten-3">&nbsp;</th>
+                                    <th class="grey-bg lighten-3">資材確認</th>
                                     <th class="grey-bg lighten-3">發貨日期</th>
+                                    <th class="grey-bg lighten-3 center aligned">客戶<br />
+                                        銷貨單號</th>
                                     <th class="grey-bg lighten-3">銷貨金額</th>
-                                    <th class="grey-bg lighten-3 center aligned">物流途徑</th>
+                                    <th class="grey-bg lighten-3">銷貨單<br />
+                                        確認</th>
                                     <th class="grey-bg lighten-3">貨運公司</th>
                                     <th class="grey-bg lighten-3">物流單號</th>
-                                    <th class="grey-bg lighten-3">收貨人</th>
-                                    <th class="grey-bg lighten-3 center aligned">件數</th>
-                                    <th class="grey-bg lighten-3 center aligned">運費方式</th>
-                                    <th class="grey-bg lighten-3 center aligned">運費</th>
+                                    <th class="grey-bg lighten-3">運費方式</th>
+                                    <th class="grey-bg lighten-3">物流途徑</th>
+                                    <th class="grey-bg lighten-3">件數</th>
+                                    <th class="grey-bg lighten-3">運費金額</th>
+                                    <th class="grey-bg lighten-3">收件人</th>
+                                    <th class="grey-bg lighten-3">收件電話</th>
+                                    <th class="grey-bg lighten-3">收件地址</th>
+                                    <th class="grey-bg lighten-3">銷售員</th>
+                                    <th class="grey-bg lighten-3">備註</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <asp:PlaceHolder ID="ph_Items" runat="server" />
                             </tbody>
                         </table>
-                    </div>
+                    </LayoutTemplate>
+                    <ItemTemplate>
+                        <tr>
+                            <td class="center aligned">
+                                <strong><%#Eval("Erp_SO_Date") %></strong>
+                            </td>
+                            <td class="left aligned collapsing">
+                                <asp:PlaceHolder ID="ph_Save" runat="server">
+                                    <asp:LinkButton ID="lbtn_Save" runat="server" CssClass="ui small teal basic icon button" ValidationGroup="List" CommandName="doSave"><i class="save icon"></i></asp:LinkButton>
+                                </asp:PlaceHolder>
+                                <asp:PlaceHolder ID="ph_Del" runat="server">
+                                    <asp:LinkButton ID="lbtn_Close" runat="server" CssClass="ui small orange basic icon button" ValidationGroup="List" CommandName="doClose" OnClientClick="return confirm('確定重置?')"><i class="trash alternate icon"></i></asp:LinkButton>
+                                </asp:PlaceHolder>
+                            </td>
+                            <td class="center aligned" title="確認=Y+物流單號+運費, 鎖定">
+                                <!-- 資材確認,確認後不可修改 -->
+                                <asp:CheckBox ID="lst_Check" runat="server" />
+                            </td>
+                            <td class="center aligned">
+                                <asp:TextBox ID="tb_ShipDate" runat="server" Width="120px" Text='<%#Eval("ShipDate").ToString().ToDateString("yyyy-MM-dd") %>' MaxLength="10" autocomplete="off" type="date" placeholder="ex:2019/05/01"></asp:TextBox>
+                            </td>
+                            <td>
+                                <h5 class="green-text text-darken-3" style="margin-bottom:0px;"><%#Eval("CustName") %></h5>
+                                <h5 class="blue-text text-darken-3" style="margin-top:0.5rem"><%#Eval("Erp_SO_FullID") %></h5>
+                            </td>
+                            <td class="right aligned red-text text-darken-1">
+                                <strong><%#Eval("TotalPrice").ToString().ToMoneyString() %></strong>
+                            </td>
+                            <td class="center aligned"><%#Eval("CfmCode") %></td>
+                            <td class="center aligned">
+                                <!-- 貨運公司 -->
+                                <asp:DropDownList ID="lst_ShipComp" runat="server" Width="110px"></asp:DropDownList>
+                            </td>
+                            <td>
+                                <!-- 物流單號 -->
+                                <asp:TextBox ID="tb_ShipNo" runat="server" Width="110px" Text='<%#Eval("ShipNo") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
+                            </td>
+                            <td class="center aligned">
+                                <!-- 運費方式 -->
+                                <asp:DropDownList ID="lst_FreightWay" runat="server" Width="80px"></asp:DropDownList>
+                            </td>
+                            <td class="center aligned">
+                                <!-- 物流途徑 -->
 
-                    <!-- List Pagination Start -->
-                    <div class="ui mini bottom attached segment grey-bg lighten-4">
-                        <asp:Literal ID="lt_Pager" runat="server"></asp:Literal>
-                    </div>
-                    <!-- List Pagination End -->
-                </LayoutTemplate>
-                <ItemTemplate>
-                    <tr>
-                        <td>
-                            <p><%#Eval("CustName") %></p>
-                            <strong class="green-text text-darken-3"><%#Eval("Erp_SO_FID") %>-<%#Eval("Erp_SO_SID") %></strong>
-                        </td>
-                        <td><%#Eval("Erp_SO_Date") %></td>
-                        <td><%#Eval("ShipDate") %></td>
-                        <td class="right aligned red-text text-darken-1">
-                            <%#Eval("TotalPrice").ToString().ToMoneyString() %>
-                        </td>
-                        <td class="center aligned">
-                            <asp:Literal ID="lt_ShipWay" runat="server"></asp:Literal>
-                        </td>
-                        <td><%#Eval("ShipCompName") %></td>
-                        <td><%#Eval("ShipNo") %></td>
-                        <td><%#Eval("ShipWho") %></td>
-                        <td class="center aligned"><%#showNumber(Eval("ShipCnt")) %></td>
-                        <td class="center aligned"><%#fn_Menu.GetItem_ShipFrieghtWay(Eval("FreightWay").ToString()) %></td>
-                        <td class="center aligned"><%#showNumber(Eval("Freight")) %></td>
-                        <td><%#Eval("Remark") %></td>
-                        <td class="center aligned collapsing">
-                            <a class="ui small teal basic icon button" href="<%=FuncPath() %>/Edit/<%#Eval("Data_ID") %>?dt=<%=Req_DataType %>&erpNo=<%#"{0}{1}".FormatThis(Eval("Erp_SO_FID").ToString(),Eval("Erp_SO_SID").ToString()) %>">
-                                <i class="pencil icon"></i>
-                            </a>
-                        </td>
-                    </tr>
-                </ItemTemplate>
-            </asp:ListView>
+                                <asp:DropDownList ID="lst_ShipWay" runat="server" Width="80px"></asp:DropDownList>
+                            </td>
+                            <td class="center aligned">
+                                <!-- 件數 -->
+                                <asp:TextBox ID="tb_BoxCnt" runat="server" Width="40px" Text='<%#Eval("BoxCnt") %>' type="number" step="any" min="1"></asp:TextBox>
+                            </td>
+                            <td class="right aligned blue-text text-darken-3">
+                                <!-- 運費 -->
+                                <asp:TextBox ID="tb_Freight" runat="server" Width="40px" Text='<%#Eval("Freight") %>' type="number" step="any" min="0"></asp:TextBox>
+                            </td>
+                            <td>
+                                <asp:TextBox ID="tb_ShipWho" runat="server" Width="60px" Text='<%#Eval("ShipWho") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
+                            </td>
+                            <td>
+                                <asp:TextBox ID="tb_ShipTel" runat="server" Width="70px" Text='<%#Eval("ShipTel") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
+                            </td>
+                            <td>
+                                <asp:TextBox ID="tb_ShipAddr1" runat="server" Width="110px" Text='<%#Eval("ShipAddr1") %>' MaxLength="120" autocomplete="off" placeholder="地址1, 最多120字"></asp:TextBox><br />
+                                <asp:TextBox ID="tb_ShipAddr2" runat="server" Width="110px" Text='<%#Eval("ShipAddr2") %>' MaxLength="120" autocomplete="off" placeholder="地址2, 最多120字" Style="margin-top: 3px;"></asp:TextBox>
+                            </td>
+                            <td class="center aligned"><%#Eval("CfmWhoName") %></td>
+                            <td>
+                                <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" placeholder="最多 50 字"></asp:TextBox>
+
+                                <asp:HiddenField ID="hf_SO_FID" runat="server" Value='<%#Eval("Erp_SO_FID") %>' />
+                                <asp:HiddenField ID="hf_SO_SID" runat="server" Value='<%#Eval("Erp_SO_SID") %>' />
+                                <asp:HiddenField ID="hf_DataID" runat="server" Value='<%#Eval("Data_ID") %>' />
+                            </td>
+                        </tr>
+                    </ItemTemplate>
+                    <EmptyDataTemplate>
+                        <div class="ui placeholder segment">
+                            <div class="ui icon header">
+                                <i class="search icon"></i>
+                                目前條件查無資料
+                            </div>
+                        </div>
+                    </EmptyDataTemplate>
+                </asp:ListView>
+            </div>
+
+            <!-- List Pagination Start -->
+            <div class="ui mini bottom attached segment grey-bg lighten-4">
+                <asp:Literal ID="lt_Pager" runat="server"></asp:Literal>
+            </div>
+            <!-- List Pagination End -->
         </asp:PlaceHolder>
         <!-- List Content End -->
     </div>
@@ -233,16 +276,33 @@
                 }
             });
 
-            //[搜尋][查詢鈕] - 觸發查詢
+            //Click:Search
             $("#doSearch").click(function () {
+                //觸發查詢按鈕
                 $("#MainContent_btn_Search").trigger("click");
             });
 
+
+            //Click:Save
+            $("#doSave").click(function () {
+                //confirm
+                var r = confirm("是否要存檔??\n「確定」:資料存檔\n「取消」:繼續編輯\n資材確認打勾後,資料則鎖定不可修改.");
+                if (r == true) {
+
+                } else {
+                    return false;
+                }
+
+                //loading
+                $("#formData").addClass("loading");
+                $("#MainContent_btn_Save").trigger("click");
+            });
+
+
             //init dropdown list
-            $('select').dropdown();
+            $('select.topSearch').dropdown();
             //init checkbox
             $('.ui.checkbox').checkbox();
-
         });
     </script>
     <%-- 日期選擇器 Start --%>
@@ -282,5 +342,45 @@
         });
     </script>
     <%-- Search UI End --%>
+
+    <%-- DataTables Start --%>
+    <link href="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.20/datatables.min.css?v=1.1" rel="stylesheet" />
+    <script src="<%=fn_Param.CDNUrl %>plugin/dataTables-1.10.20/datatables.min.js?v=1.1"></script>
+    <script>
+        $(function () {
+            //使用DataTable
+            var table = $('#tableList').DataTable({
+                //fixedHeader: true,
+                searching: false,  //搜尋
+                ordering: false,   //排序
+                paging: false,     //分頁
+                info: false,      //頁數資訊
+                //pageLength: 10,   //顯示筆數預設值
+                language: {
+                    //自訂筆數顯示選單
+                    "lengthMenu": ''
+                },
+                //捲軸設定
+                "scrollY": '70vh',
+                "scrollCollapse": true,
+                "scrollX": true,
+                fixedColumns: {
+                    /* 要凍結的窗格不可放要編輯的欄位 */
+                    leftColumns: 3,
+                    heightMatch: 'semiauto'
+                }
+            });
+
+            //點擊時變更背景色
+            $('#tableList tbody').on('click', 'tr', function () {
+                var bgcolor = 'orange-bg lighten-4';
+                var targetBg = 'tr.orange-bg.lighten-4';
+
+                table.$(targetBg).removeClass(bgcolor); //移除其他列背景
+                $(this).addClass(bgcolor); //此列新增背景
+            });
+        });
+    </script>
+    <%-- DataTables End --%>
 </asp:Content>
 

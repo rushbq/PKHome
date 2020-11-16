@@ -42,14 +42,46 @@
                     <div class="sixteen wide required field">
                         <label>
                             追蹤碼</label>
-                        <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
+                        <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label">系統自動產生</asp:Label>
                     </div>
                 </div>
                 <div class="fields">
+                    <div class="sixteen wide field">
+                        <div class="ui two cards">
+                            <div class="card">
+                                <div class="content">
+                                    <div class="header">經銷商</div>
+                                    <div class="meta">
+                                        <span class="category"></span>
+                                    </div>
+                                    <div class="description">
+                                        <label>選擇檔案</label>
+                                        <asp:FileUpload ID="fu_File_B" runat="server" AllowMultiple="false" accept=".xlsx" />
+                                    </div>
+                                </div>
+                                <asp:LinkButton ID="lbtn_Job_B" runat="server" CssClass="ui green bottom attached button" OnClick="lbtn_Job_B_Click">開始匯入<i class="chevron right icon"></i></asp:LinkButton>
+                            </div>
+                            <div class="card">
+                                <div class="content">
+                                    <div class="header">電商</div>
+                                    <div class="meta">
+                                        <span class="category">(對應銷貨單備註)</span>
+                                    </div>
+                                    <div class="description">
+                                        <label>選擇檔案</label>
+                                        <asp:FileUpload ID="fu_File_A" runat="server" AllowMultiple="false" accept=".xlsx" />
+                                    </div>
+                                </div>
+                                <asp:LinkButton ID="lbtn_Job_A" runat="server" CssClass="ui blue bottom attached button" OnClick="lbtn_Job_A_Click">開始匯入<i class="chevron right icon"></i></asp:LinkButton>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="fields">
                     <div class="sixteen wide required field">
-                        <label>
-                            上傳檔案</label>
-                        <asp:FileUpload ID="fu_File" runat="server" AllowMultiple="false" accept=".xlsx" />
                     </div>
                 </div>
                 <div class="ui message">
@@ -60,7 +92,10 @@
                         <li>Excel不要留空白列。</li>
                         <li>若要變更格式，請先與資訊部討論。</li>
                         <li class="red-text">銷貨單號符合 & 平台物流單號為空白時,匯入才會寫入。</li>
-                        <li><a href="<%=fn_Param.RefUrl %>PKHome/ShipImport/CHNSample.xlsx">範本下載</a></li>
+                        <li>範本下載：
+                            <a href="<%=fn_Param.RefUrl %>PKHome/ShipImport/CHNSampleB.xlsx">經銷商</a>、
+                            <a href="<%=fn_Param.RefUrl %>PKHome/ShipImport/CHNSampleA.xlsx">電商</a>
+                        </li>
                     </ul>
                 </div>
 
@@ -69,10 +104,7 @@
                         <a href="<%=Page_SearchUrl %>" class="ui button"><i class="undo icon"></i>返回列表</a>
                     </div>
                     <div class="ten wide column right aligned">
-                        <asp:LinkButton ID="lbtn_Next" runat="server" CssClass="ui green button" OnClick="lbtn_Next_Click">下一步<i class="chevron right icon"></i></asp:LinkButton>
                     </div>
-
-                    <asp:HiddenField ID="hf_TraceID" runat="server" />
                 </div>
             </div>
             <!-- 基本資料 End -->

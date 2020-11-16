@@ -40,12 +40,18 @@
             <!-- 基本資料 Start -->
             <div class="ui small form attached green segment">
                 <div class="fields">
-                    <div class="eight wide field">
+                    <div class="five wide field">
                         <label>
                             追蹤碼</label>
                         <asp:Label ID="lb_TraceID" runat="server" CssClass="ui red basic large label"></asp:Label>
                     </div>
-                    <div class="eight wide field">
+                    <div class="five wide field">
+                        <label>
+                            匯入類型</label>
+                        <asp:Label ID="lb_TypeName" runat="server" CssClass="ui blue basic large label"></asp:Label>
+                        <asp:HiddenField ID="hf_Type" runat="server" />
+                    </div>
+                    <div class="six wide required field">
                         <label>選擇工作表</label>
                         <asp:DropDownList ID="ddl_Sheet" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddl_Sheet_SelectedIndexChanged">
                         </asp:DropDownList>
