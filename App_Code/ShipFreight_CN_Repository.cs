@@ -207,9 +207,10 @@ namespace ShipFreight_CN.Controllers
                                 ShipWayName = item.Field<string>("ShipWayName"),
                                 SendType = item.Field<Int32?>("SendType") ?? 0,
                                 SendTypeName = item.Field<string>("SendTypeName"),
-
                                 UserCheck1 = item.Field<string>("UserCheck1"),
+                                Check_Time1 = item.Field<DateTime?>("Check_Time1").ToString().ToDateString("yyyy/MM/dd HH:mm"),
                                 Remark = item.Field<string>("Remark"),
+                                EmptyCol = item.Field<string>("EmptyCol"),
                                 Create_Time = item.Field<DateTime?>("Create_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
                                 Update_Time = item.Field<DateTime?>("Update_Time").ToString().ToDateString("yyyy/MM/dd HH:mm"),
                                 Create_Name = item.Field<string>("Create_Name"),
@@ -244,35 +245,36 @@ namespace ShipFreight_CN.Controllers
         /// </summary>
         /// <param name="type">A=電商工具/B=電商玩具/C=經銷商工具/D=經銷商玩具</param>
         /// <returns></returns>
+        /// <remarks>
+        /// SQL上半段
+        /// </remarks>
         private string GetSQL_CTE(string type)
         {
             string param1 = "";
             switch (type.ToUpper())
             {
                 case "A":
-                    /* 指定條件:電商工具 */
+                    /* 指定條件:電商工具(164電商部) */
                     param1 = " AND (Base.TG001 IN ('2341','2342','2343','2345','23B2','23B3','23B6'))";
+                    param1 += @" AND (Base.TG005 IN ('164'))";
                     break;
 
                 case "B":
                     /* 指定條件:電商科學玩具 */
                     param1 = " AND (Base.TG001 IN ('2380','2381','2382','2383'))";
+                    param1 += @" AND (Base.TG005 IN ('164'))";
                     break;
 
                 case "C":
-                    /* 指定條件:經銷商工具 */
+                    /* 指定條件:經銷商工具(102業務部) */
                     param1 = " AND (Base.TG001 IN ('2341','2342','2343','2345','23B2','23B3','23B6'))";
-                    param1 += @" AND (Base.TG004 NOT IN (
-                      'C010010','C021068','C02022','C28016','C027025','024008','C029016','C316002','C020040','C021086'
-                      ,'C021085','C021055','C021063','C020041','C020042','C021038','C021064','C021101','C021100'))";
+                    param1 += @" AND (Base.TG005 IN ('102'))";
                     break;
 
                 case "D":
                     /* 指定條件:經銷商科學玩具 */
                     param1 = " AND (Base.TG001 IN ('2380','2381','2382','2383'))";
-                    param1 += @" AND (Base.TG004 NOT IN (
-                      '60000002','60000003','60000004','60000005','60000006','60000007','60000008','60000009','60000010'
-                      ,'60000011','60000012','60000013','60000014'))";
+                    param1 += @" AND (Base.TG005 IN ('102'))";
                     break;
             }
 
@@ -341,6 +343,9 @@ namespace ShipFreight_CN.Controllers
         /// <param name="search">search集合</param>
         /// <returns></returns>
         /// <see cref="GetShipData"/>
+        /// <remarks>
+        /// SQL下半段
+        /// </remarks>
         private StringBuilder GetSQL_ShipData(Dictionary<string, string> search)
         {
             StringBuilder sql = new StringBuilder();
@@ -359,7 +364,7 @@ namespace ShipFreight_CN.Controllers
               , ISNULL(ShipBase.ShipAddr1, TblERP.ShipAddr1) AS ShipAddr1
               , ISNULL(ShipBase.ShipAddr2, TblERP.ShipAddr2) AS ShipAddr2
               , ISNULL(ShipBase.ShipNo, TblERP.ShipNo) AS ShipNo
-              , ShipBase.ShipDate, ISNULL(ShipBase.BoxCnt, 1) BoxCnt, ISNULL(ShipBase.Freight, 0) Freight
+              , ShipBase.ShipDate, ISNULL(ShipBase.BoxCnt, 0) BoxCnt, ISNULL(ShipBase.Freight, 0) Freight
               , ShipBase.ShipComp, ShipBase.ShipWay, ShipBase.SendType
               , ISNULL(RefShipComp.Class_Name_zh_CN, '') AS ShipCompName
               , ISNULL(RefShipWay.Class_Name_zh_CN, '') AS ShipWayName
@@ -367,10 +372,11 @@ namespace ShipFreight_CN.Controllers
               , ShipBase.Remark
               , ShipBase.UserCheck1
               , RTRIM(Emp.MA002) AS CfmWhoName
+              , '' AS EmptyCol
               , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Create_Who)) AS Create_Name
               , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = ShipBase.Update_Who)) AS Update_Name
-              , ShipBase.Create_Time, ShipBase.Update_Time
-              , RANK() OVER (ORDER BY TblERP.SO_Date DESC, TblERP.SO_Fid, TblERP.SO_Sid) AS RowIdx
+              , ShipBase.Create_Time, ShipBase.Update_Time, ShipBase.Check_Time1
+              , RANK() OVER (ORDER BY TblERP.SO_Date DESC, TblERP.CustID, TblERP.SO_Fid, TblERP.SO_Sid) AS RowIdx
              FROM TblERP
               INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON TblERP.CustID = Cust.MA001
               INNER JOIN [DSCSYS].dbo.DSCMA Emp WITH(NOLOCK) ON TblERP.CfmWho = Emp.MA001
@@ -605,7 +611,7 @@ namespace ShipFreight_CN.Controllers
                         myErpID = val[35]; //銷貨單別-單號
                         myShipNo = val[4]; //物流單號
                         myShipDate = val[6].ToString().ToDateString("yyyy/MM/dd");
-                        myQty = Convert.ToInt32(val[20]);
+                        //myQty = Convert.ToInt32(val[20]);
                         myPrice = Convert.ToDouble(val[40]);
                     }
 
@@ -1011,6 +1017,8 @@ namespace ShipFreight_CN.Controllers
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.CommandTimeout = 180;   //單位:秒
+
                 cmd.Parameters.AddWithValue("DataID", baseData.Data_ID);
                 cmd.Parameters.AddWithValue("Sheet_Name", baseData.Sheet_Name);
                 cmd.Parameters.AddWithValue("Update_Who", baseData.Update_Who);
@@ -1224,7 +1232,6 @@ WHERE (Ref_ID = @RefID)
 UPDATE [PKExcel].dbo.Shipment_Data_CHN
 SET ShipDate = Ref.ShipDate
  , BoxCnt = Ref.BoxCnt, ShipNo = Ref.ShipNo, Freight = Ref.Freight
- , ShipWho = Ref.ShipWho, ShipTel = Ref.ShipTel, ShipAddr1 = Ref.ShipAddr1, ShipAddr2 = Ref.ShipAddr2
  , Update_Who = @Who, Update_Time = GETDATE()
 FROM [PKExcel].dbo.Shipment_Data_CHN_Temp Ref
 WHERE (Shipment_Data_CHN.SO_FID = Ref.SO_FID) AND (Shipment_Data_CHN.SO_SID = Ref.SO_SID)
@@ -1257,6 +1264,7 @@ WHERE (Data_ID = @RefID)
 
                 //----- SQL 執行 -----
                 cmd.CommandText = strSQL;
+                cmd.CommandTimeout = 180;   //單位:秒
                 cmd.Parameters.AddWithValue("RefID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("Who", instance.Update_Who);
 
@@ -1286,30 +1294,34 @@ WHERE (Data_ID = @RefID)
                     sql.AppendLine("  BEGIN");
                     sql.AppendLine("   UPDATE Shipment_Data_CHN");
                     sql.AppendLine("   SET ShipComp = @ShipComp_#idx#, ShipWay = @ShipWay_#idx#, SendType = @SendType_#idx#");
-                    sql.AppendLine("    , ShipDate = @ShipDate_#idx#, ShipNo = @ShipNo_#idx#");
+                    sql.AppendLine("    , ShipDate = @ShipDate_#idx#, ShipNo = @ShipNo_#idx#, ShipWho = @ShipWho_#idx#");
                     sql.AppendLine("    , Remark = @Remark_#idx#, UserCheck1 = @UserCheck1_#idx#");
                     sql.AppendLine("    , ShipTel = @ShipTel_#idx#, ShipAddr1 = @ShipAddr1_#idx#, ShipAddr2 = @ShipAddr2_#idx#");
                     sql.AppendLine("    , BoxCnt = @BoxCnt_#idx#, Freight = @Freight_#idx#");
-                    sql.AppendLine("    , Update_Who = @Who, Update_Time = GETDATE()");
+                    sql.AppendLine("    , Update_Who = @Who, Update_Time = GETDATE(), Check_Time1 = @Check_Time1");
                     sql.AppendLine("   WHERE (Data_ID = @Data_ID_#idx#)");
                     sql.AppendLine("  END");
                     sql.AppendLine(" ELSE");
                     sql.AppendLine("  BEGIN");
+
+                    sql.AppendLine("   IF (SELECT COUNT(*) FROM Shipment_Data_CHN WHERE (SO_FID = @SO_FID_#idx#) AND (SO_SID = @SO_SID_#idx#)) = 0");
+                    sql.AppendLine("   BEGIN");
                     sql.AppendLine("    INSERT INTO Shipment_Data_CHN (");
                     sql.AppendLine("        Data_ID, SO_FID, SO_SID, ShipDate");
                     sql.AppendLine("        , ShipComp, ShipWay, SendType");
-                    sql.AppendLine("        , ShipWho, ShipNo, Remark");
+                    sql.AppendLine("        , ShipWho, ShipNo, Remark, UserCheck1");
                     sql.AppendLine("        , ShipTel, ShipAddr1, ShipAddr2");
                     sql.AppendLine("        , BoxCnt, Freight");
-                    sql.AppendLine("        , Create_Who");
+                    sql.AppendLine("        , Create_Who, Check_Time1");
                     sql.AppendLine("    ) VALUES (");
                     sql.AppendLine("        @Data_ID_#idx#, @SO_FID_#idx#, @SO_SID_#idx#, @ShipDate_#idx#");
                     sql.AppendLine("        , @ShipComp_#idx#, @ShipWay_#idx#, @SendType_#idx#");
-                    sql.AppendLine("        , @ShipWho_#idx#, @ShipNo_#idx#, @Remark_#idx#");
+                    sql.AppendLine("        , @ShipWho_#idx#, @ShipNo_#idx#, @Remark_#idx#, @UserCheck1_#idx#");
                     sql.AppendLine("        , @ShipTel_#idx#, @ShipAddr1_#idx#, @ShipAddr2_#idx#");
                     sql.AppendLine("        , @BoxCnt_#idx#, @Freight_#idx#");
-                    sql.AppendLine("        , @Who");
+                    sql.AppendLine("        , @Who, @Check_Time1");
                     sql.AppendLine("    )");
+                    sql.AppendLine("   END");
                     sql.AppendLine("  END");
 
 
@@ -1326,13 +1338,13 @@ WHERE (Data_ID = @RefID)
                     cmd.Parameters.AddWithValue("ShipWho_" + row, item.ShipWho);
                     cmd.Parameters.AddWithValue("ShipNo_" + row, item.ShipNo);
                     cmd.Parameters.AddWithValue("ShipDate_" + row, string.IsNullOrWhiteSpace(item.ShipDate) ? DBNull.Value : (object)item.ShipDate);
-                    
+
                     cmd.Parameters.AddWithValue("ShipTel_" + row, item.ShipTel);
                     cmd.Parameters.AddWithValue("ShipAddr1_" + row, item.ShipAddr1);
                     cmd.Parameters.AddWithValue("ShipAddr2_" + row, item.ShipAddr2);
                     cmd.Parameters.AddWithValue("BoxCnt_" + row, item.BoxCnt);
                     cmd.Parameters.AddWithValue("Freight_" + row, item.Freight);
-                    
+
                     cmd.Parameters.AddWithValue("UserCheck1_" + row, item.UserCheck1);
                     cmd.Parameters.AddWithValue("Remark_" + row, item.Remark);
                 }
@@ -1340,6 +1352,7 @@ WHERE (Data_ID = @RefID)
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
                 cmd.Parameters.AddWithValue("Who", instance[0].Create_Who);
+                cmd.Parameters.AddWithValue("Check_Time1", string.IsNullOrWhiteSpace(instance[0].Check_Time1) ? DBNull.Value : (object)instance[0].Check_Time1.ToDateString("yyyy/MM/dd HH:mm:ss"));
 
                 //Execute
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);

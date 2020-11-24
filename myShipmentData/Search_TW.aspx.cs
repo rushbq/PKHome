@@ -56,10 +56,7 @@ public partial class myShipmentData_Search_TW : SecurityCheck
     }
 
 
-
-
     #region -- 資料顯示 --
-
     /// <summary>
     /// 取得資料
     /// </summary>
@@ -126,7 +123,6 @@ public partial class myShipmentData_Search_TW : SecurityCheck
             {
                 ph_EmptyData.Visible = true;
                 ph_Data.Visible = false;
-                ph_Save.Visible = false;
             }
             else
             {
@@ -154,12 +150,113 @@ public partial class myShipmentData_Search_TW : SecurityCheck
 
     protected void lvDataList_ItemCommand(object sender, ListViewCommandEventArgs e)
     {
-        //取得Key值
-        //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+        //----- 宣告:資料參數 -----
+        Menu3000Repository _data = new Menu3000Repository();
+        List<ShipData_Item> dataList = new List<ShipData_Item>();
 
+        try
+        {
+            if (e.Item.ItemType == ListViewItemType.DataItem)
+            {
+
+                #region ** 取得欄位資料 **
+
+                string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+                string _Ship_FID = ((HiddenField)e.Item.FindControl("hf_Ship_FID")).Value;
+                string _Ship_SID = ((HiddenField)e.Item.FindControl("hf_Ship_SID")).Value;
+                string _SO_FID = ((HiddenField)e.Item.FindControl("hf_SO_FID")).Value;
+                string _SO_SID = ((HiddenField)e.Item.FindControl("hf_SO_SID")).Value;
+                string _BoxCnt = ((TextBox)e.Item.FindControl("tb_BoxCnt")).Text;
+                string _Pallet = ((TextBox)e.Item.FindControl("tb_Pallet")).Text;
+                string _Weight = ((TextBox)e.Item.FindControl("tb_Weight")).Text;
+                string _Cuft = ((TextBox)e.Item.FindControl("tb_Cuft")).Text;
+                string _TradeTerms = ((TextBox)e.Item.FindControl("tb_TradeTerms")).Text;
+                string _Cost_Customs = ((TextBox)e.Item.FindControl("tb_Cost_Customs")).Text;
+                string _Cost_LocalCharge = ((TextBox)e.Item.FindControl("tb_Cost_LocalCharge")).Text;
+                string _Cost_Cert = ((TextBox)e.Item.FindControl("tb_Cost_Cert")).Text;
+                string _Cost_Freight = ((TextBox)e.Item.FindControl("tb_Cost_Freight")).Text;
+                string _Cost_Business = ((TextBox)e.Item.FindControl("tb_Cost_Business")).Text;
+                string _ShipID = ((DropDownList)e.Item.FindControl("ddl_Ship")).SelectedValue;
+                string _TrackingNo = ((TextBox)e.Item.FindControl("tb_TrackingNo")).Text;
+                string _Cost_Shipment = ((TextBox)e.Item.FindControl("tb_Cost_Shipment")).Text;
+                string _Cost_Fee = ((TextBox)e.Item.FindControl("tb_Cost_Fee")).Text;
+                string _FWD = ((TextBox)e.Item.FindControl("tb_FWD")).Text;
+                string _PlaceID = ((DropDownList)e.Item.FindControl("ddl_Place")).SelectedValue;
+                string _Cost_Trade = ((TextBox)e.Item.FindControl("tb_Cost_Trade")).Text;
+                string _Cost_Service = ((TextBox)e.Item.FindControl("tb_Cost_Service")).Text;
+                string _Cost_Use = ((TextBox)e.Item.FindControl("tb_Cost_Use")).Text;
+                string _CheckID = ((DropDownList)e.Item.FindControl("ddl_Check")).SelectedValue;
+                string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
+
+                #endregion
+
+                //Switch 
+                switch (e.CommandName.ToUpper())
+                {
+                    case "DOSAVE":
+                        //*** 存檔 ****
+                        var dataItem = new ShipData_Item
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            Ship_FID = _Ship_FID,
+                            Ship_SID = _Ship_SID,
+                            SO_FID = _SO_FID,
+                            SO_SID = _SO_SID,
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
+                            Pallet = _Pallet,
+                            Weight = string.IsNullOrWhiteSpace(_Weight) ? 0 : Convert.ToDouble(_Weight),
+                            Cuft = string.IsNullOrWhiteSpace(_Cuft) ? 0 : Convert.ToDouble(_Cuft),
+                            TradeTerms = _TradeTerms,
+                            Cost_Customs = string.IsNullOrWhiteSpace(_Cost_Customs) ? 0 : Convert.ToDouble(_Cost_Customs),
+                            Cost_LocalCharge = string.IsNullOrWhiteSpace(_Cost_LocalCharge) ? 0 : Convert.ToDouble(_Cost_LocalCharge),
+                            Cost_Cert = string.IsNullOrWhiteSpace(_Cost_Cert) ? 0 : Convert.ToDouble(_Cost_Cert),
+                            Cost_Freight = string.IsNullOrWhiteSpace(_Cost_Freight) ? 0 : Convert.ToDouble(_Cost_Freight),
+                            Cost_Business = string.IsNullOrWhiteSpace(_Cost_Business) ? 0 : Convert.ToDouble(_Cost_Business),
+                            ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
+                            Cost_Shipment = string.IsNullOrWhiteSpace(_Cost_Shipment) ? 0 : Convert.ToDouble(_Cost_Shipment),
+                            Cost_Fee = string.IsNullOrWhiteSpace(_Cost_Fee) ? 0 : Convert.ToDouble(_Cost_Fee),
+                            FWD = _FWD,
+                            PlaceID = string.IsNullOrWhiteSpace(_PlaceID) ? 0 : Convert.ToUInt16(_PlaceID),
+                            Cost_Trade = string.IsNullOrWhiteSpace(_Cost_Trade) ? 0 : Convert.ToDouble(_Cost_Trade),
+                            Cost_Service = string.IsNullOrWhiteSpace(_Cost_Service) ? 0 : Convert.ToDouble(_Cost_Service),
+                            Cost_Use = string.IsNullOrWhiteSpace(_Cost_Use) ? 0 : Convert.ToDouble(_Cost_Use),
+                            CheckID = string.IsNullOrWhiteSpace(_CheckID) ? 0 : Convert.ToUInt16(_CheckID),
+                            Remark = _Remark,
+                            TrackingNo = _TrackingNo,
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Check_ShipData(dataList, out ErrMsg))
+                        {
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(thisPage);
+
+                        break;
+
+                }
+            }
+
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
     }
 
-
+    
     protected void lvDataList_ItemDataBound(object sender, ListViewItemEventArgs e)
     {
         try
@@ -247,124 +344,6 @@ public partial class myShipmentData_Search_TW : SecurityCheck
     {
         //執行查詢
         Response.Redirect(filterUrl(), false);
-    }
-
-    /// <summary>
-    /// [按鈕] - Save
-    /// </summary>
-    protected void btn_Save_Click(object sender, EventArgs e)
-    {
-        //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
-
-        try
-        {
-            //取得Listview控制項
-            ListView _view = lvDataList;
-
-            //Check null
-            if (_view.Items.Count == 0)
-            {
-                CustomExtension.AlertMsg("無資料可設定,請確認ERP出貨通知單.", filterUrl());
-                return;
-            }
-
-            //宣告
-            List<ShipData_Item> dataList = new List<ShipData_Item>();
-
-            //取得各欄位資料
-            for (int row = 0; row < _view.Items.Count; row++)
-            {
-                #region ** 取得欄位資料 **
-
-                string _DataID = ((HiddenField)_view.Items[row].FindControl("hf_DataID")).Value;
-                string _Ship_FID = ((HiddenField)_view.Items[row].FindControl("hf_Ship_FID")).Value;
-                string _Ship_SID = ((HiddenField)_view.Items[row].FindControl("hf_Ship_SID")).Value;
-                string _SO_FID = ((HiddenField)_view.Items[row].FindControl("hf_SO_FID")).Value;
-                string _SO_SID = ((HiddenField)_view.Items[row].FindControl("hf_SO_SID")).Value;
-
-                string _BoxCnt = ((TextBox)_view.Items[row].FindControl("tb_BoxCnt")).Text;
-                string _Pallet = ((TextBox)_view.Items[row].FindControl("tb_Pallet")).Text;
-                string _Weight = ((TextBox)_view.Items[row].FindControl("tb_Weight")).Text;
-                string _Cuft = ((TextBox)_view.Items[row].FindControl("tb_Cuft")).Text;
-                string _TradeTerms = ((TextBox)_view.Items[row].FindControl("tb_TradeTerms")).Text;
-                string _Cost_Customs = ((TextBox)_view.Items[row].FindControl("tb_Cost_Customs")).Text;
-                string _Cost_LocalCharge = ((TextBox)_view.Items[row].FindControl("tb_Cost_LocalCharge")).Text;
-                string _Cost_Cert = ((TextBox)_view.Items[row].FindControl("tb_Cost_Cert")).Text;
-                string _Cost_Freight = ((TextBox)_view.Items[row].FindControl("tb_Cost_Freight")).Text;
-                string _Cost_Business = ((TextBox)_view.Items[row].FindControl("tb_Cost_Business")).Text;
-                string _ShipID = ((DropDownList)_view.Items[row].FindControl("ddl_Ship")).SelectedValue;
-                string _TrackingNo = ((TextBox)_view.Items[row].FindControl("tb_TrackingNo")).Text;
-                string _Cost_Shipment = ((TextBox)_view.Items[row].FindControl("tb_Cost_Shipment")).Text;
-                string _Cost_Fee = ((TextBox)_view.Items[row].FindControl("tb_Cost_Fee")).Text;
-                string _FWD = ((TextBox)_view.Items[row].FindControl("tb_FWD")).Text;
-                string _PlaceID = ((DropDownList)_view.Items[row].FindControl("ddl_Place")).SelectedValue;
-                string _Cost_Trade = ((TextBox)_view.Items[row].FindControl("tb_Cost_Trade")).Text;
-                string _Cost_Service = ((TextBox)_view.Items[row].FindControl("tb_Cost_Service")).Text;
-                string _Cost_Use = ((TextBox)_view.Items[row].FindControl("tb_Cost_Use")).Text;
-                string _CheckID = ((DropDownList)_view.Items[row].FindControl("ddl_Check")).SelectedValue;
-                string _Remark = ((TextBox)_view.Items[row].FindControl("tb_Remark")).Text;
-
-                #endregion
-
-                //將值填入容器
-                var dataItem = new ShipData_Item
-                {
-                    Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
-                    Ship_FID = _Ship_FID,
-                    Ship_SID = _Ship_SID,
-                    SO_FID = _SO_FID,
-                    SO_SID = _SO_SID,
-                    BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
-                    Pallet = _Pallet,
-                    Weight = string.IsNullOrWhiteSpace(_Weight) ? 0 : Convert.ToDouble(_Weight),
-                    Cuft = string.IsNullOrWhiteSpace(_Cuft) ? 0 : Convert.ToDouble(_Cuft),
-                    TradeTerms = _TradeTerms,
-                    Cost_Customs = string.IsNullOrWhiteSpace(_Cost_Customs) ? 0 : Convert.ToDouble(_Cost_Customs),
-                    Cost_LocalCharge = string.IsNullOrWhiteSpace(_Cost_LocalCharge) ? 0 : Convert.ToDouble(_Cost_LocalCharge),
-                    Cost_Cert = string.IsNullOrWhiteSpace(_Cost_Cert) ? 0 : Convert.ToDouble(_Cost_Cert),
-                    Cost_Freight = string.IsNullOrWhiteSpace(_Cost_Freight) ? 0 : Convert.ToDouble(_Cost_Freight),
-                    Cost_Business = string.IsNullOrWhiteSpace(_Cost_Business) ? 0 : Convert.ToDouble(_Cost_Business),
-                    ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
-                    Cost_Shipment = string.IsNullOrWhiteSpace(_Cost_Shipment) ? 0 : Convert.ToDouble(_Cost_Shipment),
-                    Cost_Fee = string.IsNullOrWhiteSpace(_Cost_Fee) ? 0 : Convert.ToDouble(_Cost_Fee),
-                    FWD = _FWD,
-                    PlaceID = string.IsNullOrWhiteSpace(_PlaceID) ? 0 : Convert.ToUInt16(_PlaceID),
-                    Cost_Trade = string.IsNullOrWhiteSpace(_Cost_Trade) ? 0 : Convert.ToDouble(_Cost_Trade),
-                    Cost_Service = string.IsNullOrWhiteSpace(_Cost_Service) ? 0 : Convert.ToDouble(_Cost_Service),
-                    Cost_Use = string.IsNullOrWhiteSpace(_Cost_Use) ? 0 : Convert.ToDouble(_Cost_Use),
-                    CheckID = string.IsNullOrWhiteSpace(_CheckID) ? 0 : Convert.ToUInt16(_CheckID),
-                    Remark = _Remark,
-                    TrackingNo = _TrackingNo,
-                    Create_Who = fn_Param.CurrentUser
-                };
-
-                //add to list
-                dataList.Add(dataItem);
-            }
-
-            //Call function
-            if (!_data.Check_ShipData(dataList, out ErrMsg))
-            {
-                CustomExtension.AlertMsg("資料儲存失敗...", "");
-                return;
-            }
-
-            //redirect page
-            Response.Redirect(thisPage);
-
-
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-        finally
-        {
-            _data = null;
-        }
-
     }
 
 

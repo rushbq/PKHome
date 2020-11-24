@@ -55,8 +55,6 @@ public partial class myShipmentData_Search_SH : SecurityCheck
     }
 
 
-
-
     #region -- 資料顯示 --
 
     /// <summary>
@@ -125,7 +123,6 @@ public partial class myShipmentData_Search_SH : SecurityCheck
             {
                 ph_EmptyData.Visible = true;
                 ph_Data.Visible = false;
-                ph_Save.Visible = false;
             }
             else
             {
@@ -153,9 +150,108 @@ public partial class myShipmentData_Search_SH : SecurityCheck
 
     protected void lvDataList_ItemCommand(object sender, ListViewCommandEventArgs e)
     {
-        //取得Key值
-        //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+        //----- 宣告:資料參數 -----
+        Menu3000Repository _data = new Menu3000Repository();
+        List<ShipDataSH_Item> dataList = new List<ShipDataSH_Item>();
 
+        try
+        {
+            if (e.Item.ItemType == ListViewItemType.DataItem)
+            {
+
+                #region ** 取得欄位資料 **
+
+                string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+                string _Ship_FID = ((HiddenField)e.Item.FindControl("hf_Ship_FID")).Value;
+                string _Ship_SID = ((HiddenField)e.Item.FindControl("hf_Ship_SID")).Value;
+                string _SO_FID = ((HiddenField)e.Item.FindControl("hf_SO_FID")).Value;
+                string _SO_SID = ((HiddenField)e.Item.FindControl("hf_SO_SID")).Value;
+                string _BoxCnt = ((TextBox)e.Item.FindControl("tb_BoxCnt")).Text;
+                string _Pallet = ((TextBox)e.Item.FindControl("tb_Pallet")).Text;
+                string _Weight = ((TextBox)e.Item.FindControl("tb_Weight")).Text;
+                string _Cuft = ((TextBox)e.Item.FindControl("tb_Cuft")).Text;
+                string _TradeTerms = ((TextBox)e.Item.FindControl("tb_TradeTerms")).Text;
+                string _Price1 = ((TextBox)e.Item.FindControl("tb_Price1")).Text;
+                string _Price2 = ((TextBox)e.Item.FindControl("tb_Price2")).Text;
+                string _Price3 = ((TextBox)e.Item.FindControl("tb_Price3")).Text;
+                string _Price4 = ((TextBox)e.Item.FindControl("tb_Price4")).Text;
+                string _Price5 = ((TextBox)e.Item.FindControl("tb_Price5")).Text;
+                string _Price6 = ((TextBox)e.Item.FindControl("tb_Price6")).Text;
+                string _Price7 = ((TextBox)e.Item.FindControl("tb_Price7")).Text;
+                string _Cost_ExportTax = ((TextBox)e.Item.FindControl("tb_Cost_ExportTax")).Text;
+                string _Cost_Freight = ((TextBox)e.Item.FindControl("tb_Cost_Freight")).Text;
+                string _Cost_Shipment = ((TextBox)e.Item.FindControl("tb_Cost_Shipment")).Text;
+                string _Cost_Fee = ((TextBox)e.Item.FindControl("tb_Cost_Fee")).Text;
+                string _FWD = ((TextBox)e.Item.FindControl("tb_FWD")).Text;
+                string _ShipID = ((DropDownList)e.Item.FindControl("ddl_Ship")).SelectedValue;
+                string _CheckID = ((DropDownList)e.Item.FindControl("ddl_Check")).SelectedValue;
+                string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
+
+                #endregion
+
+                //Switch 
+                switch (e.CommandName.ToUpper())
+                {
+                    case "DOSAVE":
+                        //*** 存檔 ****
+                        var dataItem = new ShipDataSH_Item
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            Ship_FID = _Ship_FID,
+                            Ship_SID = _Ship_SID,
+                            SO_FID = _SO_FID,
+                            SO_SID = _SO_SID,
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
+                            Pallet = _Pallet,
+                            Weight = string.IsNullOrWhiteSpace(_Weight) ? 0 : Convert.ToDouble(_Weight),
+                            Cuft = string.IsNullOrWhiteSpace(_Cuft) ? 0 : Convert.ToDouble(_Cuft),
+                            TradeTerms = _TradeTerms,
+                            Price1 = string.IsNullOrWhiteSpace(_Price1) ? 0 : Convert.ToDouble(_Price1),
+                            Price2 = string.IsNullOrWhiteSpace(_Price2) ? 0 : Convert.ToDouble(_Price2),
+                            Price3 = string.IsNullOrWhiteSpace(_Price3) ? 0 : Convert.ToDouble(_Price3),
+                            Price4 = string.IsNullOrWhiteSpace(_Price4) ? 0 : Convert.ToDouble(_Price4),
+                            Price5 = string.IsNullOrWhiteSpace(_Price5) ? 0 : Convert.ToDouble(_Price5),
+                            Price6 = string.IsNullOrWhiteSpace(_Price6) ? 0 : Convert.ToDouble(_Price6),
+                            Price7 = string.IsNullOrWhiteSpace(_Price7) ? 0 : Convert.ToDouble(_Price7),
+                            Cost_ExportTax = string.IsNullOrWhiteSpace(_Cost_ExportTax) ? 0 : Convert.ToDouble(_Cost_ExportTax),
+                            Cost_Freight = string.IsNullOrWhiteSpace(_Cost_Freight) ? 0 : Convert.ToDouble(_Cost_Freight),
+                            Cost_Shipment = string.IsNullOrWhiteSpace(_Cost_Shipment) ? 0 : Convert.ToDouble(_Cost_Shipment),
+                            Cost_Fee = string.IsNullOrWhiteSpace(_Cost_Fee) ? 0 : Convert.ToDouble(_Cost_Fee),
+                            FWD = _FWD,
+                            ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
+                            CheckID = string.IsNullOrWhiteSpace(_CheckID) ? 0 : Convert.ToUInt16(_CheckID),
+                            Remark = _Remark,
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Check_ShipData_SH(dataList, out ErrMsg))
+                        {
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(thisPage);
+
+                        break;
+
+                }
+            }
+
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
     }
 
 
@@ -228,122 +324,7 @@ public partial class myShipmentData_Search_SH : SecurityCheck
         //執行查詢
         Response.Redirect(filterUrl(), false);
     }
-
-    /// <summary>
-    /// [按鈕] - Save
-    /// </summary>
-    protected void btn_Save_Click(object sender, EventArgs e)
-    {
-        //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
-
-        try
-        {
-            //取得Listview控制項
-            ListView _view = lvDataList;
-
-            //Check null
-            if (_view.Items.Count == 0)
-            {
-                CustomExtension.AlertMsg("無資料可設定,請確認ERP出貨通知單.", filterUrl());
-                return;
-            }
-
-            //宣告
-            List<ShipDataSH_Item> dataList = new List<ShipDataSH_Item>();
-
-            //取得各欄位資料
-            for (int row = 0; row < _view.Items.Count; row++)
-            {
-                #region ** 取得欄位資料 **
-
-                string _DataID = ((HiddenField)_view.Items[row].FindControl("hf_DataID")).Value;
-                string _Ship_FID = ((HiddenField)_view.Items[row].FindControl("hf_Ship_FID")).Value;
-                string _Ship_SID = ((HiddenField)_view.Items[row].FindControl("hf_Ship_SID")).Value;
-                string _SO_FID = ((HiddenField)_view.Items[row].FindControl("hf_SO_FID")).Value;
-                string _SO_SID = ((HiddenField)_view.Items[row].FindControl("hf_SO_SID")).Value;
-
-                string _BoxCnt = ((TextBox)_view.Items[row].FindControl("tb_BoxCnt")).Text;
-                string _Pallet = ((TextBox)_view.Items[row].FindControl("tb_Pallet")).Text;
-                string _Weight = ((TextBox)_view.Items[row].FindControl("tb_Weight")).Text;
-                string _Cuft = ((TextBox)_view.Items[row].FindControl("tb_Cuft")).Text;
-                string _TradeTerms = ((TextBox)_view.Items[row].FindControl("tb_TradeTerms")).Text;
-                string _Price1 = ((TextBox)_view.Items[row].FindControl("tb_Price1")).Text;
-                string _Price2 = ((TextBox)_view.Items[row].FindControl("tb_Price2")).Text;
-                string _Price3 = ((TextBox)_view.Items[row].FindControl("tb_Price3")).Text;
-                string _Price4 = ((TextBox)_view.Items[row].FindControl("tb_Price4")).Text;
-                string _Price5 = ((TextBox)_view.Items[row].FindControl("tb_Price5")).Text;
-                string _Price6 = ((TextBox)_view.Items[row].FindControl("tb_Price6")).Text;
-                string _Price7 = ((TextBox)_view.Items[row].FindControl("tb_Price7")).Text;
-                string _Cost_ExportTax = ((TextBox)_view.Items[row].FindControl("tb_Cost_ExportTax")).Text;
-                string _Cost_Freight = ((TextBox)_view.Items[row].FindControl("tb_Cost_Freight")).Text;
-                string _Cost_Shipment = ((TextBox)_view.Items[row].FindControl("tb_Cost_Shipment")).Text;
-                string _Cost_Fee = ((TextBox)_view.Items[row].FindControl("tb_Cost_Fee")).Text;
-                string _FWD = ((TextBox)_view.Items[row].FindControl("tb_FWD")).Text;
-                string _ShipID = ((DropDownList)_view.Items[row].FindControl("ddl_Ship")).SelectedValue;
-                string _CheckID = ((DropDownList)_view.Items[row].FindControl("ddl_Check")).SelectedValue;
-                string _Remark = ((TextBox)_view.Items[row].FindControl("tb_Remark")).Text;
-
-                #endregion
-
-                //將值填入容器
-                var dataItem = new ShipDataSH_Item
-                {
-                    Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
-                    Ship_FID = _Ship_FID,
-                    Ship_SID = _Ship_SID,
-                    SO_FID = _SO_FID,
-                    SO_SID = _SO_SID,
-                    BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
-                    Pallet = _Pallet,
-                    Weight = string.IsNullOrWhiteSpace(_Weight) ? 0 : Convert.ToDouble(_Weight),
-                    Cuft = string.IsNullOrWhiteSpace(_Cuft) ? 0 : Convert.ToDouble(_Cuft),
-                    TradeTerms = _TradeTerms,
-                    Price1 = string.IsNullOrWhiteSpace(_Price1) ? 0 : Convert.ToDouble(_Price1),
-                    Price2 = string.IsNullOrWhiteSpace(_Price2) ? 0 : Convert.ToDouble(_Price2),
-                    Price3 = string.IsNullOrWhiteSpace(_Price3) ? 0 : Convert.ToDouble(_Price3),
-                    Price4 = string.IsNullOrWhiteSpace(_Price4) ? 0 : Convert.ToDouble(_Price4),
-                    Price5 = string.IsNullOrWhiteSpace(_Price5) ? 0 : Convert.ToDouble(_Price5),
-                    Price6 = string.IsNullOrWhiteSpace(_Price6) ? 0 : Convert.ToDouble(_Price6),
-                    Price7 = string.IsNullOrWhiteSpace(_Price7) ? 0 : Convert.ToDouble(_Price7),
-                    Cost_ExportTax = string.IsNullOrWhiteSpace(_Cost_ExportTax) ? 0 : Convert.ToDouble(_Cost_ExportTax),
-                    Cost_Freight = string.IsNullOrWhiteSpace(_Cost_Freight) ? 0 : Convert.ToDouble(_Cost_Freight),
-                    Cost_Shipment = string.IsNullOrWhiteSpace(_Cost_Shipment) ? 0 : Convert.ToDouble(_Cost_Shipment),
-                    Cost_Fee = string.IsNullOrWhiteSpace(_Cost_Fee) ? 0 : Convert.ToDouble(_Cost_Fee),
-                    FWD = _FWD,
-                    ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
-                    CheckID = string.IsNullOrWhiteSpace(_CheckID) ? 0 : Convert.ToUInt16(_CheckID),
-                    Remark = _Remark,
-                    Create_Who = fn_Param.CurrentUser
-                };
-
-                //add to list
-                dataList.Add(dataItem);
-            }
-
-            //Call function
-            if (!_data.Check_ShipData_SH(dataList, out ErrMsg))
-            {
-                CustomExtension.AlertMsg("資料儲存失敗...", "");
-                return;
-            }
-
-            //redirect page
-            Response.Redirect(thisPage);
-
-
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-        finally
-        {
-            _data = null;
-        }
-
-    }
+    
 
 
     /// <summary>

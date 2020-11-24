@@ -119,7 +119,6 @@ public partial class myShipmentData_Search_TW : SecurityCheck
             {
                 ph_EmptyData.Visible = true;
                 ph_Data.Visible = false;
-                ph_Save.Visible = false;
             }
             else
             {
@@ -147,9 +146,82 @@ public partial class myShipmentData_Search_TW : SecurityCheck
 
     protected void lvDataList_ItemCommand(object sender, ListViewCommandEventArgs e)
     {
-        //取得Key值
-        //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+        //----- 宣告:資料參數 -----
+        Menu3000Repository _data = new Menu3000Repository();
+        List<CustomsData_Item> dataList = new List<CustomsData_Item>();
 
+        try
+        {
+            if (e.Item.ItemType == ListViewItemType.DataItem)
+            {
+
+                #region ** 取得欄位資料 **
+
+                string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+                string _Redeem_FID = ((HiddenField)e.Item.FindControl("hf_Redeem_FID")).Value;
+                string _Redeem_SID = ((HiddenField)e.Item.FindControl("hf_Redeem_SID")).Value;
+                string _Cost_Customs = ((TextBox)e.Item.FindControl("tb_Cost_Customs")).Text;
+                string _Cost_LocalCharge = ((TextBox)e.Item.FindControl("tb_Cost_LocalCharge")).Text;
+                string _Cost_LocalBusiness = ((TextBox)e.Item.FindControl("tb_Cost_LocalBusiness")).Text;
+                string _Cost_Imports = ((TextBox)e.Item.FindControl("tb_Cost_Imports")).Text;
+                string _Cost_Trade = ((TextBox)e.Item.FindControl("tb_Cost_Trade")).Text;
+                string _Cost_ImportsBusiness = ((TextBox)e.Item.FindControl("tb_Cost_ImportsBusiness")).Text;
+                string _Cost_Service = ((TextBox)e.Item.FindControl("tb_Cost_Service")).Text;
+                string _Cost_Truck = ((TextBox)e.Item.FindControl("tb_Cost_Truck")).Text;
+                string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
+
+                #endregion
+
+                //Switch 
+                switch (e.CommandName.ToUpper())
+                {
+                    case "DOSAVE":
+                        //*** 存檔 ****
+                        var dataItem = new CustomsData_Item
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            Redeem_FID = _Redeem_FID,
+                            Redeem_SID = _Redeem_SID,
+                            Cost_Customs = string.IsNullOrWhiteSpace(_Cost_Customs) ? 0 : Convert.ToDouble(_Cost_Customs),
+                            Cost_LocalCharge = string.IsNullOrWhiteSpace(_Cost_LocalCharge) ? 0 : Convert.ToDouble(_Cost_LocalCharge),
+                            Cost_LocalBusiness = string.IsNullOrWhiteSpace(_Cost_LocalBusiness) ? 0 : Convert.ToDouble(_Cost_LocalBusiness),
+                            Cost_Imports = string.IsNullOrWhiteSpace(_Cost_Imports) ? 0 : Convert.ToDouble(_Cost_Imports),
+                            Cost_Trade = string.IsNullOrWhiteSpace(_Cost_Trade) ? 0 : Convert.ToDouble(_Cost_Trade),
+                            Cost_ImportsBusiness = string.IsNullOrWhiteSpace(_Cost_ImportsBusiness) ? 0 : Convert.ToDouble(_Cost_ImportsBusiness),
+                            Cost_Service = string.IsNullOrWhiteSpace(_Cost_Service) ? 0 : Convert.ToDouble(_Cost_Service),
+                            Cost_Truck = string.IsNullOrWhiteSpace(_Cost_Truck) ? 0 : Convert.ToDouble(_Cost_Truck),
+                            Remark = _Remark,
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Check_CustomsData(dataList, out ErrMsg))
+                        {
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(thisPage);
+
+                        break;
+
+                }
+            }
+
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
     }
 
 
@@ -184,96 +256,7 @@ public partial class myShipmentData_Search_TW : SecurityCheck
         Response.Redirect(filterUrl(), false);
     }
 
-    /// <summary>
-    /// [按鈕] - Save
-    /// </summary>
-    protected void btn_Save_Click(object sender, EventArgs e)
-    {
-        //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
-
-        try
-        {
-            //取得Listview控制項
-            ListView _view = lvDataList;
-
-            //Check null
-            if (_view.Items.Count == 0)
-            {
-                CustomExtension.AlertMsg("無資料可設定,請確認ERP進口報單贖單.", filterUrl());
-                return;
-            }
-
-            //宣告
-            List<CustomsData_Item> dataList = new List<CustomsData_Item>();
-
-            //取得各欄位資料
-            for (int row = 0; row < _view.Items.Count; row++)
-            {
-                #region ** 取得欄位資料 **
-
-                string _DataID = ((HiddenField)_view.Items[row].FindControl("hf_DataID")).Value;
-                string _Redeem_FID = ((HiddenField)_view.Items[row].FindControl("hf_Redeem_FID")).Value;
-                string _Redeem_SID = ((HiddenField)_view.Items[row].FindControl("hf_Redeem_SID")).Value;
-                string _Cost_Customs = ((TextBox)_view.Items[row].FindControl("tb_Cost_Customs")).Text;
-                string _Cost_LocalCharge = ((TextBox)_view.Items[row].FindControl("tb_Cost_LocalCharge")).Text;
-                string _Cost_LocalBusiness = ((TextBox)_view.Items[row].FindControl("tb_Cost_LocalBusiness")).Text;
-                string _Cost_Imports = ((TextBox)_view.Items[row].FindControl("tb_Cost_Imports")).Text;
-                string _Cost_Trade = ((TextBox)_view.Items[row].FindControl("tb_Cost_Trade")).Text;
-                string _Cost_ImportsBusiness = ((TextBox)_view.Items[row].FindControl("tb_Cost_ImportsBusiness")).Text;
-                string _Cost_Service = ((TextBox)_view.Items[row].FindControl("tb_Cost_Service")).Text;
-                string _Cost_Truck = ((TextBox)_view.Items[row].FindControl("tb_Cost_Truck")).Text;
-                string _Remark = ((TextBox)_view.Items[row].FindControl("tb_Remark")).Text;
-
-                #endregion
-
-                //將值填入容器
-                var dataItem = new CustomsData_Item
-                {
-                    Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
-                    Redeem_FID = _Redeem_FID,
-                    Redeem_SID = _Redeem_SID,
-                    Cost_Customs = string.IsNullOrWhiteSpace(_Cost_Customs) ? 0 : Convert.ToDouble(_Cost_Customs),
-                    Cost_LocalCharge = string.IsNullOrWhiteSpace(_Cost_LocalCharge) ? 0 : Convert.ToDouble(_Cost_LocalCharge),
-                    Cost_LocalBusiness = string.IsNullOrWhiteSpace(_Cost_LocalBusiness) ? 0 : Convert.ToDouble(_Cost_LocalBusiness),
-                    Cost_Imports = string.IsNullOrWhiteSpace(_Cost_Imports) ? 0 : Convert.ToDouble(_Cost_Imports),
-                    Cost_Trade = string.IsNullOrWhiteSpace(_Cost_Trade) ? 0 : Convert.ToDouble(_Cost_Trade),
-                    Cost_ImportsBusiness = string.IsNullOrWhiteSpace(_Cost_ImportsBusiness) ? 0 : Convert.ToDouble(_Cost_ImportsBusiness),
-                    Cost_Service = string.IsNullOrWhiteSpace(_Cost_Service) ? 0 : Convert.ToDouble(_Cost_Service),
-                    Cost_Truck = string.IsNullOrWhiteSpace(_Cost_Truck) ? 0 : Convert.ToDouble(_Cost_Truck),
-                    Remark = _Remark,
-                    Create_Who = fn_Param.CurrentUser
-                };
-
-                //add to list
-                dataList.Add(dataItem);
-            }
-
-            //Call function
-            if (!_data.Check_CustomsData(dataList, out ErrMsg))
-            {
-                CustomExtension.AlertMsg("資料儲存失敗...", "");
-                return;
-            }
-
-            //redirect page
-            Response.Redirect(thisPage);
-
-
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-        finally
-        {
-            _data = null;
-        }
-
-    }
-
-
+  
     /// <summary>
     /// [按鈕] - 匯出
     /// </summary>

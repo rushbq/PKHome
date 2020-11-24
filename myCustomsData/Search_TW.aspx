@@ -53,15 +53,9 @@
                     </div>
                 </div>
             </div>
-            <div class="ui three column grid">
+            <div class="ui two column grid">
                 <div class="column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
-                </div>
-                <div class="column center aligned">
-                    <asp:PlaceHolder ID="ph_Save" runat="server">
-                        <button type="button" id="doSave" class="ui green small button"><i class="save icon"></i>儲存此頁資料</button>
-                        <asp:Button ID="btn_Save" runat="server" Text="Button" OnClick="btn_Save_Click" Style="display: none" />
-                    </asp:PlaceHolder>
                 </div>
                 <div class="column right aligned">
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
@@ -96,6 +90,7 @@
                                     <th class="grey-bg lighten-3 center aligned">贖單日期</th>
                                     <th class="grey-bg lighten-3">廠商</th>
                                     <th class="grey-bg lighten-3">贖單單號</th>
+                                    <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3">件數</th>
                                     <th class="grey-bg lighten-3">報關金額<br />
                                         (NTD)</th>
@@ -159,6 +154,9 @@
                             </td>
                             <td class="blue-text text-darken-1">
                                 <strong><%#Eval("Redeem_FID") %>-<%#Eval("Redeem_SID") %></strong>
+                            </td>
+                            <td class="center aligned">
+                                <asp:LinkButton ID="lbtn_Save" runat="server" CssClass="ui small teal basic icon button" ValidationGroup="List" CommandName="doSave"><i class="save icon"></i></asp:LinkButton>
                             </td>
                             <td>
                                 <!-- 件數 -->
@@ -318,7 +316,7 @@
                 "scrollCollapse": true,
                 "scrollX": true,
                 fixedColumns: {
-                    leftColumns: 4,
+                    leftColumns: 5,
                     heightMatch: 'semiauto' /* [高度計算] semiauto:計算一次後暫存; auto:每次計算,較慢但準確度高; none:不計算 */
                 }
             });
@@ -331,14 +329,6 @@
                 table.$(targetBg).removeClass(bgcolor); //移除其他列背景
                 $(this).addClass(bgcolor); //此列新增背景
             });
-            ////點擊時移除背景色
-            //$('#tableList tbody').on('dblclick', 'tr', function () {
-            //    var bgcolor = 'orange-bg lighten-2';
-
-            //    if ($(this).hasClass(bgcolor)) {
-            //        $(this).removeClass(bgcolor);
-            //    }
-            //});
         });
     </script>
     <%-- DataTables End --%>

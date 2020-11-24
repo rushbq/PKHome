@@ -68,15 +68,9 @@
                     </div>
                 </div>
             </div>
-            <div class="ui three column grid">
+            <div class="ui two column grid">
                 <div class="column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
-                </div>
-                <div class="column center aligned">
-                    <asp:PlaceHolder ID="ph_Save" runat="server">
-                        <button type="button" id="doSave" class="ui green small button"><i class="save icon"></i>儲存此頁資料</button>
-                        <asp:Button ID="btn_Save" runat="server" Text="Button" OnClick="btn_Save_Click" Style="display: none" />
-                    </asp:PlaceHolder>
                 </div>
                 <div class="column right aligned">
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
@@ -109,6 +103,7 @@
                                 <tr>
                                     <th class="grey-bg lighten-3 center aligned">日期</th>
                                     <th class="grey-bg lighten-3">客戶</th>
+                                    <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3 center aligned">客戶別</th>
                                     <th class="grey-bg lighten-3 center aligned">商品類別</th>
                                     <th class="grey-bg lighten-3">OPCS單號</th>
@@ -147,6 +142,9 @@
                             <td class="center aligned red-text text-darken-1">
                                 <strong><%#Eval("CustName") %></strong><br />
                                 <span class="grey-text text-darken-2">(<%#Eval("CustID") %>)</span>
+                            </td>
+                            <td class="center aligned">
+                                <asp:LinkButton ID="lbtn_Save" runat="server" CssClass="ui small teal basic icon button" ValidationGroup="List" CommandName="doSave"><i class="save icon"></i></asp:LinkButton>
                             </td>
                             <td>
                                 <asp:DropDownList ID="ddl_CustType" runat="server" Width="80px"></asp:DropDownList>
@@ -353,7 +351,7 @@
                 "scrollX": true,
                 fixedColumns: {
                     /* 要凍結的窗格不可放要編輯的欄位 */
-                    leftColumns: 2,
+                    leftColumns: 3,
                     heightMatch: 'semiauto'
                 }
             });

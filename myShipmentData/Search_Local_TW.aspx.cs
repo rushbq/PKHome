@@ -135,7 +135,6 @@ public partial class myShipmentData_Search_Local_TW : SecurityCheck
             {
                 ph_EmptyData.Visible = true;
                 ph_Data.Visible = false;
-                ph_Save.Visible = false;
             }
             else
             {
@@ -163,9 +162,82 @@ public partial class myShipmentData_Search_Local_TW : SecurityCheck
 
     protected void lvDataList_ItemCommand(object sender, ListViewCommandEventArgs e)
     {
-        //取得Key值
-        //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+        //----- 宣告:資料參數 -----
+        Menu3000Repository _data = new Menu3000Repository();
+        List<ShipData_LocalItem> dataList = new List<ShipData_LocalItem>();
 
+        try
+        {
+            if (e.Item.ItemType == ListViewItemType.DataItem)
+            {
+
+                #region ** 取得欄位資料 **
+
+                string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+                string _SO_FID = ((HiddenField)e.Item.FindControl("hf_SO_FID")).Value;
+                string _SO_SID = ((HiddenField)e.Item.FindControl("hf_SO_SID")).Value;
+                string _CustType = ((DropDownList)e.Item.FindControl("ddl_CustType")).SelectedValue;
+                string _ProdType = ((DropDownList)e.Item.FindControl("ddl_ProdType")).SelectedValue;
+                string _BoxCnt = ((TextBox)e.Item.FindControl("tb_BoxCnt")).Text;
+                string _ShipID = ((DropDownList)e.Item.FindControl("ddl_Ship")).SelectedValue;
+                string _ShipNo = ((TextBox)e.Item.FindControl("tb_ShipNo")).Text;
+                string _Freight = ((TextBox)e.Item.FindControl("tb_Freight")).Text;
+                string _SendType = ((DropDownList)e.Item.FindControl("ddl_SendType")).SelectedValue;
+                string _SendNo = ((TextBox)e.Item.FindControl("tb_SendNo")).Text;
+                string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
+
+                #endregion
+
+                //Switch 
+                switch (e.CommandName.ToUpper())
+                {
+                    case "DOSAVE":
+                        //*** 存檔 ****
+                        var dataItem = new ShipData_LocalItem
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            SO_FID = _SO_FID,
+                            SO_SID = _SO_SID,
+                            CustType = string.IsNullOrWhiteSpace(_CustType) ? 0 : Convert.ToUInt16(_CustType),
+                            ProdType = string.IsNullOrWhiteSpace(_ProdType) ? 0 : Convert.ToUInt16(_ProdType),
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
+                            ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
+                            ShipNo = _ShipNo,
+                            Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToUInt16(_Freight),
+                            SendType = string.IsNullOrWhiteSpace(_SendType) ? 0 : Convert.ToUInt16(_SendType),
+                            SendNo = _SendNo,
+                            Remark = _Remark,
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Check_ShipLocalData(dataList, out ErrMsg))
+                        {
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(thisPage);
+
+                        break;
+
+                }
+            }
+
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
     }
 
 
@@ -279,95 +351,6 @@ public partial class myShipmentData_Search_Local_TW : SecurityCheck
     }
 
     /// <summary>
-    /// [按鈕] - Save
-    /// </summary>
-    protected void btn_Save_Click(object sender, EventArgs e)
-    {
-        //----- 宣告:資料參數 -----
-        Menu3000Repository _data = new Menu3000Repository();
-
-        try
-        {
-            //取得Listview控制項
-            ListView _view = lvDataList;
-
-            //Check null
-            if (_view.Items.Count == 0)
-            {
-                CustomExtension.AlertMsg("無資料可設定,請確認ERP銷貨單.", filterUrl());
-                return;
-            }
-
-            //宣告
-            List<ShipData_LocalItem> dataList = new List<ShipData_LocalItem>();
-
-            //取得各欄位資料
-            for (int row = 0; row < _view.Items.Count; row++)
-            {
-                #region ** 取得欄位資料 **
-
-                string _DataID = ((HiddenField)_view.Items[row].FindControl("hf_DataID")).Value;
-                string _SO_FID = ((HiddenField)_view.Items[row].FindControl("hf_SO_FID")).Value;
-                string _SO_SID = ((HiddenField)_view.Items[row].FindControl("hf_SO_SID")).Value;
-                string _CustType = ((DropDownList)_view.Items[row].FindControl("ddl_CustType")).SelectedValue;
-                string _ProdType = ((DropDownList)_view.Items[row].FindControl("ddl_ProdType")).SelectedValue;
-                string _BoxCnt = ((TextBox)_view.Items[row].FindControl("tb_BoxCnt")).Text;
-                string _ShipID = ((DropDownList)_view.Items[row].FindControl("ddl_Ship")).SelectedValue;
-                string _ShipNo = ((TextBox)_view.Items[row].FindControl("tb_ShipNo")).Text;
-                string _Freight = ((TextBox)_view.Items[row].FindControl("tb_Freight")).Text;
-                string _SendType = ((DropDownList)_view.Items[row].FindControl("ddl_SendType")).SelectedValue;
-                string _SendNo = ((TextBox)_view.Items[row].FindControl("tb_SendNo")).Text;
-                string _Remark = ((TextBox)_view.Items[row].FindControl("tb_Remark")).Text;
-
-                #endregion
-
-                //將值填入容器
-                var dataItem = new ShipData_LocalItem
-                {
-                    Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
-                    SO_FID = _SO_FID,
-                    SO_SID = _SO_SID,
-                    CustType = string.IsNullOrWhiteSpace(_CustType) ? 0 : Convert.ToUInt16(_CustType),
-                    ProdType = string.IsNullOrWhiteSpace(_ProdType) ? 0 : Convert.ToUInt16(_ProdType),
-                    BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToUInt16(_BoxCnt),
-                    ShipID = string.IsNullOrWhiteSpace(_ShipID) ? 0 : Convert.ToUInt16(_ShipID),
-                    ShipNo = _ShipNo,
-                    Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToUInt16(_Freight),
-                    SendType = string.IsNullOrWhiteSpace(_SendType) ? 0 : Convert.ToUInt16(_SendType),
-                    SendNo = _SendNo,
-                    Remark = _Remark,
-                    Create_Who = fn_Param.CurrentUser
-                };
-
-                //add to list
-                dataList.Add(dataItem);
-            }
-
-            //Call function
-            if (!_data.Check_ShipLocalData(dataList, out ErrMsg))
-            {
-                CustomExtension.AlertMsg("資料儲存失敗...", "");
-                return;
-            }
-
-            //redirect page
-            Response.Redirect(thisPage);
-
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
-        finally
-        {
-            _data = null;
-        }
-
-    }
-
-
-    /// <summary>
     /// [按鈕] - 匯出
     /// </summary>
     protected void lbtn_Excel_Click(object sender, EventArgs e)
@@ -418,7 +401,7 @@ public partial class myShipmentData_Search_Local_TW : SecurityCheck
                 發票寄出單號 = fld.SendNo,
                 備註 = fld.Remark
             });
-  
+
         //Check null
         if (query.Count() == 0)
         {

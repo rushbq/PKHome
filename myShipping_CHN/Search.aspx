@@ -28,7 +28,8 @@
             </div>
             <div class="right menu">
                 <a href="<%=fn_Param.WebUrl %><%:Req_Lang %>/<%:Req_RootID %>/ShipImportCHN?dt=<%=Req_DataType %>" class="item"><i class="sync alternate icon"></i><span class="mobile hidden">物流單轉入</span></a>
-                <asp:LinkButton ID="lbtn_Excel" runat="server" OnClick="lbtn_Excel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></asp:LinkButton>
+                <asp:LinkButton ID="lbtn_ShipExcel" runat="server" OnClick="lbtn_ShipExcel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">德邦匯出</span></asp:LinkButton>
+                <asp:LinkButton ID="lbtn_Excel" runat="server" OnClick="lbtn_Excel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">一般匯出</span></asp:LinkButton>
 
             </div>
         </div>
@@ -42,7 +43,7 @@
             <div class="ui small form">
                 <div class="fields">
                     <div class="five wide field">
-                        <label>單據日期</label>
+                        <label>銷貨日期</label>
                         <div class="two fields">
                             <div class="field">
                                 <div class="ui left icon input datepicker">
@@ -141,7 +142,7 @@
                         <table id="tableList" class="ui celled compact small table nowrap">
                             <thead>
                                 <tr>
-                                    <th class="grey-bg lighten-3">單據日期</th>
+                                    <th class="grey-bg lighten-3">銷貨日期</th>
                                     <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3">資材確認</th>
                                     <th class="grey-bg lighten-3">發貨日期</th>
@@ -161,6 +162,7 @@
                                     <th class="grey-bg lighten-3">收件地址</th>
                                     <th class="grey-bg lighten-3">銷售員</th>
                                     <th class="grey-bg lighten-3">備註</th>
+                                    <th class="grey-bg lighten-3">確認時間</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -181,16 +183,19 @@
                                     <asp:LinkButton ID="lbtn_Close" runat="server" CssClass="ui small orange basic icon button" ValidationGroup="List" CommandName="doClose" OnClientClick="return confirm('確定重置?')"><i class="trash alternate icon"></i></asp:LinkButton>
                                 </asp:PlaceHolder>
                             </td>
-                            <td class="center aligned" title="確認=Y+物流單號+運費, 鎖定">
-                                <!-- 資材確認,確認後不可修改 -->
-                                <asp:CheckBox ID="lst_Check" runat="server" />
+                            <td class="center aligned">
+                                <!-- 資材確認 -->
+                                <asp:LinkButton ID="lbtn_CheckY" runat="server" CssClass="ui grey basic icon button" ValidationGroup="List" CommandName="DoCheck_YES" ToolTip="設為確認"><i class="truck icon"></i></asp:LinkButton>
+                                <asp:LinkButton ID="lbtn_CheckN" runat="server" CssClass="ui circular green basic icon button" ValidationGroup="List" CommandName="DoCheck_NO" ToolTip="取消確認"><i class="check icon"></i></asp:LinkButton>
                             </td>
                             <td class="center aligned">
+                                <!-- 發貨日 -->
                                 <asp:TextBox ID="tb_ShipDate" runat="server" Width="120px" Text='<%#Eval("ShipDate").ToString().ToDateString("yyyy-MM-dd") %>' MaxLength="10" autocomplete="off" type="date" placeholder="ex:2019/05/01"></asp:TextBox>
                             </td>
                             <td>
-                                <h5 class="green-text text-darken-3" style="margin-bottom:0px;"><%#Eval("CustName") %></h5>
-                                <h5 class="blue-text text-darken-3" style="margin-top:0.5rem"><%#Eval("Erp_SO_FullID") %></h5>
+                                <!-- 客戶/單號 -->
+                                <h5 class="green-text text-darken-3" style="margin-bottom: 0px;"><%#Eval("CustName") %></h5>
+                                <h5 class="blue-text text-darken-3" style="margin-top: 0.5rem;"><%#Eval("Erp_SO_FullID") %></h5>
                             </td>
                             <td class="right aligned red-text text-darken-1">
                                 <strong><%#Eval("TotalPrice").ToString().ToMoneyString() %></strong>
@@ -210,18 +215,18 @@
                             </td>
                             <td class="center aligned">
                                 <!-- 物流途徑 -->
-
                                 <asp:DropDownList ID="lst_ShipWay" runat="server" Width="80px"></asp:DropDownList>
                             </td>
                             <td class="center aligned">
                                 <!-- 件數 -->
-                                <asp:TextBox ID="tb_BoxCnt" runat="server" Width="40px" Text='<%#Eval("BoxCnt") %>' type="number" step="any" min="1"></asp:TextBox>
+                                <asp:TextBox ID="tb_BoxCnt" runat="server" Width="40px" Text='<%#Eval("BoxCnt") %>' type="number" step="any" min="0"></asp:TextBox>
                             </td>
                             <td class="right aligned blue-text text-darken-3">
                                 <!-- 運費 -->
                                 <asp:TextBox ID="tb_Freight" runat="server" Width="40px" Text='<%#Eval("Freight") %>' type="number" step="any" min="0"></asp:TextBox>
                             </td>
                             <td>
+                                <!-- 收件人 -->
                                 <asp:TextBox ID="tb_ShipWho" runat="server" Width="60px" Text='<%#Eval("ShipWho") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
                             </td>
                             <td>
@@ -231,13 +236,23 @@
                                 <asp:TextBox ID="tb_ShipAddr1" runat="server" Width="110px" Text='<%#Eval("ShipAddr1") %>' MaxLength="120" autocomplete="off" placeholder="地址1, 最多120字"></asp:TextBox><br />
                                 <asp:TextBox ID="tb_ShipAddr2" runat="server" Width="110px" Text='<%#Eval("ShipAddr2") %>' MaxLength="120" autocomplete="off" placeholder="地址2, 最多120字" Style="margin-top: 3px;"></asp:TextBox>
                             </td>
-                            <td class="center aligned"><%#Eval("CfmWhoName") %></td>
+                            <td class="center aligned">
+                                <!-- 確認者 -->
+                                <%#Eval("CfmWhoName") %>
+                            </td>
                             <td>
                                 <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" placeholder="最多 50 字"></asp:TextBox>
 
                                 <asp:HiddenField ID="hf_SO_FID" runat="server" Value='<%#Eval("Erp_SO_FID") %>' />
                                 <asp:HiddenField ID="hf_SO_SID" runat="server" Value='<%#Eval("Erp_SO_SID") %>' />
                                 <asp:HiddenField ID="hf_DataID" runat="server" Value='<%#Eval("Data_ID") %>' />
+                                <asp:HiddenField ID="hf_UserCheck1" runat="server" Value='<%#Eval("UserCheck1") %>' />
+                                <asp:HiddenField ID="hf_OldCheckTime1" runat="server" Value='<%#Eval("Check_Time1").ToString().ToDateString("yyyy/MM/dd HH:mm") %>' />
+                            </td>
+                            <td>
+                                <span class="ui basic fluid label">
+                                    <%#Eval("Check_Time1").ToString().ToDateString("yyyy/MM/dd HH:mm") %>
+                                </span>
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -301,8 +316,7 @@
 
             //init dropdown list
             $('select.topSearch').dropdown();
-            //init checkbox
-            $('.ui.checkbox').checkbox();
+
         });
     </script>
     <%-- 日期選擇器 Start --%>

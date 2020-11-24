@@ -255,6 +255,8 @@ public partial class myShipping_Search : SecurityCheck
             PageParam.Add("ShipComp=" + Server.UrlEncode(Req_ShipComp));
         }
 
+        //尾碼
+        PageParam.Add("t={0}#formData".FormatThis(Cryptograph.GetCurrentTime()));
 
         #endregion
 
@@ -309,9 +311,35 @@ public partial class myShipping_Search : SecurityCheck
         {
             if (e.Item.ItemType == ListViewItemType.DataItem)
             {
+                List<ShipFreightItem> dataList = new List<ShipFreightItem>();
+
                 //取得Key值
                 string dataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
 
+                #region ** 取得欄位資料 **
+
+                string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+                string _SO_FID = ((HiddenField)e.Item.FindControl("hf_SO_FID")).Value;
+                string _SO_SID = ((HiddenField)e.Item.FindControl("hf_SO_SID")).Value;
+                string _ShipComp = ((DropDownList)e.Item.FindControl("lst_ShipComp")).SelectedValue;
+                string _FreightWay = ((DropDownList)e.Item.FindControl("lst_FreightWay")).SelectedValue;
+                string _ShipWay = ((DropDownList)e.Item.FindControl("lst_ShipWay")).SelectedValue;
+                string _ShipDate = ((TextBox)e.Item.FindControl("tb_ShipDate")).Text;
+                string _ShipNo = ((TextBox)e.Item.FindControl("tb_ShipNo")).Text;
+                string _ShipWho = ((TextBox)e.Item.FindControl("tb_ShipWho")).Text;
+                string _ShipTel = ((TextBox)e.Item.FindControl("tb_ShipTel")).Text;
+                string _ShipAddr1 = ((TextBox)e.Item.FindControl("tb_ShipAddr1")).Text;
+                string _ShipAddr2 = ((TextBox)e.Item.FindControl("tb_ShipAddr2")).Text;
+                string _BoxCnt = ((TextBox)e.Item.FindControl("tb_BoxCnt")).Text;
+                string _Freight = ((TextBox)e.Item.FindControl("tb_Freight")).Text;
+                string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
+                string _UserCheck1 = ((HiddenField)e.Item.FindControl("hf_UserCheck1")).Value;
+                string _OldCheckTime1 = ((HiddenField)e.Item.FindControl("hf_OldCheckTime1")).Value;
+
+                #endregion
+                var dataItem = new ShipFreightItem();
+
+                //Switch 
                 switch (e.CommandName.ToUpper())
                 {
                     case "DOCLOSE":
@@ -331,32 +359,9 @@ public partial class myShipping_Search : SecurityCheck
                         break;
 
                     case "DOSAVE":
-                        #region ** 取得欄位資料 **
-
-                        string _DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
-                        string _SO_FID = ((HiddenField)e.Item.FindControl("hf_SO_FID")).Value;
-                        string _SO_SID = ((HiddenField)e.Item.FindControl("hf_SO_SID")).Value;
-
-                        bool _check1 = ((CheckBox)e.Item.FindControl("lst_Check")).Checked;
-                        string _userCheck1 = _check1 ? "Y" : "N";
-                        string _ShipComp = ((DropDownList)e.Item.FindControl("lst_ShipComp")).SelectedValue;
-                        string _FreightWay = ((DropDownList)e.Item.FindControl("lst_FreightWay")).SelectedValue;
-                        string _ShipWay = ((DropDownList)e.Item.FindControl("lst_ShipWay")).SelectedValue;
-                        string _ShipDate = ((TextBox)e.Item.FindControl("tb_ShipDate")).Text;
-                        string _ShipNo = ((TextBox)e.Item.FindControl("tb_ShipNo")).Text;
-                        string _ShipWho = ((TextBox)e.Item.FindControl("tb_ShipWho")).Text;
-                        string _ShipTel = ((TextBox)e.Item.FindControl("tb_ShipTel")).Text;
-                        string _ShipAddr1 = ((TextBox)e.Item.FindControl("tb_ShipAddr1")).Text;
-                        string _ShipAddr2 = ((TextBox)e.Item.FindControl("tb_ShipAddr2")).Text;
-                        string _BoxCnt = ((TextBox)e.Item.FindControl("tb_BoxCnt")).Text;
-                        string _Freight = ((TextBox)e.Item.FindControl("tb_Freight")).Text;
-                        string _Remark = ((TextBox)e.Item.FindControl("tb_Remark")).Text;
-
-                        #endregion
-
-                        List<ShipFreightItem> dataList = new List<ShipFreightItem>();
+                        //*** 存檔 ****
                         //將值填入容器
-                        var dataItem = new ShipFreightItem
+                        dataItem = new ShipFreightItem
                         {
                             Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
                             Erp_SO_FID = _SO_FID,
@@ -366,20 +371,20 @@ public partial class myShipping_Search : SecurityCheck
                             ShipTel = _ShipTel,
                             ShipAddr1 = _ShipAddr1,
                             ShipAddr2 = _ShipAddr2,
-                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 1 : Convert.ToInt16(_BoxCnt),
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
                             Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
                             ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
                             ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
                             ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
                             SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
                             Remark = _Remark,
-                            UserCheck1 = _userCheck1,
+                            UserCheck1 = _UserCheck1,
+                            Check_Time1 = string.IsNullOrWhiteSpace(_OldCheckTime1) ? "" : _OldCheckTime1,
                             Create_Who = fn_Param.CurrentUser
                         };
 
                         //add to list
                         dataList.Add(dataItem);
-
 
                         //Call function
                         if (!_data.Update_ShipData(dataList, out ErrMsg))
@@ -392,8 +397,91 @@ public partial class myShipping_Search : SecurityCheck
                         //redirect page
                         Response.Redirect(filterUrl(Req_PageIdx) + "#formData");
 
+                        break;
+
+
+
+                    case "DOCHECK_YES":
+                        //*** 設為確認 ****
+                        dataItem = new ShipFreightItem
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            Erp_SO_FID = _SO_FID,
+                            Erp_SO_SID = _SO_SID,
+                            ShipNo = _ShipNo,
+                            ShipWho = _ShipWho,
+                            ShipTel = _ShipTel,
+                            ShipAddr1 = _ShipAddr1,
+                            ShipAddr2 = _ShipAddr2,
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
+                            Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
+                            ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
+                            ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
+                            ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
+                            SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
+                            Remark = _Remark,
+                            UserCheck1 = "Y",
+                            Check_Time1 = DateTime.Now.ToString().ToDateString("yyyy/MM/dd HH:mm:ss"),
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Update_ShipData(dataList, out ErrMsg))
+                        {
+                            //Response.Write(ErrMsg);
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(filterUrl(Req_PageIdx) + "#formData");
 
                         break;
+
+
+                    case "DOCHECK_NO":
+                        //*** 移除確認 ****
+                        dataItem = new ShipFreightItem
+                        {
+                            Data_ID = string.IsNullOrWhiteSpace(_DataID) ? new Guid(CustomExtension.GetGuid()) : new Guid(_DataID),
+                            Erp_SO_FID = _SO_FID,
+                            Erp_SO_SID = _SO_SID,
+                            ShipNo = _ShipNo,
+                            ShipWho = _ShipWho,
+                            ShipTel = _ShipTel,
+                            ShipAddr1 = _ShipAddr1,
+                            ShipAddr2 = _ShipAddr2,
+                            BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
+                            Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
+                            ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
+                            ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
+                            ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
+                            SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
+                            Remark = _Remark,
+                            UserCheck1 = "N",
+                            Check_Time1 = "",
+                            Create_Who = fn_Param.CurrentUser
+                        };
+
+                        //add to list
+                        dataList.Add(dataItem);
+
+                        //Call function
+                        if (!_data.Update_ShipData(dataList, out ErrMsg))
+                        {
+                            //Response.Write(ErrMsg);
+                            CustomExtension.AlertMsg("資料儲存失敗...", "");
+                            return;
+                        }
+
+                        //redirect page
+                        Response.Redirect(filterUrl(Req_PageIdx) + "#formData");
+
+                        break;
+
                 }
             }
 
@@ -417,28 +505,45 @@ public partial class myShipping_Search : SecurityCheck
             {
                 ListViewDataItem dataItem = (ListViewDataItem)e.Item;
 
+                //ID
+                string _DataID = DataBinder.Eval(dataItem.DataItem, "Data_ID") == null ? "" : DataBinder.Eval(dataItem.DataItem, "Data_ID").ToString();
+
                 //取得共用控制項
                 PlaceHolder ph_Save = (PlaceHolder)e.Item.FindControl("ph_Save");
                 PlaceHolder ph_Del = (PlaceHolder)e.Item.FindControl("ph_Del");
                 ph_Del.Visible = false;
 
+
+                //各欄位控制項
+                DropDownList lst_ShipComp = (DropDownList)e.Item.FindControl("lst_ShipComp");
+                DropDownList lst_FreightWay = (DropDownList)e.Item.FindControl("lst_FreightWay");
+                DropDownList lst_ShipWay = (DropDownList)e.Item.FindControl("lst_ShipWay");
+                TextBox tb_ShipDate = (TextBox)e.Item.FindControl("tb_ShipDate");
+                TextBox tb_ShipNo = (TextBox)e.Item.FindControl("tb_ShipNo");
+                TextBox tb_ShipWho = (TextBox)e.Item.FindControl("tb_ShipWho");
+                TextBox tb_ShipTel = (TextBox)e.Item.FindControl("tb_ShipTel");
+                TextBox tb_ShipAddr1 = (TextBox)e.Item.FindControl("tb_ShipAddr1");
+                TextBox tb_ShipAddr2 = (TextBox)e.Item.FindControl("tb_ShipAddr2");
+                TextBox tb_BoxCnt = (TextBox)e.Item.FindControl("tb_BoxCnt");
+                TextBox tb_Freight = (TextBox)e.Item.FindControl("tb_Freight");
+                LinkButton lbtn_CheckY = (LinkButton)e.Item.FindControl("lbtn_CheckY"); //設為y, 目前為n
+                LinkButton lbtn_CheckN = (LinkButton)e.Item.FindControl("lbtn_CheckN"); //設為n, 目前為y
+
+
                 #region >> 下拉選單處理 <<
 
                 //-- 貨運公司 --
                 Int32 _ShipComp = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "ShipComp")); //取得設定值
-                DropDownList lst_ShipComp = (DropDownList)e.Item.FindControl("lst_ShipComp");
                 SetClassMenu(lst_ShipComp, _compItem, _ShipComp == 0 ? "1" : _ShipComp.ToString(), "請選擇");
 
 
                 //-- 運費方式 --
                 Int32 _SendType = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "SendType")); //取得設定值
-                DropDownList lst_FreightWay = (DropDownList)e.Item.FindControl("lst_FreightWay");
                 SetClassMenu(lst_FreightWay, _freightItem, _SendType == 0 ? "10" : _SendType.ToString(), "請選擇");
 
 
                 //-- 物流途徑 --
                 Int32 _ShipWayD = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "ShipWay")); //取得設定值
-                DropDownList lst_ShipWay = (DropDownList)e.Item.FindControl("lst_ShipWay");
                 SetClassMenu(lst_ShipWay, _shipItem, _ShipWayD == 0 ? "8" : _ShipWayD.ToString(), "請選擇");
 
                 #endregion
@@ -446,24 +551,33 @@ public partial class myShipping_Search : SecurityCheck
 
                 #region >> 判斷資材確認 <<
 
-                //資材確認核取方塊
-                CheckBox lst_Check = (CheckBox)e.Item.FindControl("lst_Check");
-                lst_Check.Visible = false;
                 bool showCheck = false;
+                lbtn_CheckN.Visible = false;
 
                 //檢查是否有資料
                 var _usrChk1Data = DataBinder.Eval(dataItem.DataItem, "UserCheck1");
                 if (_usrChk1Data != null)
                 {
                     showCheck = true;
-                    lst_Check.Visible = true;
                 }
 
                 if (showCheck)
                 {
-                    //資材確認(Y/N)
+                    //資材確認設定(Y/N)
                     string _Chk = DataBinder.Eval(dataItem.DataItem, "UserCheck1").ToString();
-                    lst_Check.Checked = _Chk.Equals("Y");
+                    lbtn_CheckY.Visible = !_Chk.Equals("Y");
+                    lbtn_CheckN.Visible = _Chk.Equals("Y");
+
+                }
+
+                /* 暫不鎖定 2020-11-19 */
+                /*
+                if (showCheck)
+                {
+                    //資材確認設定(Y/N)
+                    string _Chk = DataBinder.Eval(dataItem.DataItem, "UserCheck1").ToString();
+                    bool _isLock = _Chk.Equals("Y");
+                    lst_Check.Checked = _isLock; //ischeckd
 
                     //物流單號
                     string _ShipNo = DataBinder.Eval(dataItem.DataItem, "ShipNo").ToString();
@@ -481,17 +595,28 @@ public partial class myShipping_Search : SecurityCheck
                     {
                         ph_Save.Visible = true;
                     }
-                }
 
+                    //欄位是否鎖定 
+                    lst_ShipComp.Enabled = _isLock;
+                    lst_FreightWay.Enabled = _isLock;
+                    lst_ShipWay.Enabled = _isLock;
+                    tb_ShipDate.Enabled = _isLock;
+                    tb_ShipNo.Enabled = _isLock;
+                    tb_ShipWho.Enabled = _isLock;
+                    tb_ShipTel.Enabled = _isLock;
+                    tb_ShipAddr1.Enabled = _isLock;
+                    tb_ShipAddr2.Enabled = _isLock;
+                    tb_BoxCnt.Enabled = _isLock;
+                    tb_Freight.Enabled = _isLock;
+                }
+                */
                 #endregion
 
 
                 #region >> 管理者判斷 <<
-                
-                if (isAdmin)
-                {                   
-                    string _DataID = DataBinder.Eval(dataItem.DataItem, "Data_ID") == null ? "" : DataBinder.Eval(dataItem.DataItem, "Data_ID").ToString();
 
+                if (isAdmin)
+                {
                     //刪除鈕
                     ph_Del.Visible = !string.IsNullOrWhiteSpace(_DataID);
                     //儲存鈕
@@ -544,7 +669,7 @@ public partial class myShipping_Search : SecurityCheck
         //執行查詢
         Response.Redirect(filterUrl(0), false);
     }
-    
+
 
     /// <summary>
     /// [按鈕] - 匯出
@@ -634,7 +759,7 @@ public partial class myShipping_Search : SecurityCheck
         #region ** 填入指定欄位 **
 
         Dictionary<string, string> _col = new Dictionary<string, string>();
-        _col.Add("Erp_SO_Date", "單據日期");
+        _col.Add("Erp_SO_Date", "銷貨日期");
         _col.Add("UserCheck1", "資材確認");
         _col.Add("ShipDate", "發貨日期");
         _col.Add("CustName", "客戶");
@@ -653,6 +778,7 @@ public partial class myShipping_Search : SecurityCheck
         _col.Add("ShipAddr2", "收件地址2");
         _col.Add("CfmWhoName", "銷售員");
         _col.Add("Remark", "備註");
+        _col.Add("Check_Time1", "確認時間");
 
 
         //將指定的欄位,轉成陣列
@@ -685,6 +811,174 @@ public partial class myShipping_Search : SecurityCheck
 
     }
 
+
+    protected void lbtn_ShipExcel_Click(object sender, EventArgs e)
+    {
+        //----- 宣告:資料參數 -----
+        ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
+        Dictionary<string, string> search = new Dictionary<string, string>();
+        Dictionary<string, string> sort = new Dictionary<string, string>();
+        DataTable DT = new DataTable();
+
+        //----- 原始資料:條件篩選 -----
+        #region >> 條件篩選 <<
+
+        //[取得/檢查參數] - Date (需轉為ERP格式)
+        if (!string.IsNullOrWhiteSpace(Req_sDate))
+        {
+            search.Add("sDate", Req_sDate.ToDateString("yyyyMMdd"));
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate))
+        {
+            search.Add("eDate", Req_eDate.ToDateString("yyyyMMdd"));
+        }
+
+        //[取得/檢查參數] - ShipDate
+        if (!string.IsNullOrWhiteSpace(Req_sDate_Ship))
+        {
+            search.Add("ShipsDate", Req_sDate_Ship);
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate_Ship))
+        {
+            search.Add("ShipeDate", Req_eDate_Ship);
+        }
+
+        //[取得/檢查參數] - Keyword
+        if (!string.IsNullOrWhiteSpace(Req_Keyword))
+        {
+            search.Add("Keyword", Req_Keyword);
+        }
+
+        //[取得/檢查參數] - Cust
+        if (!string.IsNullOrWhiteSpace(Req_Cust))
+        {
+            search.Add("Cust", Req_Cust);
+        }
+
+        //[取得/檢查參數] - Way
+        if (!string.IsNullOrWhiteSpace(Req_Way))
+        {
+            if (!Req_Way.Equals("ALL"))
+            {
+                search.Add("Way", Req_Way);
+            }
+        }
+
+        //[取得/檢查參數] - FW
+        if (!string.IsNullOrWhiteSpace(Req_FreightWay))
+        {
+            if (!Req_FreightWay.Equals("ALL"))
+            {
+                search.Add("fw", Req_FreightWay);
+            }
+        }
+
+        //[取得/檢查參數] - ShipComp
+        if (!string.IsNullOrWhiteSpace(Req_ShipComp))
+        {
+            search.Add("ShipComp", Req_ShipComp);
+        }
+
+        #endregion
+
+        //----- 方法:取得資料 -----
+        var _rowData = _data.GetAllShipData(search, Req_DataType.ToUpper(), out ErrMsg)
+             .Select(fld => new
+             {
+                 A = fld.EmptyCol,
+                 B = fld.Erp_SO_FullID,
+                 C = fld.EmptyCol,
+                 D = fld.ShipWho,
+                 E = fld.Check_Time1,
+                 F = fld.ShipTel,
+                 G = fld.ShipAddr1,
+                 H = "大件快递3.60",
+                 I = "月结",
+                 J = "送货上楼",
+                 K = fld.EmptyCol,
+                 L = fld.EmptyCol,
+                 M = fld.EmptyCol,
+                 N = fld.EmptyCol,
+                 O = "五金工具",
+                 P = fld.EmptyCol,
+                 Q = fld.EmptyCol,
+                 R = fld.EmptyCol,
+                 S = fld.EmptyCol,
+                 T = fld.EmptyCol,
+                 U = fld.EmptyCol,
+                 V = fld.EmptyCol,
+                 W = fld.EmptyCol,
+                 X = fld.EmptyCol,
+                 Y = fld.EmptyCol,
+                 Z = fld.EmptyCol,
+                 AA = fld.EmptyCol,
+                 AB = fld.EmptyCol,
+                 AC = fld.EmptyCol,
+                 AD = fld.EmptyCol,
+                 AE = fld.EmptyCol,
+                 AF = fld.EmptyCol,
+                 AG = fld.EmptyCol,
+                 AH = fld.EmptyCol,
+                 AI = fld.EmptyCol,
+                 AJ = fld.EmptyCol
+             });
+
+        if (_rowData.Count() == 0)
+        {
+            CustomExtension.AlertMsg("目前條件查不到資料.", "");
+            return;
+        }
+
+        //object to datatable
+        DataTable myDT = CustomExtension.LINQToDataTable(_rowData);
+
+        if (myDT.Rows.Count > 0)
+        {
+            //重新命名欄位標頭
+            myDT.Columns["A"].ColumnName = "序號";
+            myDT.Columns["B"].ColumnName = "平台订单号";
+            myDT.Columns["C"].ColumnName = "收件公司名称";
+            myDT.Columns["D"].ColumnName = "收件人姓名";
+            myDT.Columns["E"].ColumnName = "收件人电话";
+            myDT.Columns["F"].ColumnName = "收件人手机";
+            myDT.Columns["G"].ColumnName = "收货详细地址";
+            myDT.Columns["H"].ColumnName = "运输性质";
+            myDT.Columns["I"].ColumnName = "运费付款方式";
+            myDT.Columns["J"].ColumnName = "送货方式";
+            myDT.Columns["K"].ColumnName = "厚度(0-10]cm件数";
+            myDT.Columns["L"].ColumnName = "厚度(10-20]cm件数";
+            myDT.Columns["M"].ColumnName = "厚度(20-25]cm件数";
+            myDT.Columns["N"].ColumnName = "厚度25cm以上件数";
+            myDT.Columns["O"].ColumnName = "货物名称";
+            myDT.Columns["P"].ColumnName = "货物件数";
+            myDT.Columns["Q"].ColumnName = "货物包装";
+            myDT.Columns["R"].ColumnName = "货物重量";
+            myDT.Columns["S"].ColumnName = "货物体积";
+            myDT.Columns["T"].ColumnName = "其他费用 ";
+            myDT.Columns["U"].ColumnName = "保价金额";
+            myDT.Columns["V"].ColumnName = "代收退款方式";
+            myDT.Columns["W"].ColumnName = "代收金额";
+            myDT.Columns["X"].ColumnName = "开户姓名";
+            myDT.Columns["Y"].ColumnName = "代收账号";
+            myDT.Columns["Z"].ColumnName = "签收单";
+            myDT.Columns["AA"].ColumnName = "签收单返单要求-签字";
+            myDT.Columns["AB"].ColumnName = "签收单返单要求-盖章";
+            myDT.Columns["AC"].ColumnName = "签收单返单要求-身份证号";
+            myDT.Columns["AD"].ColumnName = "签收单返单要求-身份证复印件";
+            myDT.Columns["AE"].ColumnName = "签收单返单要求-仓库收货回执单";
+            myDT.Columns["AF"].ColumnName = "预约派送日期";
+            myDT.Columns["AG"].ColumnName = "预约派送时间段";
+            myDT.Columns["AH"].ColumnName = "拆包装";
+            myDT.Columns["AI"].ColumnName = "预售单";
+            myDT.Columns["AJ"].ColumnName = "备注信息";
+        }
+
+        //匯出Excel
+        CustomExtension.ExportExcel(
+            myDT
+            , "ShipExcelData-{0}.xlsx".FormatThis(DateTime.Now.ToShortDateString().ToDateString("yyyyMMdd"))
+            , false);
+    }
     #endregion
 
 
@@ -1078,5 +1372,6 @@ public partial class myShipping_Search : SecurityCheck
     private string _Req_FreightWay;
 
     #endregion
+
 
 }

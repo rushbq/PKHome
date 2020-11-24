@@ -49,6 +49,7 @@ namespace ShipFreight_CN.Models
         public string SendTypeName { get; set; }
 
         public string UserCheck1 { get; set; }
+        public string Check_Time1 { get; set; }
         public string Remark { get; set; }
         public string Create_Time { get; set; }
         public string Update_Time { get; set; }
@@ -56,6 +57,11 @@ namespace ShipFreight_CN.Models
         public string Create_Name { get; set; }
         public string Update_Who { get; set; }
         public string Update_Name { get; set; }
+
+        /// <summary>
+        /// 空欄位 - 匯出時使用
+        /// </summary>
+        public string EmptyCol { get; set; }
     }
 
 
