@@ -28,6 +28,8 @@
             </div>
             <div class="right menu">
                 <a href="<%=fn_Param.WebUrl %><%:Req_Lang %>/<%:Req_RootID %>/ShipImportCHN?dt=<%=Req_DataType %>" class="item"><i class="sync alternate icon"></i><span class="mobile hidden">物流單轉入</span></a>
+                <asp:LinkButton ID="lbtn_Export2" runat="server" OnClick="lbtn_Export2_Click" CssClass="item" ToolTip="查詢條件僅限銷貨日"><i class="file excel icon"></i><span class="mobile hidden">拼箱樣單</span></asp:LinkButton>
+                <asp:LinkButton ID="lbtn_Export1" runat="server" OnClick="lbtn_Export1_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">代發明細</span></asp:LinkButton>
                 <asp:LinkButton ID="lbtn_ShipExcel" runat="server" OnClick="lbtn_ShipExcel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">德邦匯出</span></asp:LinkButton>
                 <asp:LinkButton ID="lbtn_Excel" runat="server" OnClick="lbtn_Excel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">一般匯出</span></asp:LinkButton>
 
@@ -54,7 +56,7 @@
                             <div class="field">
                                 <div class="ui left icon input datepicker">
                                     <asp:TextBox ID="filter_eDate" runat="server" placeholder="結束日" autocomplete="off"></asp:TextBox>
-                                    <i class="calendar alternate outline icon"></i>
+                                    <i class="calendar alternate icon"></i>
                                 </div>
                             </div>
                         </div>
@@ -76,18 +78,18 @@
                 </div>
                 <div class="fields">
                     <div class="five wide field">
-                        <label>發貨日期</label>
+                        <label>銷貨單開立時間</label>
                         <div class="two fields">
                             <div class="field">
-                                <div class="ui left icon input datepicker">
-                                    <asp:TextBox ID="filter_sDate_Ship" runat="server" placeholder="開始日" autocomplete="off"></asp:TextBox>
+                                <div class="ui left icon input datetimepicker">
+                                    <asp:TextBox ID="filter_sDate_Ship" runat="server" placeholder="開始時間" autocomplete="off"></asp:TextBox>
                                     <i class="calendar alternate outline icon"></i>
                                 </div>
                             </div>
                             <div class="field">
-                                <div class="ui left icon input datepicker">
-                                    <asp:TextBox ID="filter_eDate_Ship" runat="server" placeholder="結束日" autocomplete="off"></asp:TextBox>
-                                    <i class="calendar alternate outline icon"></i>
+                                <div class="ui left icon input datetimepicker">
+                                    <asp:TextBox ID="filter_eDate_Ship" runat="server" placeholder="結束時間" autocomplete="off"></asp:TextBox>
+                                    <i class="calendar alternate icon"></i>
                                 </div>
                             </div>
                         </div>
@@ -107,6 +109,12 @@
                         </asp:DropDownList>
                     </div>
                     <div class="three wide field">
+                        <label>資材確認</label>
+                        <asp:DropDownList ID="filter_IsCheck" runat="server" CssClass="fluid topSearch">
+                            <asp:ListItem Value="">-- 全部 --</asp:ListItem>
+                            <asp:ListItem Value="Y">已確認</asp:ListItem>
+                            <asp:ListItem Value="N">未確認</asp:ListItem>
+                        </asp:DropDownList>
                     </div>
                 </div>
             </div>
@@ -145,7 +153,7 @@
                                     <th class="grey-bg lighten-3">銷貨日期</th>
                                     <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3">資材確認</th>
-                                    <th class="grey-bg lighten-3">發貨日期</th>
+                                    <th class="grey-bg lighten-3">銷貨單開立時間</th>
                                     <th class="grey-bg lighten-3 center aligned">客戶<br />
                                         銷貨單號</th>
                                     <th class="grey-bg lighten-3">銷貨金額</th>
@@ -162,7 +170,6 @@
                                     <th class="grey-bg lighten-3">收件地址</th>
                                     <th class="grey-bg lighten-3">銷售員</th>
                                     <th class="grey-bg lighten-3">備註</th>
-                                    <th class="grey-bg lighten-3">確認時間</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,9 +195,10 @@
                                 <asp:LinkButton ID="lbtn_CheckY" runat="server" CssClass="ui grey basic icon button" ValidationGroup="List" CommandName="DoCheck_YES" ToolTip="設為確認"><i class="truck icon"></i></asp:LinkButton>
                                 <asp:LinkButton ID="lbtn_CheckN" runat="server" CssClass="ui circular green basic icon button" ValidationGroup="List" CommandName="DoCheck_NO" ToolTip="取消確認"><i class="check icon"></i></asp:LinkButton>
                             </td>
-                            <td class="center aligned">
-                                <!-- 發貨日 -->
-                                <asp:TextBox ID="tb_ShipDate" runat="server" Width="120px" Text='<%#Eval("ShipDate").ToString().ToDateString("yyyy-MM-dd") %>' MaxLength="10" autocomplete="off" type="date" placeholder="ex:2019/05/01"></asp:TextBox>
+                            <td>
+                                <span class="ui basic fluid label">
+                                    <%#Eval("Create_Time").ToString().ToDateString("yyyy/MM/dd HH:mm") %>
+                                </span>
                             </td>
                             <td>
                                 <!-- 客戶/單號 -->
@@ -230,7 +238,7 @@
                                 <asp:TextBox ID="tb_ShipWho" runat="server" Width="60px" Text='<%#Eval("ShipWho") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
                             </td>
                             <td>
-                                <asp:TextBox ID="tb_ShipTel" runat="server" Width="70px" Text='<%#Eval("ShipTel") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
+                                <asp:TextBox ID="tb_ShipTel" runat="server" Width="90px" Text='<%#Eval("ShipTel") %>' MaxLength="20" autocomplete="off"></asp:TextBox>
                             </td>
                             <td>
                                 <asp:TextBox ID="tb_ShipAddr1" runat="server" Width="110px" Text='<%#Eval("ShipAddr1") %>' MaxLength="120" autocomplete="off" placeholder="地址1, 最多120字"></asp:TextBox><br />
@@ -248,11 +256,6 @@
                                 <asp:HiddenField ID="hf_DataID" runat="server" Value='<%#Eval("Data_ID") %>' />
                                 <asp:HiddenField ID="hf_UserCheck1" runat="server" Value='<%#Eval("UserCheck1") %>' />
                                 <asp:HiddenField ID="hf_OldCheckTime1" runat="server" Value='<%#Eval("Check_Time1").ToString().ToDateString("yyyy/MM/dd HH:mm") %>' />
-                            </td>
-                            <td>
-                                <span class="ui basic fluid label">
-                                    <%#Eval("Check_Time1").ToString().ToDateString("yyyy/MM/dd HH:mm") %>
-                                </span>
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -325,10 +328,16 @@
     <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/options.js"></script>
     <script>
         $(function () {
-            //取得設定值(往前天數, 往後天數)
-            var calOpt = getCalOptBydate(730, 0);
-            //載入datepicker
-            $('.datepicker').calendar(calOpt);
+            //[Cal1]取得設定值(往前天數, 往後天數)
+            var calOpt1 = getCalOptBydate(730, 0);
+            //[Cal1]載入datepicker
+            $('.datepicker').calendar(calOpt1);
+
+            //[Cal2]取得設定值(往前天數, 往後天數)
+            var calOpt2 = getCalOptByTime(60, 1);
+            //[Cal2]載入datepicker
+            $('.datetimepicker').calendar(calOpt2);
+
         });
     </script>
     <%-- 日期選擇器 End --%>

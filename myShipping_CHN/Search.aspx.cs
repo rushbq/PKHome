@@ -99,12 +99,12 @@ public partial class myShipping_Search : SecurityCheck
                     this.filter_eDate.Text = Req_eDate;
                 }
 
-                //[取得/檢查參數] - 發貨日
+                //[取得/檢查參數] - CreateTime S
                 if (!string.IsNullOrWhiteSpace(Req_sDate_Ship))
                 {
                     this.filter_sDate_Ship.Text = Req_sDate_Ship;
                 }
-                //[取得/檢查參數] - 發貨日
+                //[取得/檢查參數] - CreateTime E
                 if (!string.IsNullOrWhiteSpace(Req_eDate_Ship))
                 {
                     this.filter_eDate_Ship.Text = Req_eDate_Ship;
@@ -138,6 +138,11 @@ public partial class myShipping_Search : SecurityCheck
                     this.filter_ShipComp.SelectedIndex = this.filter_ShipComp.Items.IndexOf(this.filter_ShipComp.Items.FindByValue(Req_ShipComp));
                 }
 
+                //[取得/檢查參數] - 資材確認
+                if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+                {
+                    this.filter_IsCheck.SelectedIndex = this.filter_IsCheck.Items.IndexOf(this.filter_IsCheck.Items.FindByValue(Req_IsCheck));
+                }
                 #endregion
 
 
@@ -255,6 +260,13 @@ public partial class myShipping_Search : SecurityCheck
             PageParam.Add("ShipComp=" + Server.UrlEncode(Req_ShipComp));
         }
 
+        //[取得/檢查參數] - 資材確認
+        if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+        {
+            search.Add("IsCheck", Req_IsCheck);
+            PageParam.Add("chk=" + Server.UrlEncode(Req_IsCheck));
+        }
+
         //尾碼
         PageParam.Add("t={0}#formData".FormatThis(Cryptograph.GetCurrentTime()));
 
@@ -324,7 +336,7 @@ public partial class myShipping_Search : SecurityCheck
                 string _ShipComp = ((DropDownList)e.Item.FindControl("lst_ShipComp")).SelectedValue;
                 string _FreightWay = ((DropDownList)e.Item.FindControl("lst_FreightWay")).SelectedValue;
                 string _ShipWay = ((DropDownList)e.Item.FindControl("lst_ShipWay")).SelectedValue;
-                string _ShipDate = ((TextBox)e.Item.FindControl("tb_ShipDate")).Text;
+                //string _ShipDate = ((TextBox)e.Item.FindControl("tb_ShipDate")).Text;
                 string _ShipNo = ((TextBox)e.Item.FindControl("tb_ShipNo")).Text;
                 string _ShipWho = ((TextBox)e.Item.FindControl("tb_ShipWho")).Text;
                 string _ShipTel = ((TextBox)e.Item.FindControl("tb_ShipTel")).Text;
@@ -373,7 +385,7 @@ public partial class myShipping_Search : SecurityCheck
                             ShipAddr2 = _ShipAddr2,
                             BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
                             Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
-                            ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
+                            ShipDate = "", //_ShipDate.ToDateString("yyyy/MM/dd"),
                             ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
                             ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
                             SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
@@ -415,7 +427,7 @@ public partial class myShipping_Search : SecurityCheck
                             ShipAddr2 = _ShipAddr2,
                             BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
                             Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
-                            ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
+                            ShipDate = "", //_ShipDate.ToDateString("yyyy/MM/dd"),
                             ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
                             ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
                             SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
@@ -456,7 +468,7 @@ public partial class myShipping_Search : SecurityCheck
                             ShipAddr2 = _ShipAddr2,
                             BoxCnt = string.IsNullOrWhiteSpace(_BoxCnt) ? 0 : Convert.ToInt16(_BoxCnt),
                             Freight = string.IsNullOrWhiteSpace(_Freight) ? 0 : Convert.ToDouble(_Freight),
-                            ShipDate = _ShipDate.ToDateString("yyyy/MM/dd"),
+                            ShipDate = "", //_ShipDate.ToDateString("yyyy/MM/dd"),
                             ShipComp = string.IsNullOrWhiteSpace(_ShipComp) ? 0 : Convert.ToUInt16(_ShipComp),
                             ShipWay = string.IsNullOrWhiteSpace(_ShipWay) ? 0 : Convert.ToUInt16(_ShipWay),
                             SendType = string.IsNullOrWhiteSpace(_FreightWay) ? 0 : Convert.ToUInt16(_FreightWay),
@@ -518,7 +530,7 @@ public partial class myShipping_Search : SecurityCheck
                 DropDownList lst_ShipComp = (DropDownList)e.Item.FindControl("lst_ShipComp");
                 DropDownList lst_FreightWay = (DropDownList)e.Item.FindControl("lst_FreightWay");
                 DropDownList lst_ShipWay = (DropDownList)e.Item.FindControl("lst_ShipWay");
-                TextBox tb_ShipDate = (TextBox)e.Item.FindControl("tb_ShipDate");
+                //TextBox tb_ShipDate = (TextBox)e.Item.FindControl("tb_ShipDate");
                 TextBox tb_ShipNo = (TextBox)e.Item.FindControl("tb_ShipNo");
                 TextBox tb_ShipWho = (TextBox)e.Item.FindControl("tb_ShipWho");
                 TextBox tb_ShipTel = (TextBox)e.Item.FindControl("tb_ShipTel");
@@ -672,7 +684,7 @@ public partial class myShipping_Search : SecurityCheck
 
 
     /// <summary>
-    /// [按鈕] - 匯出
+    /// [按鈕] - 一般匯出
     /// </summary>
     protected void lbtn_Excel_Click(object sender, EventArgs e)
     {
@@ -680,8 +692,6 @@ public partial class myShipping_Search : SecurityCheck
         //----- 宣告:資料參數 -----
         ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
         Dictionary<string, string> search = new Dictionary<string, string>();
-        Dictionary<string, string> sort = new Dictionary<string, string>();
-        DataTable DT = new DataTable();
 
         //----- 原始資料:條件篩選 -----
         #region >> 條件篩選 <<
@@ -732,7 +742,7 @@ public partial class myShipping_Search : SecurityCheck
         {
             if (!Req_FreightWay.Equals("ALL"))
             {
-                search.Add("fw", Req_FreightWay);
+                search.Add("FreightWay", Req_FreightWay);
             }
         }
 
@@ -740,6 +750,12 @@ public partial class myShipping_Search : SecurityCheck
         if (!string.IsNullOrWhiteSpace(Req_ShipComp))
         {
             search.Add("ShipComp", Req_ShipComp);
+        }
+
+        //[取得/檢查參數] - 資材確認
+        if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+        {
+            search.Add("IsCheck", Req_IsCheck);
         }
 
         #endregion
@@ -761,7 +777,7 @@ public partial class myShipping_Search : SecurityCheck
         Dictionary<string, string> _col = new Dictionary<string, string>();
         _col.Add("Erp_SO_Date", "銷貨日期");
         _col.Add("UserCheck1", "資材確認");
-        _col.Add("ShipDate", "發貨日期");
+        _col.Add("Create_Time", "銷貨單開立時間");
         _col.Add("CustName", "客戶");
         _col.Add("Erp_SO_FullID", "銷貨單號");
         _col.Add("TotalPrice", "銷貨金額");
@@ -778,7 +794,6 @@ public partial class myShipping_Search : SecurityCheck
         _col.Add("ShipAddr2", "收件地址2");
         _col.Add("CfmWhoName", "銷售員");
         _col.Add("Remark", "備註");
-        _col.Add("Check_Time1", "確認時間");
 
 
         //將指定的欄位,轉成陣列
@@ -811,14 +826,14 @@ public partial class myShipping_Search : SecurityCheck
 
     }
 
-
+    /// <summary>
+    /// [按鈕] - 德邦匯出
+    /// </summary>
     protected void lbtn_ShipExcel_Click(object sender, EventArgs e)
     {
         //----- 宣告:資料參數 -----
         ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
         Dictionary<string, string> search = new Dictionary<string, string>();
-        Dictionary<string, string> sort = new Dictionary<string, string>();
-        DataTable DT = new DataTable();
 
         //----- 原始資料:條件篩選 -----
         #region >> 條件篩選 <<
@@ -869,7 +884,7 @@ public partial class myShipping_Search : SecurityCheck
         {
             if (!Req_FreightWay.Equals("ALL"))
             {
-                search.Add("fw", Req_FreightWay);
+                search.Add("FreightWay", Req_FreightWay);
             }
         }
 
@@ -877,6 +892,13 @@ public partial class myShipping_Search : SecurityCheck
         if (!string.IsNullOrWhiteSpace(Req_ShipComp))
         {
             search.Add("ShipComp", Req_ShipComp);
+        }
+
+
+        //[取得/檢查參數] - 資材確認
+        if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+        {
+            search.Add("IsCheck", Req_IsCheck);
         }
 
         #endregion
@@ -889,7 +911,7 @@ public partial class myShipping_Search : SecurityCheck
                  B = fld.Erp_SO_FullID,
                  C = fld.EmptyCol,
                  D = fld.ShipWho,
-                 E = fld.Check_Time1,
+                 E = fld.EmptyCol,
                  F = fld.ShipTel,
                  G = fld.ShipAddr1,
                  H = "大件快递3.60",
@@ -979,6 +1001,269 @@ public partial class myShipping_Search : SecurityCheck
             , "ShipExcelData-{0}.xlsx".FormatThis(DateTime.Now.ToShortDateString().ToDateString("yyyyMMdd"))
             , false);
     }
+
+
+    /// <summary>
+    /// [按鈕] - 代發明細
+    /// </summary>
+    protected void lbtn_Export1_Click(object sender, EventArgs e)
+    {
+        //----- 宣告:資料參數 -----
+        ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
+        Dictionary<string, string> search = new Dictionary<string, string>();
+
+        //----- 原始資料:條件篩選 -----
+        #region >> 條件篩選 <<
+
+        //[取得/檢查參數] - Date (需轉為ERP格式)
+        if (!string.IsNullOrWhiteSpace(Req_sDate))
+        {
+            search.Add("sDate", Req_sDate.ToDateString("yyyyMMdd"));
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate))
+        {
+            search.Add("eDate", Req_eDate.ToDateString("yyyyMMdd"));
+        }
+
+        //[取得/檢查參數] - ShipDate
+        if (!string.IsNullOrWhiteSpace(Req_sDate_Ship))
+        {
+            search.Add("ShipsDate", Req_sDate_Ship);
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate_Ship))
+        {
+            search.Add("ShipeDate", Req_eDate_Ship);
+        }
+
+        //[取得/檢查參數] - Keyword
+        if (!string.IsNullOrWhiteSpace(Req_Keyword))
+        {
+            search.Add("Keyword", Req_Keyword);
+        }
+
+        //[取得/檢查參數] - Cust
+        if (!string.IsNullOrWhiteSpace(Req_Cust))
+        {
+            search.Add("Cust", Req_Cust);
+        }
+
+        //[取得/檢查參數] - Way
+        if (!string.IsNullOrWhiteSpace(Req_Way))
+        {
+            if (!Req_Way.Equals("ALL"))
+            {
+                search.Add("Way", Req_Way);
+            }
+        }
+
+        //[取得/檢查參數] - FW
+        if (!string.IsNullOrWhiteSpace(Req_FreightWay))
+        {
+            if (!Req_FreightWay.Equals("ALL"))
+            {
+                search.Add("FreightWay", Req_FreightWay);
+            }
+        }
+
+        //[取得/檢查參數] - ShipComp
+        if (!string.IsNullOrWhiteSpace(Req_ShipComp))
+        {
+            search.Add("ShipComp", Req_ShipComp);
+        }
+
+        //[取得/檢查參數] - 資材確認
+        if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+        {
+            search.Add("IsCheck", Req_IsCheck);
+        }
+
+        #endregion
+
+        //----- 方法:取得資料 -----
+        DataTable _rowData = _data.Get_ExportData1(search, Req_DataType.ToUpper(), out ErrMsg);
+        if (_rowData == null)
+        {
+            CustomExtension.AlertMsg("目前條件查不到資料.", "");
+            return;
+        }
+        if (_rowData.Rows.Count == 0)
+        {
+            CustomExtension.AlertMsg("目前條件查不到資料.", "");
+            return;
+        }
+
+
+        #region ** 填入指定欄位 **
+
+        Dictionary<string, string> _col = new Dictionary<string, string>();
+        _col.Add("SO_Date", "銷貨日期");
+        _col.Add("Create_Time", "銷貨單開立時間");
+        _col.Add("CustName", "客戶");
+        _col.Add("Erp_SO_FullID", "銷貨單號");
+        _col.Add("SerialNo", "銷貨單序號");
+        _col.Add("ModelNo", "銷貨品號");
+        _col.Add("Qty", "銷貨數量");
+        _col.Add("GiftQty", "贈/備品量");
+        _col.Add("StockPos", "儲存位置");
+        _col.Add("ShipCompName", "貨運公司");
+        _col.Add("SendTypeName", "運費方式");
+        _col.Add("ShipWayName", "物流途徑");
+        _col.Add("ShipWho", "收件人");
+        _col.Add("ShipTel", "收件電話");
+        _col.Add("ShipAddr1", "收件地址1");
+        _col.Add("CfmWhoName", "銷售員");
+        _col.Add("Remark", "備註");
+
+
+        //將指定的欄位,轉成陣列
+        string[] selectedColumns = _col.Keys.ToArray();
+
+        //資料複製到新的Table(內容為指定的欄位資料)
+        DataTable newDT = new DataView(_rowData).ToTable(true, selectedColumns);
+
+        #region ** 重新命名欄位,顯示為中文 **
+
+        foreach (var item in _col)
+        {
+            string _id = item.Key;
+            string _name = item.Value;
+
+            newDT.Columns[_id].ColumnName = _name;
+
+        }
+        #endregion
+
+        #endregion
+
+
+        //匯出Excel
+        CustomExtension.ExportExcel(
+            newDT
+            , "ExcelData-Deteail-{0}.xlsx".FormatThis(DateTime.Now.ToShortDateString().ToDateString("yyyyMMdd"))
+            , false);
+    }
+
+
+    /// <summary>
+    /// [按鈕] - 拼箱樣單
+    /// </summary>
+    protected void lbtn_Export2_Click(object sender, EventArgs e)
+    {
+        //----- 宣告:資料參數 -----
+        ShipFreight_CN_Repository _data = new ShipFreight_CN_Repository();
+        Dictionary<string, string> search = new Dictionary<string, string>();
+
+
+        //----- 原始資料:條件篩選 -----
+        #region >> 條件篩選 <<
+
+        //[取得/檢查參數] - Date (需轉為ERP格式)
+        if (!string.IsNullOrWhiteSpace(Req_sDate))
+        {
+            search.Add("sDate", Req_sDate.ToDateString("yyyyMMdd"));
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate))
+        {
+            search.Add("eDate", Req_eDate.ToDateString("yyyyMMdd"));
+        }
+
+        //[取得/檢查參數] - Cust
+        if (!string.IsNullOrWhiteSpace(Req_Cust))
+        {
+            search.Add("Cust", Req_Cust);
+        }
+        #endregion
+
+        //----- 方法:取得資料(單頭) -----
+        DataTable _rowDataA = _data.Get_ExportData2(search, Req_DataType.ToUpper(), "A", out ErrMsg);
+        //----- 方法:取得資料(單身) -----
+        DataTable _rowDataB = _data.Get_ExportData2(search, Req_DataType.ToUpper(), "B", out ErrMsg);
+
+        if (_rowDataA == null || _rowDataB == null)
+        {
+            CustomExtension.AlertMsg("目前條件查不到資料.", "");
+            return;
+        }
+
+
+        #region ** 填入指定欄位 **
+
+        //單頭欄位
+        Dictionary<string, string> _colA = new Dictionary<string, string>();
+        _colA.Add("SO_Fid", "銷貨單別");
+        _colA.Add("TypeName", "單據名稱");
+        _colA.Add("SO_Sid", "銷貨單號");
+        _colA.Add("SO_Date", "單據日期");
+        _colA.Add("CustID", "客戶代號");
+        _colA.Add("CustName", "客戶簡稱");
+
+
+        //單身欄位
+        Dictionary<string, string> _colB = new Dictionary<string, string>();
+        _colB.Add("SO_Sno", "序號");
+        _colB.Add("ModelNo", "品號");
+        _colB.Add("Qty", "數量");
+        _colB.Add("StockPos", "儲存位置");
+        _colB.Add("PO_Fid", "訂單單別");
+        _colB.Add("PO_Sid", "訂單單號");
+        _colB.Add("PO_Sno", "訂單序號");
+        _colB.Add("ModelName", "品名");
+        _colB.Add("GiftQty", "贈/備品量");
+
+        #endregion
+
+
+        //將指定的欄位,轉成陣列
+        string[] _ColumnsA = _colA.Keys.ToArray();
+        string[] _ColumnsB = _colB.Keys.ToArray();
+
+        //資料複製到新的Table(內容為指定的欄位資料)
+        DataTable newDTA = new DataView(_rowDataA).ToTable(true, _ColumnsA);
+        DataTable newDTB = new DataView(_rowDataB).ToTable(true, _ColumnsB);
+
+
+        #region ** 重新命名欄位,顯示為中文 **
+
+        foreach (var item in _colA)
+        {
+            string _id = item.Key;
+            string _name = item.Value;
+
+            newDTA.Columns[_id].ColumnName = _name;
+        }
+
+
+        foreach (var item in _colB)
+        {
+            string _id = item.Key;
+            string _name = item.Value;
+
+            newDTB.Columns[_id].ColumnName = _name;
+        }
+        #endregion
+
+
+        #region ** 將Table依順序寫入暫存容器 **
+
+        List<DataTable> _dataList = new List<DataTable>();
+        _dataList.Add(newDTA);
+        _dataList.Add(newDTB);
+
+        List<string> _sheet = new List<string>();
+        _sheet.Add("單頭資料");
+        _sheet.Add("單身資料");
+
+        #endregion
+
+        //匯出Excel(多個工作表)
+        CustomExtension.ExportExcelMultiple(
+            _dataList
+            , "ExcelData-Box-{0}.xlsx".FormatThis(DateTime.Now.ToShortDateString().ToDateString("yyyyMMdd"))
+            , false
+            , _sheet);
+    }
+
+
     #endregion
 
 
@@ -1049,6 +1334,7 @@ public partial class myShipping_Search : SecurityCheck
         string _Way = this.filter_ShipWay.SelectedValue;
         string _FWay = this.filter_FreightWay.SelectedValue;
         string _ShipComp = this.filter_ShipComp.SelectedValue;
+        string _isCheck = filter_IsCheck.SelectedValue;
 
         //url string
         StringBuilder url = new StringBuilder();
@@ -1067,7 +1353,7 @@ public partial class myShipping_Search : SecurityCheck
             url.Append("&eDate=" + Server.UrlEncode(_eDate));
         }
 
-        //[查詢條件] - ShipDate
+        //[查詢條件] - CreateTime
         if (!string.IsNullOrWhiteSpace(_sDate_Ship))
         {
             url.Append("&sDate_Ship=" + Server.UrlEncode(_sDate_Ship));
@@ -1107,7 +1393,11 @@ public partial class myShipping_Search : SecurityCheck
             url.Append("&fw=" + Server.UrlEncode(_FWay));
         }
 
-
+        //[查詢條件] - 資材確認
+        if (!string.IsNullOrWhiteSpace(_isCheck))
+        {
+            url.Append("&chk=" + Server.UrlEncode(_isCheck));
+        }
         return url.ToString();
     }
 
@@ -1254,7 +1544,7 @@ public partial class myShipping_Search : SecurityCheck
         get
         {
             String _data = Request.QueryString["sDate_Ship"];
-            return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : "";
+            return (CustomExtension.String_資料長度Byte(_data, "1", "20", out ErrMsg)) ? _data.Trim() : "";
         }
         set
         {
@@ -1272,7 +1562,7 @@ public partial class myShipping_Search : SecurityCheck
         get
         {
             String _data = Request.QueryString["eDate_Ship"];
-            return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : "";
+            return (CustomExtension.String_資料長度Byte(_data, "1", "20", out ErrMsg)) ? _data.Trim() : "";
         }
         set
         {
@@ -1370,6 +1660,25 @@ public partial class myShipping_Search : SecurityCheck
         }
     }
     private string _Req_FreightWay;
+
+
+
+    /// <summary>
+    /// 取得傳遞參數 - 資材確認
+    /// </summary>
+    public string Req_IsCheck
+    {
+        get
+        {
+            String _data = Request.QueryString["chk"];
+            return _data;
+        }
+        set
+        {
+            this._Req_IsCheck = value;
+        }
+    }
+    private string _Req_IsCheck;
 
     #endregion
 
