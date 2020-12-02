@@ -839,10 +839,11 @@ namespace ShipFreight_CN.Controllers
                         FROM [SHPK2].dbo.COPTG Base WITH(NOLOCK)
                          INNER JOIN [SHPK2].dbo.CMSMQ Ref WITH(NOLOCK) ON Base.TG001 = Ref.MQ001
                          INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON Base.TG004 = Cust.MA001
-                        WHERE (RTRIM(Base.TG001) + RTRIM(Base.TG002) IN (
-	                        SELECT SO_FID+SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
-	                        FROM [PKExcel].dbo.Shipment_Data_CHN
-                         ))
+                         INNER JOIN [PKExcel].dbo.Shipment_Data_CHN ShipBase ON Base.TG001 = ShipBase.SO_FID COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TG002 = ShipBase.SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipComp ON ShipBase.ShipComp = RefShipComp.Class_ID
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipWay ON ShipBase.ShipWay = RefShipWay.Class_ID
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefSendType ON ShipBase.SendType = RefSendType.Class_ID
+                        WHERE (1=1)
                         ##param1##
                         ";
                 }
@@ -866,10 +867,11 @@ namespace ShipFreight_CN.Controllers
                          INNER JOIN [SHPK2].dbo.CMSMQ Ref WITH(NOLOCK) ON Base.TG001 = Ref.MQ001
                          INNER JOIN [SHPK2].dbo.COPMA Cust WITH(NOLOCK) ON Base.TG004 = Cust.MA001
                          INNER JOIN [SHPK2].dbo.COPTH DT WITH(NOLOCK) ON DT.TH001 = Base.TG001 AND DT.TH002 = Base.TG002
-                        WHERE (RTRIM(Base.TG001) + RTRIM(Base.TG002) IN (
-	                        SELECT SO_FID+SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
-	                        FROM [PKExcel].dbo.Shipment_Data_CHN
-                         ))
+                         INNER JOIN [PKExcel].dbo.Shipment_Data_CHN ShipBase ON Base.TG001 = ShipBase.SO_FID COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TG002 = ShipBase.SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipComp ON ShipBase.ShipComp = RefShipComp.Class_ID
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefShipWay ON ShipBase.ShipWay = RefShipWay.Class_ID
+                         LEFT JOIN [PKExcel].dbo.Shipment_RefClass_CHN RefSendType ON ShipBase.SendType = RefSendType.Class_ID
+                        WHERE (1=1)
                         ##param1##
                         ";
                 }
@@ -909,16 +911,75 @@ namespace ShipFreight_CN.Controllers
                                 //--客戶ID / Name
                                 sql.Append(" AND (");
                                 sql.Append("  (UPPER(Cust.MA001) LIKE '%' + UPPER(@Cust) + '%')");
-                                sql.Append("  OR (UPPER(Cust(Cust.MA002)) LIKE '%' + UPPER(@Cust) + '%')");
+                                sql.Append("  OR (UPPER(RTRIM(Cust.MA002)) LIKE '%' + UPPER(@Cust) + '%')");
                                 sql.Append(" )");
                                 cmd.Parameters.AddWithValue("Cust", item.Value);
 
                                 break;
 
+                            case "Keyword":
+                                //--單號keyword/物流單號/收件人
+                                sql.Append(" AND (");
+                                sql.Append("  (UPPER(Base.TG001) + UPPER(Base.TG002) LIKE '%' + UPPER(@keyword) + '%')");
+                                sql.Append("  OR (UPPER(Base.TG001) +'-'+ UPPER(Base.TG002) LIKE '%' + UPPER(@keyword) + '%')");
+                                sql.Append("  OR (ShipBase.ShipNo LIKE '%'+ @keyword +'%')");
+                                sql.Append("  OR (ShipBase.ShipWho LIKE '%'+ @keyword +'%')");
+                                sql.Append(" )");
+                                cmd.Parameters.AddWithValue("keyword", item.Value);
+
+                                break;
+
+                            case "ShipsDate":
+                                //--CreateTime S
+                                sql.Append(" AND (ShipBase.Create_Time >= @ShipsDate)");
+                                cmd.Parameters.AddWithValue("ShipsDate", item.Value);
+
+                                break;
+
+                            case "ShipeDate":
+                                //--CreateTime E
+                                sql.Append(" AND (ShipBase.Create_Time <= @ShipeDate)");
+                                cmd.Parameters.AddWithValue("ShipeDate", item.Value);
+
+                                break;
+
+                            case "ShipComp":
+                                //貨運公司
+                                sql.Append(" AND (ShipBase.ShipComp = @ShipComp)");
+                                cmd.Parameters.AddWithValue("ShipComp", item.Value);
+
+                                break;
+
+                            case "Way":
+                                //--物流途徑
+                                sql.Append(" AND (ShipBase.ShipWay = @ShipWay)");
+                                cmd.Parameters.AddWithValue("ShipWay", item.Value);
+
+                                break;
+
+                            case "FreightWay":
+                                //運費方式
+                                sql.Append(" AND (ShipBase.SendType = @FreightWay)");
+                                cmd.Parameters.AddWithValue("FreightWay", item.Value);
+
+                                break;
+
+                            case "IsCheck":
+                                //資材確認
+                                if (item.Value.Equals("Y"))
+                                {
+                                    sql.Append(" AND (ShipBase.UserCheck1 = 'Y')");
+                                }
+                                else
+                                {
+                                    sql.Append(" AND ((ShipBase.UserCheck1 = '') OR (ShipBase.UserCheck1 IS NULL) OR (ShipBase.UserCheck1 = 'N'))");
+                                }
+                                break;
                         }
                     }
                 }
                 #endregion
+
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();

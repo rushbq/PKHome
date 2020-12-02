@@ -1097,22 +1097,23 @@ public partial class myShipping_Search : SecurityCheck
 
         Dictionary<string, string> _col = new Dictionary<string, string>();
         _col.Add("SO_Date", "銷貨日期");
-        _col.Add("Create_Time", "銷貨單開立時間");
-        _col.Add("CustName", "客戶");
-        _col.Add("Erp_SO_FullID", "銷貨單號");
-        _col.Add("SerialNo", "銷貨單序號");
+        _col.Add("ShipWho", "收件人");
         _col.Add("ModelNo", "銷貨品號");
         _col.Add("Qty", "銷貨數量");
-        _col.Add("GiftQty", "贈/備品量");
-        _col.Add("StockPos", "儲存位置");
         _col.Add("ShipCompName", "貨運公司");
         _col.Add("SendTypeName", "運費方式");
         _col.Add("ShipWayName", "物流途徑");
-        _col.Add("ShipWho", "收件人");
-        _col.Add("ShipTel", "收件電話");
         _col.Add("ShipAddr1", "收件地址1");
-        _col.Add("CfmWhoName", "銷售員");
-        _col.Add("Remark", "備註");
+
+        //_col.Add("Create_Time", "銷貨單開立時間");
+        //_col.Add("CustName", "客戶");
+        //_col.Add("Erp_SO_FullID", "銷貨單號");
+        //_col.Add("SerialNo", "銷貨單序號");
+        //_col.Add("GiftQty", "贈/備品量");
+        //_col.Add("StockPos", "儲存位置");
+        //_col.Add("ShipTel", "收件電話");
+        //_col.Add("CfmWhoName", "銷售員");
+        //_col.Add("Remark", "備註");
 
 
         //將指定的欄位,轉成陣列
@@ -1167,11 +1168,58 @@ public partial class myShipping_Search : SecurityCheck
             search.Add("eDate", Req_eDate.ToDateString("yyyyMMdd"));
         }
 
+        //[取得/檢查參數] - ShipDate
+        if (!string.IsNullOrWhiteSpace(Req_sDate_Ship))
+        {
+            search.Add("ShipsDate", Req_sDate_Ship);
+        }
+        if (!string.IsNullOrWhiteSpace(Req_eDate_Ship))
+        {
+            search.Add("ShipeDate", Req_eDate_Ship);
+        }
+
+        //[取得/檢查參數] - Keyword
+        if (!string.IsNullOrWhiteSpace(Req_Keyword))
+        {
+            search.Add("Keyword", Req_Keyword);
+        }
+
         //[取得/檢查參數] - Cust
         if (!string.IsNullOrWhiteSpace(Req_Cust))
         {
             search.Add("Cust", Req_Cust);
         }
+
+        //[取得/檢查參數] - Way
+        if (!string.IsNullOrWhiteSpace(Req_Way))
+        {
+            if (!Req_Way.Equals("ALL"))
+            {
+                search.Add("Way", Req_Way);
+            }
+        }
+
+        //[取得/檢查參數] - FW
+        if (!string.IsNullOrWhiteSpace(Req_FreightWay))
+        {
+            if (!Req_FreightWay.Equals("ALL"))
+            {
+                search.Add("FreightWay", Req_FreightWay);
+            }
+        }
+
+        //[取得/檢查參數] - ShipComp
+        if (!string.IsNullOrWhiteSpace(Req_ShipComp))
+        {
+            search.Add("ShipComp", Req_ShipComp);
+        }
+
+        //[取得/檢查參數] - 資材確認
+        if (!string.IsNullOrWhiteSpace(Req_IsCheck))
+        {
+            search.Add("IsCheck", Req_IsCheck);
+        }
+
         #endregion
 
         //----- 方法:取得資料(單頭) -----
