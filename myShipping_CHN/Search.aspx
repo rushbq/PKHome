@@ -157,8 +157,7 @@
                                     <th class="grey-bg lighten-3 center aligned">客戶<br />
                                         銷貨單號</th>
                                     <th class="grey-bg lighten-3">銷貨金額</th>
-                                    <th class="grey-bg lighten-3">銷貨單<br />
-                                        確認</th>
+                                    <th class="grey-bg lighten-3">備註</th>
                                     <th class="grey-bg lighten-3">貨運公司</th>
                                     <th class="grey-bg lighten-3">物流單號</th>
                                     <th class="grey-bg lighten-3">運費方式</th>
@@ -169,7 +168,8 @@
                                     <th class="grey-bg lighten-3">收件電話</th>
                                     <th class="grey-bg lighten-3">收件地址</th>
                                     <th class="grey-bg lighten-3">銷售員</th>
-                                    <th class="grey-bg lighten-3">備註</th>
+                                    <th class="grey-bg lighten-3">銷貨單<br />
+                                        確認</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -208,7 +208,9 @@
                             <td class="right aligned red-text text-darken-1">
                                 <strong><%#Eval("TotalPrice").ToString().ToMoneyString() %></strong>
                             </td>
-                            <td class="center aligned"><%#Eval("CfmCode") %></td>
+                            <td>
+                                <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" placeholder="最多 50 字"></asp:TextBox>
+                            </td>
                             <td class="center aligned">
                                 <!-- 貨運公司 -->
                                 <asp:DropDownList ID="lst_ShipComp" runat="server" Width="110px"></asp:DropDownList>
@@ -248,9 +250,8 @@
                                 <!-- 確認者 -->
                                 <%#Eval("CfmWhoName") %>
                             </td>
-                            <td>
-                                <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" placeholder="最多 50 字"></asp:TextBox>
-
+                            <td class="center aligned">
+                                <%#Eval("CfmCode") %>
                                 <asp:HiddenField ID="hf_SO_FID" runat="server" Value='<%#Eval("Erp_SO_FID") %>' />
                                 <asp:HiddenField ID="hf_SO_SID" runat="server" Value='<%#Eval("Erp_SO_SID") %>' />
                                 <asp:HiddenField ID="hf_DataID" runat="server" Value='<%#Eval("Data_ID") %>' />

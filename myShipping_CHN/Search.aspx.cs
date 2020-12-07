@@ -781,7 +781,7 @@ public partial class myShipping_Search : SecurityCheck
         _col.Add("CustName", "客戶");
         _col.Add("Erp_SO_FullID", "銷貨單號");
         _col.Add("TotalPrice", "銷貨金額");
-        _col.Add("CfmCode", "銷貨單確認");
+        _col.Add("Remark", "備註");
         _col.Add("ShipCompName", "貨運公司");
         _col.Add("ShipNo", "物流單號");
         _col.Add("SendTypeName", "運費方式");
@@ -793,8 +793,7 @@ public partial class myShipping_Search : SecurityCheck
         _col.Add("ShipAddr1", "收件地址1");
         _col.Add("ShipAddr2", "收件地址2");
         _col.Add("CfmWhoName", "銷售員");
-        _col.Add("Remark", "備註");
-
+        _col.Add("CfmCode", "銷貨單確認");
 
         //將指定的欄位,轉成陣列
         string[] selectedColumns = _col.Keys.ToArray();
