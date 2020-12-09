@@ -4,10 +4,11 @@ using System.Linq;
 using System.Web;
 using System.Web.UI.WebControls;
 using LinqToExcel;
+using Menu3000Data.Models;
 using PKLib_Method.Methods;
-using SZ_ecData.Controllers;
+using SH_ecData.Controllers;
 
-public partial class myECdata_SZ_ImportPrice : SecurityCheck
+public partial class myECdata_SH_ImportSaleAmt : SecurityCheck
 {
     //設定FTP連線參數
     private FtpMethod _ftp = new FtpMethod(
@@ -27,7 +28,7 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
              * 取得其他權限
              */
             bool isPass = false;
-            isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3750");
+            isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3810");
 
 
             if (!isPass)
@@ -43,6 +44,10 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
             if (!IsPostBack)
             {
                 //[產生選單]
+                CreateMenu_Year(ddl_Year1);
+                CreateMenu_Month(ddl_Month1);
+                CreateMenu_Year(ddl_Year2);
+                CreateMenu_Month(ddl_Month2);
                 Get_ClassList("1", ddl_Mall1);
                 Get_ClassList("2", ddl_Mall2);
 
@@ -62,18 +67,43 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
     {
         string _mallID = ddl_Mall1.SelectedValue;
         string _mallName = "工具-" + ddl_Mall1.SelectedItem.Text;
-        do_Upload(1, _mallID, _mallName, fu_File1);
+        Int16 _year = Convert.ToInt16(ddl_Year1.SelectedValue);
+        Int16 _month = Convert.ToInt16(ddl_Month1.SelectedValue);
+
+        do_Upload(_year, _month, 1, _mallID, _mallName, fu_File1);
     }
 
     protected void btn_Save2_Click(object sender, EventArgs e)
     {
         string _mallID = ddl_Mall2.SelectedValue;
         string _mallName = "科學玩具-" + ddl_Mall2.SelectedItem.Text;
-        do_Upload(2, _mallID, _mallName, fu_File2);
+        Int16 _year = Convert.ToInt16(ddl_Year2.SelectedValue);
+        Int16 _month = Convert.ToInt16(ddl_Month2.SelectedValue);
+
+        do_Upload(_year, _month, 2, _mallID, _mallName, fu_File2);
     }
 
-    private void do_Upload(Int16 _type, string _mallID, string _mallName, FileUpload filectrl)
+    private void do_Upload(Int16 _year, Int16 _month, Int16 _type, string _mallID, string _mallName, FileUpload filectrl)
     {
+        //----- 宣告:資料參數 -----
+        SH_ecDataRepository _data = new SH_ecDataRepository();
+
+        var data = new ECDItem_SalesAmount
+        {
+            RefType = _type,
+            RefMall = Convert.ToInt16(_mallID),
+            setYear = _year,
+            setMonth = _month
+        };
+
+        //----- 方法:判斷重複 -----
+        if (_data.CheckECD_SalesAmt(data, out ErrMsg) > 0)
+        {
+            CustomExtension.AlertMsg("資料重複新增", thisPage);
+            return;
+        }
+
+
         #region -- 檔案處理 --
 
         //宣告
@@ -195,9 +225,6 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
 
         #region -- 資料處理 --
 
-        //----- 宣告:資料參數 -----
-        SZ_ecDataRepository _data = new SZ_ecDataRepository();
-
         //設定完整路徑
         string _filePath = @"{0}{1}{2}".FormatThis(
             System.Web.Configuration.WebConfigurationManager.AppSettings["FTP_DiskUrl"]
@@ -212,12 +239,12 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
         var sheetData = excelFile.GetWorksheetNames().FirstOrDefault();
 
         ////取得Excel資料欄位
-        var query_Xls = _data.GetEC_ExcelData(_filePath, sheetData);
+        var query_Xls = _data.GetEC_AmountData(_filePath, sheetData);
 
         try
         {
             //儲存資料
-            if (!_data.CreateECD_PriceList(query_Xls, _type, Convert.ToInt32(_mallID), out ErrMsg))
+            if (!_data.CreateECD_SalesAmt(query_Xls, _year, _month, _type, Convert.ToInt16(_mallID), out ErrMsg))
             {
                 CustomExtension.AlertMsg("資料匯入失敗", thisPage);
                 return;
@@ -253,7 +280,7 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
     private void Get_ClassList(string typeID, DropDownList ddl)
     {
         //----- 宣告:資料參數 -----
-        SZ_ecDataRepository _data = new SZ_ecDataRepository();
+        SH_ecDataRepository _data = new SH_ecDataRepository();
 
         //----- 原始資料:取得所有資料 -----
         var query = _data.GetEC_RefMall(typeID, "zh_TW", out ErrMsg);
@@ -270,6 +297,36 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
         query = null;
     }
 
+
+    protected void CreateMenu_Year(DropDownList item)
+    {
+        int currYear = DateTime.Now.Year;
+        int prevYear = currYear - 1;
+        int nextYear = currYear;
+
+        item.Items.Clear();
+        for (int itemY = prevYear; itemY <= nextYear; itemY++)
+        {
+            item.Items.Add(new ListItem(itemY.ToString(), itemY.ToString()));
+        }
+
+        //預設值
+        item.SelectedValue = currYear.ToString();
+    }
+
+    protected void CreateMenu_Month(DropDownList item)
+    {
+        int currMonth = DateTime.Now.Month;
+
+        item.Items.Clear();
+        for (int row = 1; row <= 12; row++)
+        {
+            item.Items.Add(new ListItem(row.ToString(), row.ToString()));
+        }
+
+        //預設值
+        item.SelectedValue = currMonth.ToString();
+    }
     #endregion
 
 
@@ -283,7 +340,7 @@ public partial class myECdata_SZ_ImportPrice : SecurityCheck
     {
         get
         {
-            return "{0}myECdata_SZ/ImportPrice.aspx".FormatThis(fn_Param.WebUrl);
+            return "{0}myECdata_SH/ImportSaleAmt.aspx".FormatThis(fn_Param.WebUrl);
         }
         set
         {

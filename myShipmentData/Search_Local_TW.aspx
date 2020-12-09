@@ -23,7 +23,7 @@
                 </div>
             </div>
             <div class="right menu">
-                <div class="item">
+                <div class="item" title="物流單號,運費">
                     <label for="MainContent_freightImport" style="cursor: pointer;">
                         <i class="sync alternate icon"></i>運費轉入
                     </label>

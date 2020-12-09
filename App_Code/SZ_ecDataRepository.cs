@@ -1079,7 +1079,7 @@ namespace SZ_ecData.Controllers
 
 
         /// <summary>
-        /// 取得Excel欄位,用來轉入資料
+        /// 取得Excel欄位,用來轉入資料(價格匯入)
         /// </summary>
         /// <param name="filePath">完整磁碟路徑</param>
         /// <param name="sheetName">工作表名稱</param>
@@ -1127,6 +1127,58 @@ namespace SZ_ecData.Controllers
             }
         }
 
+
+        /// <summary>
+        /// 取得Excel欄位,用來轉入資料(銷售數量匯入)
+        /// </summary>
+        /// <param name="filePath">完整磁碟路徑</param>
+        /// <param name="sheetName">工作表名稱</param>
+        /// <returns></returns>
+        public IQueryable<ECDItem_SalesAmount> GetEC_AmountData(string filePath, string sheetName)
+        {
+            try
+            {
+                //----- 宣告 -----
+                List<ECDItem_SalesAmount> dataList = new List<ECDItem_SalesAmount>();
+
+                //[Excel] - 取得原始資料
+                var excelFile = new ExcelQueryFactory(filePath);
+                var queryVals = excelFile.Worksheet(sheetName);
+
+                //宣告各內容參數
+                string _ProdID = "";
+                int _Qty = 0;
+                double _Price1 = 0;
+
+                //資料迴圈
+                foreach (var val in queryVals)
+                {
+                    _ProdID = val[0];
+                    _Qty = Convert.ToInt32(val[1]);
+                    _Price1 = Convert.ToDouble(val[2]);
+
+                    //加入項目
+                    var data = new ECDItem_SalesAmount
+                    {
+                        ProdID = _ProdID,
+                        Qty = _Qty,
+                        Price1 = _Price1
+                    };
+
+                    //將項目加入至集合
+                    dataList.Add(data);
+
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception("請檢查Excel格式是否正確!!格式可參考Excel範本." + ex.Message.ToString());
+            }
+        }
 
         #endregion
 
@@ -1488,6 +1540,88 @@ namespace SZ_ecData.Controllers
 
         }
 
+
+        /// <summary>
+        /// [電商平台數據] 判斷是否重複新增 - SalesAmt
+        /// </summary>
+        /// <param name="instance">ECDItem_SalesAmount</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public Int32 CheckECD_SalesAmt(ECDItem_SalesAmount instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" SELECT COUNT(*) AS Cnt FROM SZ_Prod_SalesInfo");
+                sql.AppendLine(" WHERE (RefType = @RefType) AND (RefMall = @RefMall) AND (setYear = @setYear) AND (setMonth = @setMonth)");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("RefType", instance.RefType);
+                cmd.Parameters.AddWithValue("RefMall", instance.RefMall);
+                cmd.Parameters.AddWithValue("setYear", instance.setYear);
+                cmd.Parameters.AddWithValue("setMonth", instance.setMonth);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Report, out ErrMsg))
+                {
+                    return Convert.ToInt32(DT.Rows[0]["Cnt"]);
+                }
+
+            }
+        }
+
+
+        /// <summary>
+        /// [電商平台數據] 建立銷售資料
+        /// </summary>
+        /// <param name="instance">ECDItem_SalesAmount</param>
+        /// <param name="_year"></param>
+        /// <param name="_month"></param>
+        /// <param name="typeID">1工具;2玩具</param>
+        /// <param name="mallID">Mall</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool CreateECD_SalesAmt(IQueryable<ECDItem_SalesAmount> instance, Int16 _year, Int16 _month, Int64 typeID, Int32 mallID, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" DECLARE @NewID AS INT");
+
+                foreach (var item in instance)
+                {
+                    sql.AppendLine(" SET @NewID = (");
+                    sql.AppendLine("  SELECT ISNULL(MAX(Data_ID) ,0) + 1 FROM SZ_Prod_SalesInfo");
+                    sql.AppendLine(" )");
+                    sql.AppendLine(" INSERT INTO SZ_Prod_SalesInfo(");
+                    sql.AppendLine("  Data_ID, setYear, setMonth, RefType, RefMall");
+                    sql.AppendLine("  , ProdID, SaleAmount, SalePrice");
+                    sql.AppendLine(" ) VALUES (");
+                    sql.AppendLine("  @NewID, @setYear, @setMonth, @RefType, @RefMall");
+                    sql.AppendLine("  , N'{0}', {1}, {2}".FormatThis(item.ProdID, item.Qty, item.Price1));
+                    sql.AppendLine(" );");
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("RefType", typeID);
+                cmd.Parameters.AddWithValue("RefMall", mallID);
+                cmd.Parameters.AddWithValue("setYear", _year);
+                cmd.Parameters.AddWithValue("setMonth", _month);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.Report, out ErrMsg);
+            }
+
+        }
 
         #endregion
 

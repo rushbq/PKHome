@@ -672,6 +672,16 @@ namespace Menu3000Data.Models
         public double Price1 { get; set; }
     }
 
+    public class ECDItem_SalesAmount
+    {
+        public Int16 setYear { get; set; }
+        public Int16 setMonth { get; set; }
+        public Int16 RefType { get; set; }
+        public Int16 RefMall { get; set; }
+        public string ProdID { get; set; }
+        public double Price1 { get; set; }
+        public int Qty { get; set; }
+    }
     #endregion
 
 
