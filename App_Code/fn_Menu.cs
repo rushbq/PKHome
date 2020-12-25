@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using Menu3000Data.Controllers;
 using Menu3000Data.Models;
@@ -45,37 +47,57 @@ public class fn_Menu
     }
 
 
-    ///// <summary>
-    ///// 發貨統計-中國內銷
-    ///// </summary>
-    ///// <param name="lang"></param>
-    ///// <param name="rootID"></param>
-    ///// <param name="tabID">選單tab</param>
-    ///// <param name="dataType">1工具/2玩具</param>
-    ///// <returns></returns>
-    //public static string GetTopMenu_ShipFreight_CHN(string lang, string rootID, string tabID, string dataType)
-    //{
-    //    string menu = "";
-    //    string url = "{0}{1}/{2}/ShipFreight_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
+    /// <summary>
+    /// 產品目錄
+    /// </summary>
+    /// <param name="ErrMsg"></param>
+    /// <returns></returns>
+    public static IQueryable<ClassItem> GetProdVol(out string ErrMsg)
+    {
+        //----- 宣告 -----
+        List<ClassItem> dataList = new List<ClassItem>();
+        string sql = "";
 
-    //    //發貨明細
-    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=1\">發貨明細</a>".FormatThis(url, dataType, tabID.Equals("1") ? "active" : "");
+        //----- 資料取得 -----
+        using (SqlCommand cmd = new SqlCommand())
+        {
+            //----- SQL 查詢語法 -----
+            sql = @"
+                SELECT RTRIM(Catelog_Vol) AS Label
+                FROM Prod_Item WITH(NOLOCK)
+                WHERE (Catelog_Vol <> '')
+                GROUP BY Catelog_Vol
+                ORDER BY 1
+                ";
 
-    //    //發貨資料傳送
-    //    url = "{0}{1}/{2}/ShipFreightSend_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=2\">發貨資料傳送</a>".FormatThis(url, dataType, tabID.Equals("2") ? "active" : "");
+            //----- SQL 執行 -----
+            cmd.CommandText = sql.ToString();
 
-    //    //運費統計
-    //    url = "{0}{1}/{2}/ShipFreightStat_Y_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=3\">運費統計</a>".FormatThis(url, dataType, tabID.Equals("3") ? "active" : "");
+            using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.Product, out ErrMsg))
+            {
+                //LinQ 查詢
+                var query = DT.AsEnumerable();
 
-    //    //週統計
-    //    url = "{0}{1}/{2}/ShipFreightStat_W_CHN".FormatThis(fn_Param.WebUrl, lang, rootID);
-    //    menu += "<a class=\"item {2}\" href=\"{0}/?dt={1}&tab=4\">週統計</a>".FormatThis(url, dataType, tabID.Equals("4") ? "active" : "");
+                //資料迴圈
+                foreach (var item in query)
+                {
+                    //加入項目
+                    var data = new ClassItem
+                    {
+                        Label = item.Field<string>("Label")
+                    };
 
-    //    return menu;
-    //}
+                    //將項目加入至集合
+                    dataList.Add(data);
 
+                }
+            }
+
+            //回傳集合
+            return dataList.AsQueryable();
+
+        }
+    }
 
 
     /// <summary>

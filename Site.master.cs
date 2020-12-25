@@ -160,10 +160,16 @@ public partial class Site : System.Web.UI.MasterPage
 
                 #region >> 第三層選單 <<
 
+                //redirect url
+                string rtUrl = "";
+
                 var menuLv3 = myMenu
                     .Where(m => m.Lv.Equals(3) && m.ParentID.Equals(itemLv2.MenuID.ToString()));
                 foreach (var itemLv3 in menuLv3)
                 {
+                    //reset redirect url
+                    rtUrl = fn_Param.WebUrl + "redirect.aspx?menuID=$id$&url=$url$";
+
                     html.Append(" <div class=\"collapsible-body\">");
                     html.Append("  <ul class=\"collection\">");
                     html.Append("   <li class=\"collection-item\">");
@@ -177,13 +183,20 @@ public partial class Site : System.Web.UI.MasterPage
                     else
                     {
                         string urlTarget = itemLv3.Target;
-
-                        //判斷連結(redirect:舊EF的URL / local:原站指定連結)
-                        html.Append("<a href=\"{0}\" target=\"{2}\"><h6>{1}</h6></a>".FormatThis(
-                            urlTarget.Equals("redirect")
+                        //set url
+                        string urlLv3 = urlTarget.Equals("redirect")
                                 ? url //EF Url
                                  : urlTarget.Equals("local") ? "{0}{1}".FormatThis(webUrl, url) //Local Url
                                   : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, url) //Route Url
+                                  ;
+                        //replace url
+                        rtUrl = rtUrl
+                            .Replace("$id$", itemLv3.MenuID)
+                            .Replace("$url$", Server.UrlEncode(urlLv3));
+
+                        //判斷連結(redirect:舊EF的URL / local:原站指定連結)
+                        html.Append("<a href=\"{0}\" target=\"{2}\"><h6>{1}</h6></a>".FormatThis(
+                            rtUrl
                             , itemLv3.MenuName
                             , urlTarget.Equals("redirect") || urlTarget.Equals("local") ? "_blank" : urlTarget));  //href target
                     }
@@ -201,15 +214,26 @@ public partial class Site : System.Web.UI.MasterPage
                     }
                     foreach (var itemLv4 in menuLv4)
                     {
-                        string urlLv4 = itemLv4.Url;
+                        //reset redirect url
+                        rtUrl = fn_Param.WebUrl + "redirect.aspx?menuID=$id$&url=$url$";
+
                         string urlTarget = itemLv4.Target;
+
+                        //set url
+                        string urlLv4 = urlTarget.Equals("redirect")
+                                ? itemLv4.Url //EF Url
+                                 : urlTarget.Equals("local") ? "{0}{1}".FormatThis(webUrl, itemLv4.Url) //Local Url
+                                  : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, itemLv4.Url) //Route Url
+                                  ;
+                        //replace url
+                        rtUrl = rtUrl
+                            .Replace("$id$", itemLv4.MenuID)
+                            .Replace("$url$", Server.UrlEncode(urlLv4));
+
 
                         //判斷連結(redirect:舊EF的URL / local:原站指定連結)
                         html.Append("<a href=\"{0}\" class=\"collection-item\" target=\"{2}\">{1}</a>".FormatThis(
-                            urlTarget.Equals("redirect")
-                                ? urlLv4
-                                 : urlTarget.Equals("local") ? "{0}{1}".FormatThis(webUrl, urlLv4) //Local Url
-                                  : "{0}{1}/{2}".FormatThis(webUrl, Req_Lang, urlLv4)
+                            rtUrl
                             , itemLv4.MenuName
                             , urlTarget.Equals("redirect") || urlTarget.Equals("local") ? "_blank" : urlTarget
                             ));

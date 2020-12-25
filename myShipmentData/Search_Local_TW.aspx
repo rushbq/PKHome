@@ -23,12 +23,22 @@
                 </div>
             </div>
             <div class="right menu">
+                <div class="item" title="物流單號,銷貨單號">
+                    <label for="MainContent_shipNoImport" style="cursor: pointer;">
+                        <i class="sync alternate icon"></i>物流單轉入
+                    </label>
+                    <asp:FileUpload ID="shipNoImport" runat="server" accept=".xlsx,.xls" Style="display: none" />
+                    <asp:Button ID="btn_ImportShipNo" runat="server" OnClick="btn_ImportShipNo_Click" Style="display: none" />
+                    &nbsp;
+                    (<a href="<%:fn_Param.WebUrl %>myShipmentData/excel/local_shipno.xlsx">範例</a>)
+                </div>
                 <div class="item" title="物流單號,運費">
                     <label for="MainContent_freightImport" style="cursor: pointer;">
                         <i class="sync alternate icon"></i>運費轉入
                     </label>
                     <asp:FileUpload ID="freightImport" runat="server" accept=".xlsx,.xls" Style="display: none" />
-                    <asp:Button ID="btn_Import" runat="server" OnClick="btn_Import_Click" Style="display: none" />
+                    <asp:Button ID="btn_Import" runat="server" OnClick="btn_Import_Click" Style="display: none" />&nbsp;
+                    (<a href="<%:fn_Param.WebUrl %>myShipmentData/excel/local_frieght.xlsx">範例</a>)
                 </div>
 
                 <asp:LinkButton ID="lbtn_Excel" runat="server" CssClass="item" OnClick="lbtn_Excel_Click"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></asp:LinkButton>
@@ -106,6 +116,7 @@
                                     <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3 center aligned">客戶別</th>
                                     <th class="grey-bg lighten-3 center aligned">商品類別</th>
+                                    <th class="grey-bg lighten-3">發票寄送方式</th>
                                     <th class="grey-bg lighten-3">OPCS單號</th>
                                     <th class="grey-bg lighten-3">銷貨單號</th>
                                     <th class="grey-bg lighten-3 center aligned">出貨單金額<br />
@@ -124,7 +135,6 @@
                                     <th class="grey-bg lighten-3">業務</th>
                                     <th class="grey-bg lighten-3">發票號碼(起)</th>
                                     <th class="grey-bg lighten-3">發票號碼(迄)</th>
-                                    <th class="grey-bg lighten-3">發票寄送方式</th>
                                     <th class="grey-bg lighten-3">發票寄出單號</th>
                                     <th class="grey-bg lighten-3">備註</th>
                                 </tr>
@@ -152,6 +162,10 @@
                             <td>
                                 <asp:DropDownList ID="ddl_ProdType" runat="server" Width="60px"></asp:DropDownList>
                             </td>
+                            <td>
+                                <!--發票寄送方式-->
+                                <asp:DropDownList ID="ddl_SendType" runat="server" Width="60px"></asp:DropDownList>
+                            </td>
                             <td class="center aligned">
                                 <a class="ui mini grey basic icon button btn-OpenDetail" data-id="<%#Eval("SO_FID") %><%#Eval("SO_SID") %>" data-title="<%#Eval("SO_FID") %>-<%#Eval("SO_SID") %>" title="展開明細">
                                     <i class="folder open icon"></i>
@@ -169,7 +183,7 @@
 
                             <td>
                                 <!-- 件數 -->
-                                <asp:TextBox ID="tb_BoxCnt" runat="server" Width="60px" Text='<%#Eval("BoxCnt") %>' type="number" step="1" min="0" placeholder="填入數字"></asp:TextBox>
+                                <asp:TextBox ID="tb_BoxCnt" runat="server" Width="60px" Text='<%#Eval("BoxCnt") %>' type="number" step="1" min="0" placeholder="填入數字">1</asp:TextBox>
                             </td>
                             <td>
                                 <asp:DropDownList ID="ddl_Ship" runat="server" Width="120px"></asp:DropDownList>
@@ -188,9 +202,6 @@
                             <td class="center aligned"><%#Eval("SalesName") %></td>
                             <td class="center aligned"><%#Eval("InvNo_Start") %></td>
                             <td class="center aligned"><%#Eval("InvNo_End") %></td>
-                            <td>
-                                <asp:DropDownList ID="ddl_SendType" runat="server" Width="60px"></asp:DropDownList>
-                            </td>
                             <td>
                                 <!-- 發票寄出單號 -->
                                 <asp:TextBox ID="tb_SendNo" runat="server" Width="100px" Text='<%#Eval("SendNo") %>' MaxLength="40" placeholder="最多 40 字"></asp:TextBox>
@@ -286,6 +297,19 @@
 
                 //trigger
                 $("#MainContent_btn_Import").trigger("click");
+            });
+
+            $("#MainContent_shipNoImport").change(function () {
+                //confirm
+                var r = confirm("請確認匯入的資料在「第一個工作表」?");
+                if (r == true) {
+
+                } else {
+                    return false;
+                }
+
+                //trigger
+                $("#MainContent_btn_ImportShipNo").trigger("click");
             });
         });
     </script>

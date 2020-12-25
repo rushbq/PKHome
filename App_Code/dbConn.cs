@@ -12,7 +12,8 @@ public class dbConn
         PKSYSinANA = 4,
         EFGP = 5,
         Report = 6,
-        PKExcel = 7
+        PKExcel = 7,
+        ClickLog = 8
     }
 
     /// <summary>

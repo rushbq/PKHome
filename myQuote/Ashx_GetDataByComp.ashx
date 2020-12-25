@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="Ashx_GetData" %>
+﻿<%@ WebHandler Language="C#" Class="Ashx_GetDataByComp" %>
 
 using System;
 using System.Web;
@@ -12,10 +12,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 /// <summary>
-/// 取得客戶歷史報價
-/// 使用程式:SearchByProd.aspx
+/// 取得集團報價
+/// 使用程式:SearchByCompany.aspx
 /// </summary>
-public class Ashx_GetData : IHttpHandler
+public class Ashx_GetDataByComp : IHttpHandler
 {
     public void ProcessRequest(HttpContext context)
     {
@@ -35,9 +35,14 @@ public class Ashx_GetData : IHttpHandler
 
 
             //[接收參數] 自訂查詢
-            string _Cust = context.Request["Cust"];
-            //string _ModelNo = context.Request["ModelNo"];
+            string _ClsID = context.Request["ClassID"];
             string _keyword = context.Request["Keyword"];
+            string _itemNo = context.Request["ItemNo"];
+            string _vol = context.Request["Vol"];
+            string _dateType = context.Request["dateType"];
+            string _sDate = context.Request["sDate"];
+            string _eDate = context.Request["eDate"];
+
 
             //----- 宣告:分頁參數 -----
             int TotalRow = 0;   //總筆數
@@ -50,11 +55,11 @@ public class Ashx_GetData : IHttpHandler
             int DataCnt;
 
             //----- 原始資料:條件篩選 -----
-            ////[查詢條件] - ModelNo
-            //if (!string.IsNullOrWhiteSpace(_ModelNo))
-            //{
-            //    search.Add("ModelNo", _ModelNo);
-            //}
+            //[查詢條件] - Class
+            if (!string.IsNullOrWhiteSpace(_ClsID) && (!_ClsID.Equals("-1")))
+            {
+                search.Add("ClassID", _ClsID);
+            }
 
             //[查詢條件] - Keyword
             if (!string.IsNullOrWhiteSpace(_keyword))
@@ -62,17 +67,53 @@ public class Ashx_GetData : IHttpHandler
                 search.Add("Keyword", _keyword);
             }
 
-            //[查詢條件] - Cust
-            if (!string.IsNullOrWhiteSpace(_Cust))
+            //[查詢條件] - ItemNo
+            if (!string.IsNullOrWhiteSpace(_itemNo))
             {
-                search.Add("Cust", _Cust);
+                search.Add("ItemNo", _itemNo);
             }
 
+            //[查詢條件] - Vol
+            if (!string.IsNullOrWhiteSpace(_vol) && (!_vol.Equals("-1")))
+            {
+                search.Add("Vol", _vol);
+            }
+
+            //[查詢條件] - Search Date
+            switch (_dateType)
+            {
+                case "A":
+                    if (!string.IsNullOrWhiteSpace(_sDate))
+                    {
+                        search.Add("sDateA", _sDate);
+                    }
+                    if (!string.IsNullOrWhiteSpace(_eDate))
+                    {
+                        search.Add("eDateA", _eDate);
+                    }
+
+                    break;
+
+                case "B":
+                    if (!string.IsNullOrWhiteSpace(_sDate))
+                    {
+                        search.Add("sDateB", _sDate);
+                    }
+                    if (!string.IsNullOrWhiteSpace(_eDate))
+                    {
+                        search.Add("eDateB", _eDate);
+                    }
+
+                    break;
+
+                default:
+                    //do nothing
+                    break;
+            }
+
+
             //----- 方法:取得資料 -----
-            /* 外業要求不分頁 */
-            start = 0;
-            length = 9999;
-            using (DT = _data.GetQuote_History(search, start, length, out DataCnt, out ErrMsg))
+            using (DT = _data.GetQuote_AllComp(search, start, length, true, out DataCnt, out ErrMsg))
             {
                 //----- 資料整理:取得總筆數 -----
                 TotalRow = DataCnt;
@@ -87,6 +128,11 @@ public class Ashx_GetData : IHttpHandler
                 json.Add(new JProperty("recordsTotal", TotalRow));
                 json.Add(new JProperty("recordsFiltered", TotalRow));
                 json.Add(new JProperty("data", JsonConvert.DeserializeObject<JArray>(Jdata)));
+
+                if (!string.IsNullOrWhiteSpace(ErrMsg))
+                {
+                    json.Add(new JProperty("error", ErrMsg));
+                }
 
                 /*
                  * [回傳格式] - Json

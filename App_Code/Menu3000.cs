@@ -759,6 +759,7 @@ namespace Menu3000Data.Models
         /*** ERP資料欄位 ***/
         public string SO_FID { get; set; }
         public string SO_SID { get; set; }
+        public string SO_FullID { get; set; }
         public string SO_Date { get; set; } //銷貨日
         public string CustID { get; set; }
         public string CustName { get; set; }

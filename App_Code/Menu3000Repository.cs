@@ -1289,6 +1289,494 @@ namespace Menu3000Data.Controllers
         #endregion *** 客戶歷史報價 E ***
 
 
+        #region *** 集團報價 S ***
+        /// <summary>
+        /// [報價管理] 集團報價
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable GetQuote_AllComp(Dictionary<string, string> search
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                string mainSql = ""; //SQL主體
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataTable myDT = new DataTable();
+                DataCnt = 0;    //資料總數
+
+                #region >> [前置作業] SQL主體 <<
+
+                mainSql = @"
+/*
+ 品號基本資料價格
+ DB:prokit2
+*/
+;WITH TblTW AS (
+SELECT RTRIM(MB001) AS ModelNo
+ , (MB057 + MB058 + MB059 + MB060) AS tw_StdCost /* 標準成本 */
+ , MB053/32 AS tw_AgentPrice /* 台灣Agent價 */
+ , MB055 AS tw_NetPrice /* 台灣網路價 */
+ , MB056 AS tw_InAgentPrice /* 內銷經銷價 */
+FROM [prokit2].dbo.INVMB WITH (NOLOCK)
+WHERE (LEFT(MB001, 1) <> '0')
+)
+
+/*
+ 品號基本資料價格
+ DB:SHPK2
+*/
+, TblSH AS (
+SELECT RTRIM(MB001) AS ModelNo
+ , (MB057 + MB058 + MB059 + MB060) AS sh_StdCost /* 標準成本 */
+ , MB097 AS sh_LowestPrice /* 業務底價 */
+ , MB047 AS sh_SalePrice /* 定價 */
+ , MB053/8 AS sh_AgentPrice /* 中國Agent價 */
+ , MB070 AS sh_SellPrice /* 中國經銷價 */
+ , MB054 AS sh_NetPrice /* 中國網路價 */
+FROM [SHPK2].dbo.INVMB WITH (NOLOCK)
+WHERE (LEFT(MB001, 1) <> '0')
+)
+
+/*
+ 採購核價
+ DB:prokit2
+  - 幣別:NTD
+*/
+, TblChkPrice_TW AS (
+SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price
+FROM (
+	SELECT
+	RTRIM([MB001]) AS ModelNo --AS [品號]
+	, [MB011] AS Price --AS [採購單價]
+	, RANK() OVER (
+		PARTITION BY MB001 ORDER BY MB008 DESC
+	) AS RankSeq  --依核價日排序
+	FROM [prokit2].dbo.PURMB
+	WHERE (MB003 = 'NTD')
+	 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112)) AND (LEFT(MB001, 1) <> '0')
+) AS ChkPrice_TW
+WHERE (ChkPrice_TW.RankSeq = 1)
+)
+
+/*
+ 採購核價
+ DB:SHPK2
+  - 幣別:RMB
+*/
+, TblChkPrice_SH AS (
+SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price
+FROM (
+	SELECT
+	RTRIM([MB001]) AS ModelNo --AS [品號]
+	, [MB011] AS Price --AS [採購單價]
+	, RANK() OVER (
+		PARTITION BY MB001 ORDER BY MB008 DESC
+	) AS RankSeq  --依核價日排序
+	FROM [SHPK2].dbo.PURMB
+	WHERE (MB003 = 'RMB')
+	 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112)) AND (LEFT(MB001, 1) <> '0')
+) AS ChkPrice_SH
+WHERE (ChkPrice_SH.RankSeq = 1)
+)
+
+
+/*
+ 台灣Agent價,生效日
+ DB:prokit2
+*/
+, TblTWSale AS (	
+SELECT TblPrice.ModelNo, TblPrice.ValidDate
+FROM (
+	SELECT
+	RTRIM([MB002]) AS ModelNo --AS [品號]
+	,[MB008] AS Price --AS [單價]
+	,[MB017] AS ValidDate --AS [生效日]
+	, RANK() OVER (
+		PARTITION BY MB002, MB004 ORDER BY MB017 DESC
+	) AS RankSeq  --依生效日排序,取最新的日期
+	FROM [prokit2].dbo.COPMB
+	WHERE (MB001 = 'A001') AND (MB004 = 'USD')
+	 AND (MB017 <= CONVERT(CHAR(8),GETDATE(),112)) AND (LEFT(MB002, 1) <> '0')
+) AS TblPrice
+WHERE (TblPrice.RankSeq = 1)
+)
+/*
+ 上海Agent價,生效日
+ DB:SHPK2
+*/
+, TblSHSale AS (	
+SELECT TblPrice.ModelNo, TblPrice.ValidDate
+FROM (
+	SELECT
+	RTRIM([MB002]) AS ModelNo --AS [品號]
+	,[MB008] AS Price --AS [單價]
+	,[MB017] AS ValidDate --AS [生效日]
+	, RANK() OVER (
+		PARTITION BY MB002, MB004 ORDER BY MB017 DESC
+	) AS RankSeq  --依生效日排序,取最新的日期
+	FROM [SHPK2].dbo.COPMB
+	WHERE (MB001 = 'SA001') AND (MB004 = 'USD')
+	 AND (MB017 <= CONVERT(CHAR(8),GETDATE(),112)) AND (LEFT(MB002, 1) <> '0')
+) AS TblPrice
+WHERE (TblPrice.RankSeq = 1)
+)
+/*
+ 京東VC價格
+ DB:SHPK2
+  - 指定客代:C010010, 幣別:RMB
+*/
+, TblVC AS (
+SELECT RTRIM(erp.MG002) AS ModelNo, Ref.ListPrice, ISNULL(RefPur.PurPrice, 0) AS PurPrice
+FROM [SHPK2].dbo.COPMG erp WITH (NOLOCK)
+ INNER JOIN [ReportCenter].dbo.SH_Prod_PriceList Ref ON Ref.ProdID COLLATE Chinese_Taiwan_Stroke_BIN = erp.MG003
+ LEFT JOIN (
+	SELECT PurInfo.*
+	FROM (
+		SELECT
+		RTRIM(MB002) AS ModelNo
+		, ISNULL(MB008, 0) AS PurPrice 
+		, RANK() OVER (
+			PARTITION BY MB002, MB019 ORDER BY MB017 DESC
+		) AS RankSeq /* GROUP:品號,交易條件 ; 依生效日排序,取第一筆 */
+		FROM [SHPK2].[dbo].[COPMB] WITH (NOLOCK)
+		/* [條件], 含稅(MB013), 生效日(MB017) <= 今日, 幣別(MB004)=RMB */
+		WHERE (MB013 = 'Y') AND (LEFT(MB002, 1) <> '0')
+		AND (MB017 <= CONVERT(CHAR(8),GETDATE(),112))
+		AND (MB001 = 'C010010')
+		AND (MB004 = 'RMB')
+	) AS PurInfo
+	WHERE (PurInfo.RankSeq = 1)
+ ) AS RefPur ON erp.MG002 = RefPur.ModelNo
+WHERE (RefMall IN (1,6)) AND (erp.MG001 = 'C010010')
+)";
+
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    //append 主體語法
+                    sql.Append(mainSql);
+
+                    //欄位select
+                    sql.AppendLine("SELECT TbAll.*");
+                    sql.AppendLine(" FROM (");
+
+                    sql.AppendLine(" SELECT");
+                    sql.AppendLine(" RTRIM(Prod.Model_No) AS Model_No");
+                    sql.AppendLine(" , Prod.Model_Name_zh_TW AS ModelName");
+                    sql.AppendLine(" , Prod.Pub_Individual_Packing_zh_TW AS Packing /* 包裝方式 */");
+                    sql.AppendLine(" , Prod.Ship_From");
+                    sql.AppendLine(" , REPLACE(ISNULL(Prod.Catelog_Vol, ''), 'NULL', '') AS CatVol");
+                    sql.AppendLine(" , REPLACE(ISNULL(Prod.Page, ''), 'NULL', '') AS CatPage");
+
+                    /* TW:Agent價 ,台灣網路價 ,內銷經銷價 ,標準成本, 核價 */
+                    sql.AppendLine(" , ISNULL(TblTW.tw_AgentPrice, 0) tw_AgentPrice, ISNULL(TblTW.tw_NetPrice, 0) tw_NetPrice");
+                    sql.AppendLine(" , ISNULL(TblTW.tw_InAgentPrice, 0) tw_InAgentPrice, ISNULL(TblTW.tw_StdCost, 0) tw_StdCost");
+                    sql.AppendLine(" , ISNULL(TblChkPrice_TW.Price, 0) AS tw_PurPrice");
+
+                    /* SH:Agent價 ,業務底價 ,定價 ,標準成本, 中國經銷價, 中國網路價, 核價 */
+                    sql.AppendLine(" , ISNULL(TblSH.sh_AgentPrice, 0) sh_AgentPrice, ISNULL(TblSH.sh_LowestPrice, 0) sh_LowestPrice");
+                    sql.AppendLine(" , ISNULL(TblSH.sh_SalePrice, 0) sh_SalePrice, ISNULL(TblSH.sh_StdCost, 0) sh_StdCost");
+                    sql.AppendLine(" , ISNULL(TblSH.sh_SellPrice, 0) AS sh_SellPrice, ISNULL(TblSH.sh_NetPrice, 0) AS sh_NetPrice");
+                    sql.AppendLine(" , ISNULL(TblChkPrice_SH.Price, 0) AS sh_PurPrice");
+
+                    /* 京東:路面價 ,採購價 */
+                    sql.AppendLine(" , ISNULL(TblVC.ListPrice, 0) ListPrice, ISNULL(TblVC.PurPrice, 0) PurPrice");
+                    /* TW/SH生效日(from COPMB) */
+                    sql.AppendLine(" , TblTWSale.ValidDate AS tw_ValidDate, TblSHSale.ValidDate AS sh_ValidDate");
+                    /* 上市日,停售日 */
+                    sql.AppendLine(" , (CASE WHEN Prod.Date_Of_Listing = '' THEN NULL ELSE CAST((CONVERT(DATE, Prod.Date_Of_Listing, 111)) AS VARCHAR) END) AS onlineDate");
+                    sql.AppendLine(" , CONVERT(VARCHAR(10), Prod.Stop_Offer_Date, 111) AS offlineDate");
+
+                    sql.AppendLine(" , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx");
+                    sql.AppendLine(" FROM [ProductCenter].dbo.Prod_Item Prod");
+                    sql.AppendLine("  LEFT JOIN TblTW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTW.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblSH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSH.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblVC ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblVC.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblSHSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSHSale.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblTWSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTWSale.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblChkPrice_TW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_TW.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblChkPrice_SH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_SH.ModelNo");
+                    sql.AppendLine(" WHERE (LEFT(Prod.Model_No, 1) <> '0')");
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "ClassID":
+                                    sql.Append(" AND (Prod.Class_ID = @Class_ID)");
+                                    sqlParamList.Add(new SqlParameter("@Class_ID", item.Value));
+
+                                    break;
+
+                                case "ItemNo":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Item_No) LIKE '%' + UPPER(@ItemNo) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@ItemNo", item.Value));
+
+                                    break;
+
+                                case "Vol":
+                                    sql.Append(" AND (Prod.Catelog_Vol = @Vol)");
+
+                                    sqlParamList.Add(new SqlParameter("@Vol", item.Value));
+
+                                    break;
+
+                                /* 上市日(yyyyMMdd) */
+                                case "sDateA":
+                                    sql.Append(" AND (Prod.Date_Of_Listing >= @sDateA)");
+
+                                    sqlParamList.Add(new SqlParameter("@sDateA", item.Value));
+
+                                    break;
+
+                                case "eDateA":
+                                    sql.Append(" AND (Prod.Date_Of_Listing <= @eDateA)");
+
+                                    sqlParamList.Add(new SqlParameter("@eDateA", item.Value));
+
+                                    break;
+
+                                /* 停售日(yyyy/MM/dd) */
+                                case "sDateB":
+                                    sql.Append(" AND (Prod.Stop_Offer_Date >= @sDateB)");
+
+                                    sqlParamList.Add(new SqlParameter("@sDateB", item.Value));
+
+                                    break;
+
+                                case "eDateB":
+                                    sql.Append(" AND (Prod.Stop_Offer_Date <= @eDateB)");
+
+                                    sqlParamList.Add(new SqlParameter("@eDateB", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    sql.AppendLine(") AS TbAll");
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+                    cmd.CommandTimeout = 90;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+
+
+                    //加入參數陣列
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+                    AllErrMsg += ErrMsg;
+                }
+
+                #endregion
+
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    //append 主體語法
+                    sql.Append(mainSql);
+                    //欄位select
+                    sql.AppendLine(" SELECT COUNT(Prod.Model_No) AS TotalCnt");
+                    sql.AppendLine(" FROM [ProductCenter].dbo.Prod_Item Prod");
+                    sql.AppendLine("  LEFT JOIN TblTW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTW.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblSH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSH.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblVC ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblVC.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblSHSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSHSale.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblTWSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTWSale.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblChkPrice_TW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_TW.ModelNo");
+                    sql.AppendLine("  LEFT JOIN TblChkPrice_SH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_SH.ModelNo");
+                    sql.AppendLine(" WHERE (LEFT(Prod.Model_No, 1) <> '0')");
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "ClassID":
+                                    sql.Append(" AND (Prod.Class_ID = @Class_ID)");
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Class_ID", item.Value));
+
+                                    break;
+
+
+                                case "ItemNo":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Item_No) LIKE '%' + UPPER(@ItemNo) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@ItemNo", item.Value));
+
+                                    break;
+
+                                case "Vol":
+                                    sql.Append(" AND (Prod.Catelog_Vol = @Vol)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Vol", item.Value));
+
+                                    break;
+
+
+                                /* 上市日(yyyyMMdd) */
+                                case "sDateA":
+                                    sql.Append(" AND (Prod.Date_Of_Listing >= @sDateA)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@sDateA", item.Value));
+
+                                    break;
+
+                                case "eDateA":
+                                    sql.Append(" AND (Prod.Date_Of_Listing <= @eDateA)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@eDateA", item.Value));
+
+                                    break;
+
+                                /* 停售日(yyyy/MM/dd) */
+                                case "sDateB":
+                                    sql.Append(" AND (Prod.Stop_Offer_Date >= @sDateB)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@sDateB", item.Value));
+
+                                    break;
+
+                                case "eDateB":
+                                    sql.Append(" AND (Prod.Stop_Offer_Date <= @eDateB)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@eDateB", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 條件參數 -----
+                    //加入參數陣列
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+                //return
+                if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+                return myDT;
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        #endregion *** 集團報價 E ***
+
 
         #region *** 發貨 S ***
         /// <summary>
@@ -5691,7 +6179,7 @@ namespace Menu3000Data.Controllers
 
                                 //平台維護欄位
                                 Data_ID = item.Field<Guid?>("Data_ID"),
-                                BoxCnt = item.Field<Int32?>("BoxCnt") ?? 0,
+                                BoxCnt = item.Field<Int32?>("BoxCnt") ?? 1,
                                 ShipNo = item.Field<string>("ShipNo"),
                                 Freight = _Freight, //(L)
                                 Cnt_FreightPercent = _Cnt_FreightPercent, //運費比(%)(M=L/G)
@@ -5892,12 +6380,12 @@ namespace Menu3000Data.Controllers
 
 
         /// <summary>
-        /// [出貨明細表](內銷) 取得Excel欄位
+        /// [出貨明細表](內銷) 取得Excel欄位(運費匯入)
         /// 回傳Excel資料
         /// </summary>
         /// <param name="filePath"></param>
         /// <param name="sheetName"></param>
-        public IQueryable<ShipData_LocalItem> GetExcel_ShipNoData(string filePath, string sheetName)
+        public IQueryable<ShipData_LocalItem> GetExcel_FreightData(string filePath, string sheetName)
         {
             try
             {
@@ -5923,6 +6411,55 @@ namespace Menu3000Data.Controllers
                     {
                         ShipNo = _ShipNo,
                         Freight = _Freight
+                    };
+
+                    //將項目加入至集合
+                    dataList.Add(data);
+
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception("請檢查Excel格式是否正確!!" + ex.Message.ToString());
+            }
+        }
+
+        /// <summary>
+        /// [出貨明細表](內銷) 取得Excel欄位(物流單匯入)
+        /// 回傳Excel資料
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="sheetName"></param>
+        public IQueryable<ShipData_LocalItem> GetExcel_ShipNoData(string filePath, string sheetName)
+        {
+            try
+            {
+                //----- 宣告 -----
+                List<ShipData_LocalItem> dataList = new List<ShipData_LocalItem>();
+
+                //[Excel] - 取得原始資料
+                var excelFile = new ExcelQueryFactory(filePath);
+                var queryVals = excelFile.Worksheet(sheetName);
+
+                //宣告各內容參數
+                string _ShipNo = ""; //物流單號
+                string _FullID = ""; //銷貨單號(含-)
+
+                //資料迴圈
+                foreach (var val in queryVals)
+                {
+                    _FullID = val[2];
+                    _ShipNo = val[14];
+
+                    //加入項目
+                    var data = new ShipData_LocalItem
+                    {
+                        ShipNo = _ShipNo,
+                        SO_FullID = _FullID
                     };
 
                     //將項目加入至集合
@@ -7489,6 +8026,39 @@ namespace Menu3000Data.Controllers
 
         }
 
+
+        /// <summary>
+        /// 回寫物流單號
+        /// </summary>
+        /// <param name="instance">excel來源資料</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Check_ShipLocalData_ShipNo(IQueryable<ShipData_LocalItem> instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 語法 -----
+                var _data = instance
+                    .Where(el => !el.ShipNo.Equals(""));
+
+                foreach (var item in _data)
+                {
+                    sql.AppendLine(" UPDATE Shipment_Local_Data SET ShipNo = N'{0}' WHERE ((SO_FID +'-'+ SO_SID) = '{1}');"
+                        .FormatThis(item.ShipNo, item.SO_FullID));
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
         #endregion *** 出貨明細表(內銷) E ***
 
 
