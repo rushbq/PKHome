@@ -18,6 +18,7 @@ using PKLib_Method.Methods;
   [電商數據]-eCommerceData
   [出貨明細表]-ShipData
   [外銷客戶歷史報價]-GetQuote_History
+  [集團報價表]
 */
 namespace Menu3000Data.Controllers
 {

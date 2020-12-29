@@ -114,8 +114,11 @@ public partial class myQuote_SearchByProd : SecurityCheck
         _col.Add("sh_StdCost", "標準成本-上海成本(RMB)");
         _col.Add("sh_PurPrice", "採購最新核價-上海成本(RMB)");
 
-        _col.Add("sh_AgentPrice", "Agent價-中國市場(RMB)");
-        _col.Add("sh_ValidDate", "生效日-中國市場(RMB)");
+        _col.Add("tw_AgentPrice", "台灣Agent價");
+        _col.Add("tw_ValidDate", "台灣生效日");
+        _col.Add("sh_AgentPrice", "上海Agent價");
+        _col.Add("sh_ValidDate", "上海生效日");
+
         _col.Add("sh_LowestPrice", "業務底價-中國市場(RMB)");
         _col.Add("sh_SellPrice", "中國經銷價-中國市場(RMB)");
         _col.Add("sh_NetPrice", "中國網路價-中國市場(RMB)");
@@ -123,8 +126,6 @@ public partial class myQuote_SearchByProd : SecurityCheck
         _col.Add("ListPrice", "京東頁面價-中國市場(RMB)");
         _col.Add("sh_SalePrice", "定價-中國市場(RMB)");
 
-        _col.Add("tw_AgentPrice", "Agent價-台灣市場(NTD)");
-        _col.Add("tw_ValidDate", "生效日-台灣市場(NTD)");
         _col.Add("tw_NetPrice", "台灣網路價-台灣市場(NTD)");
         _col.Add("tw_InAgentPrice", "內銷經銷價-台灣市場(NTD)");
 

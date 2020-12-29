@@ -115,12 +115,12 @@
                             <th class="grey-bg lighten-3" rowspan="2">品號</th>
                             <th class="grey-bg lighten-3" rowspan="2">目錄</th>
                             <th class="grey-bg lighten-3" rowspan="2">頁次</th>
-                            <th class="grey-bg lighten-3" rowspan="2">主要<br />
-                                出貨地</th>
+                            <th class="grey-bg lighten-3" rowspan="2">主要<br />出貨地</th>
                             <th class="grey-bg lighten-3 center aligned" colspan="2">台灣成本(NTD)</th>
                             <th class="grey-bg lighten-3 center aligned" colspan="2">上海成本(RMB)</th>
-                            <th class="blue-bg lighten-3 center aligned" colspan="8">中國市場(RMB)</th>
-                            <th class="green-bg lighten-3 center aligned" colspan="4">台灣市場(NTD)</th>
+                            <th class="grey-bg lighten-3 center aligned" colspan="4">外銷(USD)</th>
+                            <th class="blue-bg lighten-3 center aligned" colspan="6">中國市場(RMB)</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="2">台灣市場(NTD)</th>
 
                             <th class="grey-bg lighten-3" rowspan="2">品名</th>
                             <th class="grey-bg lighten-3" rowspan="2">包裝方式</th>
@@ -130,25 +130,27 @@
                         <tr>
                             <!-- 台灣成本 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">採購最新核價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />最新核價</th>
                             <!-- 上海成本 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">採購最新核價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />最新核價</th>
+                            
+                            <!-- 外銷(USD) -->
+                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />Agent價</th>
+                            <th class="grey-bg lighten-3 center aligned">台灣<br />生效日</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">上海<br />Agent價</th>
+                            <th class="grey-bg lighten-3 center aligned">上海<br />生效日</th>
 
                             <!-- 中國市場 -->
-                            <th class="grey-bg lighten-3 right aligned numFmt">Agent價</th>
-                            <th class="grey-bg lighten-3 center aligned">生效日</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">業務底價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">中國經銷價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">中國網路價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">京東採購價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">京東頁面價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />經銷價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />網路價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />採購價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />頁面價</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">定價</th>
                             <!-- 台灣市場 -->
-                            <th class="grey-bg lighten-3 right aligned numFmt">Agent價</th>
-                            <th class="grey-bg lighten-3 center aligned">生效日</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">台灣網路價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">內銷經銷價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />網路價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">內銷<br />經銷價</th>
                         </tr>
                     </thead>
                 </table>
@@ -252,7 +254,7 @@
                 //Init
                 table =
                  $('#myListTable').DataTable({
-                     "responsive": true,
+                     "responsive": false,
                      "processing": true,
                      "serverSide": true,
                      "ajax": {
@@ -287,10 +289,12 @@
                          /* SH成本 */
                          { data: "sh_StdCost", className: "right aligned" },
                          { data: "sh_PurPrice", className: "right aligned" },
+                         { data: "tw_AgentPrice", className: "right aligned numComma" }, //TW-Agent價
+                         { data: "tw_ValidDate", className: "center aligned" }, //TW-生效日
+                         { data: "sh_AgentPrice", className: "right aligned numComma" }, //SH-Agent價
+                         { data: "sh_ValidDate", className: "center aligned" }, //SH-生效日
 
                          /* SH市場 */
-                         { data: "sh_AgentPrice", className: "right aligned numComma" }, //Agent價
-                         { data: "sh_ValidDate", className: "center aligned" }, //生效日
                          { data: "sh_LowestPrice", className: "right aligned" }, //業務底價
                          { data: "sh_SellPrice", className: "right aligned" }, //中國經銷價
                          { data: "sh_NetPrice", className: "right aligned" }, //中國網路價
@@ -299,8 +303,6 @@
                          { data: "sh_SalePrice", className: "right aligned" }, //定價
 
                          /* TW市場 */
-                         { data: "tw_AgentPrice", className: "right aligned numComma" }, //Agent價
-                         { data: "tw_ValidDate", className: "center aligned" }, //生效日
                          { data: "tw_NetPrice", className: "right aligned" }, //台灣網路價
                          { data: "tw_InAgentPrice", className: "right aligned" }, //內銷經銷價
 
