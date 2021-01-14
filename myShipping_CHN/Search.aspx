@@ -18,8 +18,6 @@
                 <div class="ui small breadcrumb">
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
-                    <div class="section">發貨/運費</div>
-                    <i class="right angle icon divider"></i>
                     <div class="active section red-text text-darken-2">
                         出貨明細表 - 
                         <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
@@ -27,6 +25,7 @@
                 </div>
             </div>
             <div class="right menu">
+                <a href="<%=fn_Param.WebUrl %>myShipping_CHN/CustSendCntStat.aspx" class="item" target="_blank"><i class="sync alternate icon"></i><span class="mobile hidden">代發統計</span></a>
                 <a href="<%=fn_Param.WebUrl %><%:Req_Lang %>/<%:Req_RootID %>/ShipImportCHN?dt=<%=Req_DataType %>" class="item"><i class="sync alternate icon"></i><span class="mobile hidden">物流單轉入</span></a>
                 <asp:LinkButton ID="lbtn_Export2" runat="server" OnClick="lbtn_Export2_Click" CssClass="item" ToolTip="查詢條件僅限銷貨日"><i class="file excel icon"></i><span class="mobile hidden">拼箱樣單</span></asp:LinkButton>
                 <asp:LinkButton ID="lbtn_Export1" runat="server" OnClick="lbtn_Export1_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">代發明細</span></asp:LinkButton>

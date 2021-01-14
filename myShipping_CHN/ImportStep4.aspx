@@ -1,4 +1,4 @@
-﻿<%@ Page Title="發貨-物流單轉入Step4" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="ImportStep4.aspx.cs" Inherits="myShipping_ImportStep4" %>
+﻿<%@ Page Title="物流單轉入Step4" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="ImportStep4.aspx.cs" Inherits="myShipping_ImportStep4" %>
 
 <%@ Register Src="Ascx_StepMenu.ascx" TagName="Ascx_Menu" TagPrefix="ucMenu" %>
 <%@ Import Namespace="PKLib_Method.Methods" %>
@@ -12,10 +12,10 @@
                 <div class="ui small breadcrumb">
                     <div class="section">業務行銷</div>
                     <i class="right angle icon divider"></i>
-                    <div class="section">發貨/運費維護統計</div>
+                    <div class="section">出貨明細</div>
                     <i class="right angle icon divider"></i>
                     <div class="active section red-text text-darken-2">
-                        發貨-物流單轉入 - 
+                        物流單轉入 - 
                         <asp:Literal ID="lt_CorpName" runat="server"></asp:Literal>
                     </div>
                 </div>

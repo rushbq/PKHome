@@ -299,6 +299,7 @@
                 $("#MainContent_btn_Import").trigger("click");
             });
 
+            //Click:Import
             $("#MainContent_shipNoImport").change(function () {
                 //confirm
                 var r = confirm("請確認匯入的資料在「第一個工作表」?");

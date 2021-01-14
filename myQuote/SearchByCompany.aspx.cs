@@ -59,6 +59,9 @@ public partial class myQuote_SearchByProd : SecurityCheck
         string _ClsID = ddl_Class.SelectedValue;
         string _itemNo = filter_ItemNo.Text;
         string _vol = ddl_Vol.SelectedValue;
+        string _dateType = ddl_dateType.SelectedValue;
+        string _sDate = filter_sDate.Text;
+        string _eDate = filter_eDate.Text;
 
         //-----原始資料:條件篩選---- -
         #region >> 條件篩選 <<
@@ -87,6 +90,37 @@ public partial class myQuote_SearchByProd : SecurityCheck
             search.Add("Vol", _vol);
         }
 
+        //[查詢條件] - Search Date
+        switch (_dateType)
+        {
+            case "A":
+                if (!string.IsNullOrWhiteSpace(_sDate))
+                {
+                    search.Add("sDateA", _sDate);
+                }
+                if (!string.IsNullOrWhiteSpace(_eDate))
+                {
+                    search.Add("eDateA", _eDate);
+                }
+
+                break;
+
+            case "B":
+                if (!string.IsNullOrWhiteSpace(_sDate))
+                {
+                    search.Add("sDateB", _sDate);
+                }
+                if (!string.IsNullOrWhiteSpace(_eDate))
+                {
+                    search.Add("eDateB", _eDate);
+                }
+
+                break;
+
+            default:
+                //do nothing
+                break;
+        }
         #endregion
 
         //----- 方法:取得資料 -----
@@ -115,19 +149,36 @@ public partial class myQuote_SearchByProd : SecurityCheck
         _col.Add("sh_PurPrice", "採購最新核價-上海成本(RMB)");
 
         _col.Add("tw_AgentPrice", "台灣Agent價");
+        _col.Add("tw_Rate_AgentPrice", "利潤率%(台灣Agent)");
         _col.Add("tw_ValidDate", "台灣生效日");
+
         _col.Add("sh_AgentPrice", "上海Agent價");
+        _col.Add("sh_Rate_AgentPrice", "利潤率%(上海Agent)");
         _col.Add("sh_ValidDate", "上海生效日");
 
         _col.Add("sh_LowestPrice", "業務底價-中國市場(RMB)");
+        _col.Add("sh_Rate_LowestPrice", "利潤率%(業務底價)");
+
         _col.Add("sh_SellPrice", "中國經銷價-中國市場(RMB)");
+        _col.Add("sh_Rate_SellPrice", "利潤率%(中國經銷價)");
+
         _col.Add("sh_NetPrice", "中國網路價-中國市場(RMB)");
+        _col.Add("sh_Rate_NetPrice", "利潤率%(中國網路價)");
+
         _col.Add("PurPrice", "京東採購價-中國市場(RMB)");
+        _col.Add("sh_Rate_PurPrice", "利潤率%(京東採購價)");
+
         _col.Add("ListPrice", "京東頁面價-中國市場(RMB)");
-        _col.Add("sh_SalePrice", "定價-中國市場(RMB)");
+        _col.Add("sh_Rate_ListPrice", "利潤率%(京東頁面價)");
+
+        _col.Add("sh_SalePrice", "零售價-中國市場(RMB)");
+        _col.Add("sh_Rate_SalePrice", "利潤率%(零售價)");
 
         _col.Add("tw_NetPrice", "台灣網路價-台灣市場(NTD)");
+        _col.Add("tw_Rate_NetPrice", "利潤率%(台灣網路價)");
+
         _col.Add("tw_InAgentPrice", "內銷經銷價-台灣市場(NTD)");
+        _col.Add("tw_Rate_InAgentPrice", "利潤率%(內銷經銷價)");
 
         _col.Add("ModelName", "品名");
         _col.Add("Packing", "包裝方式");

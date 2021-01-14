@@ -259,8 +259,8 @@
                 , { "CompID", "SZ" }});
 
         //發貨CHN
-         routes.MapPageRoute("SFsearch_CHN", "{lang}/{rootID}/ShipFreight_CHN", "~/myShipping_CHN/Search.aspx", false,
-         new RouteValueDictionary {
+        routes.MapPageRoute("SFsearch_CHN", "{lang}/{rootID}/ShipFreight_CHN", "~/myShipping_CHN/Search.aspx", false,
+        new RouteValueDictionary {
                 { "lang", "auto" }
                 , { "rootID", "3000" }});
         routes.MapPageRoute("SFedit_CHN", "{lang}/{rootID}/ShipFreight_CHN/Edit/{id}", "~/myShipping_CHN/Edit.aspx", false,
@@ -597,6 +597,12 @@
                 , { "rootID", "4000" }
                 , { "CompID", "TW" }});
 
+        //標準成本
+        routes.MapPageRoute("PurProdCost", "{lang}/{rootID}/PurProdCost/{CompID}", "~/myPurProdCost/Search.aspx", false,
+        new RouteValueDictionary {
+                { "lang", "auto" }
+                , { "rootID", "4000" }
+                , { "CompID", "TW" }});
 
 
         //Error

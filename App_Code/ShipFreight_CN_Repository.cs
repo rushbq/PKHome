@@ -992,6 +992,138 @@ namespace ShipFreight_CN.Controllers
         }
 
 
+        /// <summary>
+        /// [出貨明細表] 取得Excel欄位(代發筆數匯入)
+        /// 回傳Excel資料
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="sheetName"></param>
+        public IQueryable<CustCntItem> GetExcel_CustCntData(string filePath, string sheetName)
+        {
+            try
+            {
+                //----- 宣告 -----
+                List<CustCntItem> dataList = new List<CustCntItem>();
+
+                //[Excel] - 取得原始資料
+                var excelFile = new ExcelQueryFactory(filePath);
+                var queryVals = excelFile.Worksheet(sheetName);
+
+                //宣告各內容參數
+                Int16 _year;
+                Int16 _month;
+                string _custID = "";
+                Int16 _cnt = 0;
+
+                //資料迴圈
+                foreach (var val in queryVals)
+                {
+                    _year = Convert.ToInt16(val[0]);
+                    _month = Convert.ToInt16(val[1]);
+                    _custID = val[2];
+                    _cnt = Convert.ToInt16(val[3]);
+
+                    //加入項目
+                    var data = new CustCntItem
+                    {
+                        setYear = _year,
+                        setMonth = _month,
+                        CustID = _custID,
+                        Cnt = _cnt
+                    };
+
+                    //將項目加入至集合
+                    dataList.Add(data);
+
+                }
+
+                //回傳集合
+                return dataList.AsQueryable();
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception("請檢查Excel格式是否正確!!" + ex.Message.ToString());
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// 代發次數統計
+        /// </summary>
+        /// <param name="inputYear">年</param>
+        /// <param name="inputMonth">月</param>
+        /// <param name="search">查詢參數</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 必填:inputYear / inputMonth
+        /// </remarks>
+        public DataTable GetCustCntStat(string inputYear, string inputMonth
+            , Dictionary<string, string> search, out string ErrMsg)
+        {
+            //----- 資料取得 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+;WITH TblSum AS (
+	SELECT TblERP.TG004 AS CustID, COUNT(TblERP.TG004) AS doSentCnt
+	FROM[PKExcel].dbo.Shipment_Data_CHN ShipBase
+	 INNER JOIN [SHPK2].dbo.COPTG TblERP ON TblERP.TG001 = ShipBase.SO_FID COLLATE Chinese_Taiwan_Stroke_BIN AND TblERP.TG002 = ShipBase.SO_SID COLLATE Chinese_Taiwan_Stroke_BIN
+	WHERE (ShipBase.ShipWay = 9) AND LEFT(TblERP.TG003, 6) = @paramYM
+	GROUP BY TblERP.TG004
+)
+SELECT Base.setYear, Base.setMonth
+, Base.CustID, RTRIM(Cust.MA002) CustName
+, Base.SendCnt, ISNULL(TblSum.doSentCnt, 0) AS doSentCnt
+FROM Shipment_CustSendCnt Base
+    INNER JOIN [PKSYS].dbo.Customer Cust ON Base.CustID = Cust.MA001 AND Cust.DBS = Cust.DBC
+	LEFT JOIN TblSum ON Base.CustID COLLATE Chinese_Taiwan_Stroke_BIN = TblSum.CustID
+WHERE (setYear = @paramYear) AND (setMonth = @paramMonth)            
+                ";
+
+                /* Search */
+                #region >> filter <<
+
+                //if (search != null)
+                //{
+                //    //過濾空值
+                //    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                //    //查詢內容
+                //    foreach (var item in thisSearch)
+                //    {
+                //        switch (item.Key)
+                //        {
+                //            case "Cust":
+                //                //客戶代號
+                //                sql += " AND (UPPER(TblBase.CustID) = UPPER(@CustID))";
+
+                //                cmd.Parameters.AddWithValue("CustID", item.Value);
+
+                //                break;
+                //        }
+                //    }
+                //}
+                #endregion
+
+                sql += " ORDER BY 6 DESC";
+
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                //cmd.CommandTimeout = 60;   //單位:秒
+                cmd.Parameters.AddWithValue("paramYear", inputYear);
+                cmd.Parameters.AddWithValue("paramMonth", inputMonth);
+                cmd.Parameters.AddWithValue("paramYM", inputYear + ("0" + inputMonth).Right(2));
+
+                return dbConn.LookupDT(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
         #endregion *** 出貨資料 E ***
 
 
@@ -1462,6 +1594,52 @@ namespace ShipFreight_CN.Controllers
 
 
         #endregion *** 匯入 E ***
+
+
+
+        /// <summary>
+        /// 寫入客戶代發資料
+        /// </summary>
+        /// <param name="instance">excel來源資料</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Check_CustCnt(IQueryable<CustCntItem> instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 語法 -----
+                var _data = instance
+                    .Where(el => !el.CustID.Equals(""));
+
+                foreach (var item in _data)
+                {
+                    sql.AppendLine("IF (SELECT COUNT(*) FROM Shipment_CustSendCnt WHERE (CustID = N'{0}') AND (setYear = {1}) AND (setMonth = {2})) > 0".FormatThis(
+                        item.CustID, item.setYear, item.setMonth));
+                    sql.AppendLine("  BEGIN");
+                    sql.AppendLine("    UPDATE Shipment_CustSendCnt SET SendCnt = {0}, Update_Time = GETDATE() WHERE (CustID = N'{1}') AND (setYear = {2}) AND (setMonth = {3})".FormatThis(
+                        item.Cnt, item.CustID, item.setYear, item.setMonth));
+                    sql.AppendLine("  END");
+                    sql.AppendLine(" ELSE");
+                    sql.AppendLine("  BEGIN");
+                    sql.AppendLine("    INSERT INTO Shipment_CustSendCnt (setYear, setMonth, CustID, SendCnt)");
+                    sql.AppendLine("    VALUES ({0}, {1}, N'{2}', {3})".FormatThis(
+                        item.setYear, item.setMonth, item.CustID, item.Cnt));
+                    sql.AppendLine("  END");
+
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
 
         #endregion
 

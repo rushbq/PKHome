@@ -220,13 +220,18 @@
         function doGetDrpVals() {
             //取得多選品號的值
             var procValue = $("#menuProd").dropdown("get value");
-            if (procValue.length > 0) {
+            var $fldProd = $("#MainContent_val_Prods");
+
+            if (procValue.length == 0) {
+                $fldProd.val("");
+            } else {
                 //將陣列轉成以#分隔的字串
                 var myVals = procValue.join("#");
                 //填入隱藏欄位(傳遞時使用)
-                $("#MainContent_val_Prods").val(myVals);
+                $fldProd.val(myVals);
                 //console.log(myVals);
             }
+
         }
 
     </script>

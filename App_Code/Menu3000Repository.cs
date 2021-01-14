@@ -1347,7 +1347,7 @@ WHERE (LEFT(MB001, 1) <> '0')
 SELECT RTRIM(MB001) AS ModelNo
  , (MB057 + MB058 + MB059 + MB060) AS sh_StdCost /* 標準成本 */
  , MB097 AS sh_LowestPrice /* 業務底價 */
- , MB047 AS sh_SalePrice /* 定價 */
+ , MB051 AS sh_SalePrice /* 零售價 */
  , MB053/8 AS sh_AgentPrice /* 中國Agent價 */
  , MB070 AS sh_SellPrice /* 中國經銷價 */
  , MB054 AS sh_NetPrice /* 中國網路價 */
@@ -1481,47 +1481,90 @@ WHERE (RefMall IN (1,6)) AND (erp.MG001 = 'C010010')
                     sql.Append(mainSql);
 
                     //欄位select
-                    sql.AppendLine("SELECT TbAll.*");
-                    sql.AppendLine(" FROM (");
+                    string subSql = @"
+SELECT TbAll.*
+FROM (
+  SELECT
+	RTRIM(Prod.Model_No) AS Model_No
+	, Prod.Model_Name_zh_TW AS ModelName
+	, Prod.Pub_Individual_Packing_zh_TW AS Packing /* 包裝明細 */
+	, Prod.Ship_From
+	, REPLACE(ISNULL(Prod.Catelog_Vol, ''), 'NULL', '') AS CatVol
+	, REPLACE(ISNULL(Prod.Page, ''), 'NULL', '') AS CatPage
 
-                    sql.AppendLine(" SELECT");
-                    sql.AppendLine(" RTRIM(Prod.Model_No) AS Model_No");
-                    sql.AppendLine(" , Prod.Model_Name_zh_TW AS ModelName");
-                    sql.AppendLine(" , Prod.Pub_Individual_Packing_zh_TW AS Packing /* 包裝方式 */");
-                    sql.AppendLine(" , Prod.Ship_From");
-                    sql.AppendLine(" , REPLACE(ISNULL(Prod.Catelog_Vol, ''), 'NULL', '') AS CatVol");
-                    sql.AppendLine(" , REPLACE(ISNULL(Prod.Page, ''), 'NULL', '') AS CatPage");
+	/* TW:Agent價 */
+	, ISNULL(TblTW.tw_AgentPrice, 0) AS tw_AgentPrice
+	/* 利潤率(TW:Agent價) */
+	, (CASE WHEN TblTW.tw_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_AgentPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_AgentPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_AgentPrice
+	/* 台灣網路價 */
+	, ISNULL(TblTW.tw_NetPrice, 0) AS tw_NetPrice
+	/* 利潤率(台灣網路價) */
+	, (CASE WHEN TblTW.tw_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_NetPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_NetPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_NetPrice
+	/* 內銷經銷價 */
+	, ISNULL(TblTW.tw_InAgentPrice, 0) AS tw_InAgentPrice
+	/* 利潤率(內銷經銷價) */
+	, (CASE WHEN TblTW.tw_InAgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_InAgentPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_InAgentPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_InAgentPrice
+	/* 標準成本 */
+	, ISNULL(TblTW.tw_StdCost, 0) AS tw_StdCost
+	/* 核價 */
+	, ISNULL(TblChkPrice_TW.Price, 0) AS tw_PurPrice
 
-                    /* TW:Agent價 ,台灣網路價 ,內銷經銷價 ,標準成本, 核價 */
-                    sql.AppendLine(" , ISNULL(TblTW.tw_AgentPrice, 0) tw_AgentPrice, ISNULL(TblTW.tw_NetPrice, 0) tw_NetPrice");
-                    sql.AppendLine(" , ISNULL(TblTW.tw_InAgentPrice, 0) tw_InAgentPrice, ISNULL(TblTW.tw_StdCost, 0) tw_StdCost");
-                    sql.AppendLine(" , ISNULL(TblChkPrice_TW.Price, 0) AS tw_PurPrice");
+	/* SH:Agent價 */
+	, ISNULL(TblSH.sh_AgentPrice, 0) AS sh_AgentPrice
+	/* 利潤率(SH:Agent價) */
+	, (CASE WHEN TblSH.sh_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_AgentPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_AgentPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_AgentPrice
+	/* 業務底價 */
+	, ISNULL(TblSH.sh_LowestPrice, 0) AS sh_LowestPrice
+	/* 利潤率(業務底價) */
+	, (CASE WHEN TblSH.sh_LowestPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_LowestPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_LowestPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_LowestPrice
+	/* 零售價 */
+	, ISNULL(TblSH.sh_SalePrice, 0) AS sh_SalePrice
+	/* 利潤率(零售價) */
+	, (CASE WHEN TblSH.sh_SalePrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SalePrice*8 - TblSH.sh_StdCost) / (TblSH.sh_SalePrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_SalePrice
 
-                    /* SH:Agent價 ,業務底價 ,定價 ,標準成本, 中國經銷價, 中國網路價, 核價 */
-                    sql.AppendLine(" , ISNULL(TblSH.sh_AgentPrice, 0) sh_AgentPrice, ISNULL(TblSH.sh_LowestPrice, 0) sh_LowestPrice");
-                    sql.AppendLine(" , ISNULL(TblSH.sh_SalePrice, 0) sh_SalePrice, ISNULL(TblSH.sh_StdCost, 0) sh_StdCost");
-                    sql.AppendLine(" , ISNULL(TblSH.sh_SellPrice, 0) AS sh_SellPrice, ISNULL(TblSH.sh_NetPrice, 0) AS sh_NetPrice");
-                    sql.AppendLine(" , ISNULL(TblChkPrice_SH.Price, 0) AS sh_PurPrice");
+	/* 中國經銷價 */
+	, ISNULL(TblSH.sh_SellPrice, 0) AS sh_SellPrice
+	/* 利潤率(中國經銷價) */
+	, (CASE WHEN TblSH.sh_SellPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SellPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_SellPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_SellPrice
 
-                    /* 京東:路面價 ,採購價 */
-                    sql.AppendLine(" , ISNULL(TblVC.ListPrice, 0) ListPrice, ISNULL(TblVC.PurPrice, 0) PurPrice");
-                    /* TW/SH生效日(from COPMB) */
-                    sql.AppendLine(" , TblTWSale.ValidDate AS tw_ValidDate, TblSHSale.ValidDate AS sh_ValidDate");
-                    /* 上市日,停售日 */
-                    sql.AppendLine(" , (CASE WHEN Prod.Date_Of_Listing = '' THEN NULL ELSE CAST((CONVERT(DATE, Prod.Date_Of_Listing, 111)) AS VARCHAR) END) AS onlineDate");
-                    sql.AppendLine(" , CONVERT(VARCHAR(10), Prod.Stop_Offer_Date, 111) AS offlineDate");
+	/* 中國網路價 */
+	, ISNULL(TblSH.sh_NetPrice, 0) AS sh_NetPrice
+	/* 利潤率(中國網路價) */
+	, (CASE WHEN TblSH.sh_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_NetPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_NetPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_NetPrice
 
-                    sql.AppendLine(" , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx");
-                    sql.AppendLine(" FROM [ProductCenter].dbo.Prod_Item Prod");
-                    sql.AppendLine("  LEFT JOIN TblTW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTW.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblSH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSH.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblVC ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblVC.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblSHSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSHSale.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblTWSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTWSale.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblChkPrice_TW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_TW.ModelNo");
-                    sql.AppendLine("  LEFT JOIN TblChkPrice_SH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_SH.ModelNo");
-                    sql.AppendLine(" WHERE (LEFT(Prod.Model_No, 1) <> '0')");
+	/* 京東:頁面價 */
+	, ISNULL(TblVC.ListPrice, 0) ListPrice
+	/* 利潤率(頁面價) */
+	, (CASE WHEN TblVC.ListPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.ListPrice*8 - TblSH.sh_StdCost) / (TblVC.ListPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_ListPrice
 
+	/* 京東:採購價 */
+	, ISNULL(TblVC.PurPrice, 0) PurPrice
+	/* 利潤率(採購價) */
+	, (CASE WHEN TblVC.PurPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.PurPrice*8 - TblSH.sh_StdCost) / (TblVC.PurPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_PurPrice
+
+	/* 標準成本*/
+	, ISNULL(TblSH.sh_StdCost, 0) sh_StdCost
+	/* 核價 */
+	, ISNULL(TblChkPrice_SH.Price, 0) AS sh_PurPrice
+	/* TW/SH生效日(from COPMB) */
+	, TblTWSale.ValidDate AS tw_ValidDate, TblSHSale.ValidDate AS sh_ValidDate
+	/* 上市日,停售日 */
+	, (CASE WHEN Prod.Date_Of_Listing = '' THEN NULL ELSE CAST((CONVERT(DATE, Prod.Date_Of_Listing, 111)) AS VARCHAR) END) AS onlineDate
+	, CONVERT(VARCHAR(10), Prod.Stop_Offer_Date, 111) AS offlineDate
+
+	, ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
+	FROM [ProductCenter].dbo.Prod_Item Prod
+	 LEFT JOIN TblTW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTW.ModelNo
+	 LEFT JOIN TblSH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSH.ModelNo
+	 LEFT JOIN TblVC ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblVC.ModelNo
+	 LEFT JOIN TblSHSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblSHSale.ModelNo
+	 LEFT JOIN TblTWSale ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblTWSale.ModelNo
+	 LEFT JOIN TblChkPrice_TW ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_TW.ModelNo
+	 LEFT JOIN TblChkPrice_SH ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = TblChkPrice_SH.ModelNo
+	WHERE (LEFT(Prod.Model_No, 1) <> '0')
+";
+                    //append sql
+                    sql.Append(subSql);
 
                     #region >> 條件組合 <<
 
@@ -1620,7 +1663,7 @@ WHERE (RefMall IN (1,6)) AND (erp.MG001 = 'C010010')
                     //----- SQL 執行 -----
                     cmd.CommandText = sql.ToString();
                     cmd.Parameters.Clear();
-                    cmd.CommandTimeout = 90;   //單位:秒
+                    cmd.CommandTimeout = 120;   //單位:秒
 
                     //----- SQL 固定參數 -----
 

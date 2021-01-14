@@ -5,10 +5,7 @@ using System.Web;
 
 namespace ShipFreight_CN.Models
 {
-    #region -- 發貨/運費 --
-    /// <summary>
-    /// 發貨/運費
-    /// </summary>
+ 
     public class ShipFreightItem
     {
         public Guid? Data_ID { get; set; }
@@ -74,7 +71,7 @@ namespace ShipFreight_CN.Models
 
         public int SeqNo { get; set; }
         public Guid Data_ID { get; set; }
-        public string TraceID { get; set; }  
+        public string TraceID { get; set; }
         public decimal Status { get; set; }
         public string StatusName { get; set; }
         public string Upload_File { get; set; }
@@ -109,6 +106,15 @@ namespace ShipFreight_CN.Models
     }
 
 
+    public class CustCntItem
+    {
+        public Int16 setYear { get; set; }
+        public Int16 setMonth { get; set; }
+        public string CustID { get; set; }
+        public Int16 Cnt { get; set; }
+    }
+
+
     /// <summary>
     /// Public Class Menu
     /// </summary>
@@ -118,6 +124,4 @@ namespace ShipFreight_CN.Models
         public string Label { get; set; }
 
     }
-
-    #endregion
 }

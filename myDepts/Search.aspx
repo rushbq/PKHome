@@ -36,7 +36,7 @@
                             <asp:ListItem Value="ALL">-- 全部 --</asp:ListItem>
                             <asp:ListItem Value="TW">台灣</asp:ListItem>
                             <asp:ListItem Value="SH">上海</asp:ListItem>
-                            <asp:ListItem Value="SZ">深圳</asp:ListItem>
+                            <%--<asp:ListItem Value="SZ">深圳</asp:ListItem>--%>
                         </asp:DropDownList>
                     </div>
                     <div class="field">

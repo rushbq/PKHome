@@ -31,7 +31,7 @@ namespace Menu4000Data.Models
         public string FlowNo { get; set; }
         public string Purchaser { get; set; }
         public string Currency { get; set; }
-        
+
 
     }
 
@@ -154,6 +154,59 @@ namespace Menu4000Data.Models
         public double NowMonthTurn_12 { get; set; }
         public double QTM_Month { get; set; }
         public Int64 RowIdx { get; set; }
-      
+
     }
+
+    public class PurProdCostList
+    {
+        /// <summary>
+        /// 品號
+        /// </summary>
+        public string ModelNo { get; set; }
+
+        /// <summary>
+        /// 卡片品號
+        /// </summary>
+        public string PackItemNo { get; set; }
+
+        /// <summary>
+        /// 幣別
+        /// </summary>
+        public string Currency { get; set; }
+
+
+        /// <summary>
+        /// 品號核價單價
+        /// </summary>
+        public decimal ModelPrice { get; set; }
+
+        /// <summary>
+        /// 卡片核價單價
+        /// </summary>
+        public decimal PackPrice { get; set; }
+
+        /// <summary>
+        /// 卡片數量
+        /// </summary>
+        public decimal PackQty { get; set; }
+
+        /// <summary>
+        /// 品號備註
+        /// </summary>
+        public string ProdNote { get; set; }
+
+        /// <summary>
+        /// 標準成本
+        /// 品號核價單價 + (卡片核價單價 * 數量)
+        /// </summary>
+        public decimal ProdCost { get; set; }
+
+        /// <summary>
+        /// 卡片核價單價 * 數量
+        /// </summary>
+        public decimal PackSumPrice { get; set; }
+
+        public Int64 RowIdx { get; set; }
+    }
+
 }

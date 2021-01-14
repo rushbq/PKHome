@@ -196,47 +196,47 @@
                             <%#(Convert.ToDouble(Eval("Cnt_h"))*100) %>%
                         </td>
                         <td class="right aligned" data-content="A">
-                            <%#Eval("CntBase_A").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_A")) %>
                         </td>
                         <td class="right aligned" data-content="F">
-                            <%#Eval("CntBase_F").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_F")) %>
                         </td>
                         <td class="right aligned" data-content="Fa">
-                            <%#Eval("CntBase_Fa").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_Fa")) %>
                         </td>
                         <td class="right aligned" data-content="a" title="a = A + B - F">
-                            <%#Eval("Cnt_a").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("Cnt_a")) %>
                         </td>
                         <td>
                             <asp:Literal ID="lt_Remark" runat="server"></asp:Literal></td>
                         <td class="right aligned <%#showNumber(Eval("CntBase_D")) %>" data-content="D" title="D = A + B - g">
-                            <%#Eval("CntBase_D").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_D")) %>
                         </td>
                         <td class="right aligned <%#showNumber(Eval("CntBase_E")) %>" data-content="E" title="E = A + B - e">
-                            <%#Eval("CntBase_E").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_E")) %>
                         </td>
                         <td class="right aligned" data-content="c">
-                            <%#Eval("Cnt_c").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("Cnt_c")) %>
                         </td>
                         <td class="right aligned" data-content="B" title="W003">
-                            <%#Eval("CntBase_B").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_B")) %>
                         </td>
                         <td class="right aligned <%#showNumber(Eval("Cnt_d")) %>" data-content="d" title="d = c - B">
-                            <%#Eval("Cnt_d").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("Cnt_d")) %>
                         </td>
                         <td class="right aligned" data-content="C">
-                            <%#Eval("CntBase_C").ToString().ToMoneyString() %>
+                            <%#String.Format("{0:N1}", Eval("CntBase_C")) %>
                         </td>
-                        <td class="right aligned" data-content="b" title="b = (C+當月W003) * 50%">
-                            <%#Eval("Cnt_b").ToString().ToMoneyString() %>
+                        <td class="right aligned" data-content="b" title="(C/2) >= d then d else b = (C+當月W003) * 50%">
+                            <%#String.Format("{0:N1}", Eval("Cnt_b")) %>
                         </td>
                         <td class="center aligned" title="(未稅A - 成本)/未稅A">
                             <%#Math.Round(Convert.ToDouble(Eval("ProfitA")),2) %>%
                         </td>
-                        <td class="center aligned" title="((未稅A - 未稅已回饋B) - 成本)/(未稅A - 未稅已回饋B)">
+                        <td class="center aligned" title="((未稅A - 當月最高返利金額b) - 成本)/(未稅A - 當月最高返利金額b)">
                             <%#Math.Round(Convert.ToDouble(Eval("ProfitB")),2) %>%
                         </td>
-                        <td class="center aligned" title="((未稅A - 未稅應回饋c) - 成本)/(未稅A - 未稅應回饋c)">
+                        <td class="center aligned" title="((未稅A - 剩餘回饋金額(d)) - 成本)/(未稅A - 剩餘回饋金額(d))">
                             <%#Math.Round(Convert.ToDouble(Eval("ProfitC")),2) %>%
                         </td>
                         <td class="center aligned collapsing">

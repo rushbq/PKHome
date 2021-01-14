@@ -311,9 +311,6 @@ namespace CustRebate_China_Data.Controllers
                         _cnt_a = _cntBase_A + _cntBase_B - _cntBase_F; //(tax)
                         _cnt_uta = _cntBase_utA;
 
-                        //(最高返利金額)-b
-                        _cnt_b = (_cntBase_C + _cntBase_cB) * 0.5;
-
 
                         /* 判斷選擇哪種計算公式 */
                         switch (item.Field<string>("Formula"))
@@ -364,9 +361,6 @@ namespace CustRebate_China_Data.Controllers
 
                                 }
 
-                                //(剩餘回饋金額)-d = c - B
-                                _cnt_d = _cnt_c - _cntBase_B;
-
                                 break;
                         }
 
@@ -376,21 +370,46 @@ namespace CustRebate_China_Data.Controllers
                         {
                             _cnt_c = 0;
                         }
+                        
+                        
+                        //(剩餘回饋金額)-d = c - B  (** after _cnt_c **)
+                        _cnt_d = _cnt_c - _cntBase_B;
 
+                        //(最高返利金額)-b  (** after _cnt_d **)
+                        //if (C/2) >= d then d else (b)
+                        if ((_cntBase_C / 2) >= _cnt_d)
+                        {
+                            _cnt_b = _cnt_d;
+                        }
+                        else
+                        {
+                            _cnt_b = (_cntBase_C + _cntBase_cB) * 0.5;
+                        }
 
+                        
                         /* 返利前毛利率 = (未稅A - 成本)/未稅A */
                         _profitA = _cntBase_utA > 0
                             ? ((_cntBase_utA - _cntBase_costA) / _cntBase_utA) * 100
                             : 0;
 
-                        /* 返利後毛利率 = ((未稅A - 未稅已回饋B) - 成本)/(未稅A - 未稅已回饋B) */
-                        _profitB = (_cntBase_utA - _cntBase_utB) > 0
-                            ? (((_cntBase_utA - _cntBase_utB) - _cntBase_costA) / (_cntBase_utA - _cntBase_utB)) * 100
-                            : 0;
+                        /* 20201230(X) 返利後毛利率 = ((未稅A - 未稅已回饋B) - 成本)/(未稅A - 未稅已回饋B) */
+                        //_profitB = (_cntBase_utA - _cntBase_utB) > 0
+                        //    ? (((_cntBase_utA - _cntBase_utB) - _cntBase_costA) / (_cntBase_utA - _cntBase_utB)) * 100
+                        //    : 0;
 
-                        /* 全返利後毛利率 = ((未稅A - 未稅應回饋c) - 成本)/(未稅A - 未稅應回饋c) */
-                        _profitC = (_cntBase_utA - _cnt_utc) > 0
-                            ? (((_cntBase_utA - _cnt_utc) - _cntBase_costA) / (_cntBase_utA - _cnt_utc)) * 100
+                        /* 返利後毛利率 = ((未稅A - 當月最高返利金額b) - 成本)/(未稅A - 當月最高返利金額b) */
+                        _profitB = (_cntBase_utA - _cnt_b) > 0
+                           ? (((_cntBase_utA - _cnt_b) - _cntBase_costA) / (_cntBase_utA - _cnt_b)) * 100
+                           : 0;
+
+                        /* 20201230(X) 全返利後毛利率 = ((未稅A - 未稅應回饋c) - 成本)/(未稅A - 未稅應回饋c) */
+                        //_profitC = (_cntBase_utA - _cnt_utc) > 0
+                        //    ? (((_cntBase_utA - _cnt_utc) - _cntBase_costA) / (_cntBase_utA - _cnt_utc)) * 100
+                        //    : 0;
+
+                        /* 全返後毛利率 = ((未稅A - 剩餘回饋金額(d)) - 成本)/(未稅A - 剩餘回饋金額(d)) */
+                        _profitC = (_cntBase_utA - _cnt_d) > 0
+                            ? (((_cntBase_utA - _cnt_d) - _cntBase_costA) / (_cntBase_utA - _cnt_d)) * 100
                             : 0;
                         #endregion
 
@@ -554,7 +573,7 @@ namespace CustRebate_China_Data.Controllers
         {
             //----- 宣告 -----
             List<ClassItem> dataList = new List<ClassItem>();
-            
+
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {

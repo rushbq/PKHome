@@ -14,6 +14,7 @@ using PKLib_Method.Methods;
   [延遲分析]-DelayShipStat:需要關聯至EFGP
   [外廠包材庫存盤點]-SupInvCheck
   [訂貨計劃]-PurPlan
+  [標準成本]-PurProdCost
 */
 namespace Menu4000Data.Controllers
 {
@@ -2485,7 +2486,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 string qtyCount_Days = "";
                 string qtyCount_Year = "";
                 string qtyCount_Season = "";
-                
+
 
                 switch (stockType)
                 {
@@ -3438,6 +3439,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
                 /* 資料整理 */
+                #region -- 資料整理 --
+
                 //LinQ 查詢
                 var query = myDT.AsEnumerable();
 
@@ -3475,7 +3478,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
                         default:
                             _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_A01 + _QTM_A01 + _UsefulQty_12 + _QTM_12) / _Qty_Year : 0;
-                            _RealPreSell = (_PreSell_12+ _PreSell_A01) - _VirPreSell;
+                            _RealPreSell = (_PreSell_12 + _PreSell_A01) - _VirPreSell;
                             break;
                     }
 
@@ -3539,6 +3542,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     dataList.Add(data);
 
                 }
+
+                #endregion
 
                 //回傳集合
                 return dataList.AsQueryable();
@@ -4667,6 +4672,393 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         #endregion *** 訂貨計劃 E ***
 
 
+        #region *** 標準成本 S ***
+        /// <summary>
+        /// [標準成本]
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public IQueryable<PurProdCostList> GetCost_PurProd(Dictionary<string, string> search, string dbs
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                List<PurProdCostList> dataList = new List<PurProdCostList>(); //資料容器
+                string mainSql = ""; //SQL主體
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataTable myDT = new DataTable();
+                DataCnt = 0;    //資料總數
+
+                #region >> [前置作業] SQL主體 <<
+
+                mainSql = @"
+                /*
+                 採購核價
+                 DB:prokit2
+                  - 幣別:NTD
+                */
+                WITH TblChkPrice_TW AS (
+                SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price
+                FROM (
+	                SELECT
+	                RTRIM([MB001]) AS ModelNo --AS [品號]
+	                , [MB011] AS Price --AS [採購單價]
+	                , RANK() OVER (
+		                PARTITION BY MB001 ORDER BY MB008 DESC
+	                ) AS RankSeq  --依核價日排序
+	                FROM [prokit2].dbo.PURMB
+	                WHERE (MB003 = 'NTD')
+	                 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112))
+                ) AS ChkPrice_TW
+                WHERE (ChkPrice_TW.RankSeq = 1)
+                )
+
+                /*
+                 採購核價
+                 DB:SHPK2
+                  - 幣別:RMB
+                */
+                , TblChkPrice_SH AS (
+                SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price
+                FROM (
+	                SELECT
+	                RTRIM([MB001]) AS ModelNo --AS [品號]
+	                , [MB011] AS Price --AS [採購單價]
+	                , RANK() OVER (
+		                PARTITION BY MB001 ORDER BY MB008 DESC
+	                ) AS RankSeq  --依核價日排序
+	                FROM [SHPK2].dbo.PURMB
+	                WHERE (MB003 = 'RMB')
+	                 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112))
+                ) AS ChkPrice_SH
+                WHERE (ChkPrice_SH.RankSeq = 1)
+                )";
+
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    //append 主體語法
+                    sql.Append(mainSql);
+
+                    //欄位select
+                    string subSql = @"
+                    SELECT TbAll.*
+                    FROM (
+	                    SELECT
+	                    Rel.DBS
+	                    , (CASE Rel.DBS WHEN 'SH' THEN 'RMB' ELSE 'NTD' END) AS Currency
+	                    , Rel.ModelNo, Rel.PackItemNo, Rel.PackQty, Prod.Pub_Notes
+	                    , CONVERT(numeric(10,2), ISNULL(tw_ModelPrice.Price, 0)) AS tw_PurPrice
+	                    , CONVERT(numeric(10,2), ISNULL(sh_ModelPrice.Price, 0)) AS sh_PurPrice
+	                    , CONVERT(numeric(10,2), ISNULL(tw_PackPrice.Price, 0)) AS tw_PackPurPrice
+	                    , CONVERT(numeric(10,2), ISNULL(sh_PackPrice.Price, 0)) AS sh_PackPurPrice
+	                    , ROW_NUMBER() OVER(
+	                      PARTITION BY Rel.DBS, Rel.ModelNo ORDER BY Rel.PackItemNo
+	                    ) AS RowGroupIdx
+	                    , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
+	                    FROM [ProductCenter].dbo.Prod_Item Prod
+	                     INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
+	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo
+	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo
+	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo
+	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo
+	                    WHERE (Rel.DBS = @dbs)";
+
+                    //append sql
+                    sql.Append(subSql);
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "ModelNo":
+                                    //指定品號(多筆)
+                                    string[] aryValID = Regex.Split(item.Value, ",");
+                                    ArrayList aryValLst = new ArrayList(aryValID);
+
+                                    /*
+                                     GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                                    */
+                                    string filterParams = CustomExtension.GetSQLParam(aryValLst, "pModel");
+                                    sql.Append(" AND (UPPER(Prod.Model_No) IN ({0}))".FormatThis(filterParams));
+
+                                    //SQL參數組成
+                                    for (int row = 0; row < aryValID.Count(); row++)
+                                    {
+                                        sqlParamList.Add(new SqlParameter("@pModel" + row, aryValID[row]));
+                                    }
+
+                                    break;
+
+                                case "SupID":
+                                    //廠商
+                                    sql.Append(" AND (Prod.Provider = @SupID)");
+
+                                    sqlParamList.Add(new SqlParameter("@SupID", item.Value));
+
+                                    break;
+
+                            }
+                        }
+                    }
+                    #endregion
+
+                    sql.AppendLine(") AS TbAll");
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+                    cmd.CommandTimeout = 60;   //單位:秒
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList.Add(new SqlParameter("@dbs", dbs.ToUpper()));
+
+
+                    ////----- SQL 參數陣列 -----
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+                    AllErrMsg += ErrMsg;
+                }
+
+                #endregion
+
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    //append 主體語法
+                    sql.Append(mainSql);
+
+                    //欄位select
+                    string subsql = @"
+                    SELECT COUNT(Prod.Model_No) AS TotalCnt
+                    FROM [ProductCenter].dbo.Prod_Item Prod
+                        INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
+                        LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo
+                        LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo
+                        LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo
+                        LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo
+                    WHERE (Rel.DBS = @dbs)";
+
+                    //append
+                    sql.Append(subsql);
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "ModelNo":
+                                    //指定品號(多筆)
+                                    string[] aryValID = Regex.Split(item.Value, ",");
+                                    ArrayList aryValLst = new ArrayList(aryValID);
+
+                                    /*
+                                     GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                                    */
+                                    string filterParams = CustomExtension.GetSQLParam(aryValLst, "pModel");
+                                    sql.Append(" AND (UPPER(Prod.Model_No) IN ({0}))".FormatThis(filterParams));
+
+                                    //SQL參數組成
+                                    for (int row = 0; row < aryValID.Count(); row++)
+                                    {
+                                        sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryValID[row]));
+                                    }
+
+                                    break;
+
+
+                                case "SupID":
+                                    //廠商
+                                    sql.Append(" AND (Prod.Provider = @SupID)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@SupID", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList_Cnt.Add(new SqlParameter("@dbs", dbs.ToUpper()));
+
+                    //----- SQL 參數陣列 -----
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+                //return
+                if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+
+
+                /* 資料整理 */
+                #region -- 資料整理 --
+
+                //LinQ 查詢
+                var query = myDT.AsEnumerable();
+
+                //資料迴圈
+                foreach (var item in query)
+                {
+                    /*
+                      規則：
+                       RowGroupIdx > 1 => (品號核價單價)ModelPrice = 0
+                       依DBS取價 => TW = tw_xxxx ; SH = sh_oooo
+                    */
+                    /*
+                       品號 = string ModelNo
+                       卡片品號 = string PackItemNo
+                       幣別 = string Currency
+                       品號核價單價 = double ModelPrice
+                       卡片核價單價 = double PackPrice
+                       卡片數量 = Int16 PackQty
+                       品號備註 = string ProdNote
+                       標準成本 = double ProdCost (品號核價單價 + (卡片核價單價*數量))
+                       卡片核價單價*數量 = double PackSumPrice
+                    */
+
+                    //品號核價單價
+                    decimal _modelPrice = dbs.Equals("TW") ? item.Field<decimal>("tw_PurPrice") : item.Field<decimal>("sh_PurPrice");
+                    Int64 _rowGroupIdx = item.Field<Int64>("RowGroupIdx");
+                    if (_rowGroupIdx > 1) _modelPrice = 0;
+
+                    //卡片核價單價
+                    decimal _packPrice = dbs.Equals("TW") ? item.Field<decimal>("tw_PackPurPrice") : item.Field<decimal>("sh_PackPurPrice");
+
+                    //卡片數量
+                    decimal _packQty = item.Field<decimal>("PackQty");
+
+                    //加入項目
+                    var data = new PurProdCostList
+                    {
+                        ModelNo = item.Field<string>("ModelNo"),
+                        PackItemNo = item.Field<string>("PackItemNo"),
+                        Currency = item.Field<string>("Currency"),
+                        ModelPrice = _modelPrice,
+                        PackPrice = _packPrice,
+                        PackQty = _packQty,
+                        ProdNote = item.Field<string>("Pub_Notes").Replace("\r\n", "<br/>"),
+                        ProdCost = Math.Round(_modelPrice + (_packPrice * _packQty), 1),
+                        PackSumPrice = Math.Round(_packPrice * _packQty, 2),
+                        RowIdx = item.Field<Int64>("RowIdx")
+                    };
+
+
+                    //將項目加入至集合
+                    dataList.Add(data);
+
+                }
+
+                #endregion
+
+                //回傳集合
+                return dataList.AsQueryable();
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        #endregion *** 標準成本 E ***
+
+
         #endregion
 
 
@@ -5148,8 +5540,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
               AllCol = colID / colName / sort(標頭排序)
               DeptRel = DeptID / colID
             */
-                                                      //定義所有欄位
-                        List <OpcsColumn> allCol = new List<OpcsColumn>();
+            //定義所有欄位
+            List<OpcsColumn> allCol = new List<OpcsColumn>();
             allCol.Add(new OpcsColumn(1, "序號", 1));
             allCol.Add(new OpcsColumn(2, "產品", 2));
             allCol.Add(new OpcsColumn(3, "訂單<br />未出數量", 3));

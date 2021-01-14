@@ -83,9 +83,12 @@
                     </div>
                 </div>
             </div>
-            <div class="ui two column grid">
+            <div class="ui three column grid">
                 <div class="column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
+                </div>
+                <div class="column">
+                    USD = NTD / 32 ; RMB = NTD / 8
                 </div>
                 <div class="column right aligned">
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
@@ -115,12 +118,13 @@
                             <th class="grey-bg lighten-3" rowspan="2">品號</th>
                             <th class="grey-bg lighten-3" rowspan="2">目錄</th>
                             <th class="grey-bg lighten-3" rowspan="2">頁次</th>
-                            <th class="grey-bg lighten-3" rowspan="2">主要<br />出貨地</th>
+                            <th class="grey-bg lighten-3" rowspan="2">主要<br />
+                                出貨地</th>
                             <th class="grey-bg lighten-3 center aligned" colspan="2">台灣成本(NTD)</th>
                             <th class="grey-bg lighten-3 center aligned" colspan="2">上海成本(RMB)</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="4">外銷(USD)</th>
-                            <th class="blue-bg lighten-3 center aligned" colspan="6">中國市場(RMB)</th>
-                            <th class="green-bg lighten-3 center aligned" colspan="2">台灣市場(NTD)</th>
+                            <th class="grey-bg lighten-3 center aligned" colspan="6">外銷(USD)</th>
+                            <th class="blue-bg lighten-3 center aligned" colspan="12">中國市場(RMB)</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="4">台灣市場(NTD)</th>
 
                             <th class="grey-bg lighten-3" rowspan="2">品名</th>
                             <th class="grey-bg lighten-3" rowspan="2">包裝方式</th>
@@ -130,27 +134,49 @@
                         <tr>
                             <!-- 台灣成本 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />最新核價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />
+                                最新核價</th>
                             <!-- 上海成本 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />最新核價</th>
-                            
+                            <th class="grey-bg lighten-3 right aligned numFmt">採購<br />
+                                最新核價</th>
+
                             <!-- 外銷(USD) -->
-                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />Agent價</th>
-                            <th class="grey-bg lighten-3 center aligned">台灣<br />生效日</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">上海<br />Agent價</th>
-                            <th class="grey-bg lighten-3 center aligned">上海<br />生效日</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />
+                                Agent價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 center aligned">台灣<br />
+                                生效日</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">上海<br />
+                                Agent價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 center aligned">上海<br />
+                                生效日</th>
 
                             <!-- 中國市場 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">業務底價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />經銷價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />網路價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />採購價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />頁面價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">定價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />
+                                經銷價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">中國<br />
+                                網路價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />
+                                採購價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">京東<br />
+                                頁面價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">零售價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
                             <!-- 台灣市場 -->
-                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />網路價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">內銷<br />經銷價</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />
+                                網路價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">內銷<br />
+                                經銷價</th>
+                            <th class="grey-bg lighten-3 center aligned">利潤率</th>
                         </tr>
                     </thead>
                 </table>
@@ -289,39 +315,135 @@
                          /* SH成本 */
                          { data: "sh_StdCost", className: "right aligned" },
                          { data: "sh_PurPrice", className: "right aligned" },
-                         { data: "tw_AgentPrice", className: "right aligned numComma" }, //TW-Agent價
+                         { data: "tw_AgentPrice", className: "right aligned" }, //TW-Agent價
+                         {
+                             /* 利潤率(TW-Agent價) */
+                             data: function (source, type, val) {
+                                 var partX = source.tw_Rate_AgentPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
                          { data: "tw_ValidDate", className: "center aligned" }, //TW-生效日
-                         { data: "sh_AgentPrice", className: "right aligned numComma" }, //SH-Agent價
+
+                         { data: "sh_AgentPrice", className: "right aligned" }, //SH-Agent價
+                         {
+                             /* 利潤率(SH-Agent價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_AgentPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
                          { data: "sh_ValidDate", className: "center aligned" }, //SH-生效日
 
                          /* SH市場 */
                          { data: "sh_LowestPrice", className: "right aligned" }, //業務底價
+                         {
+                             /* 利潤率(業務底價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_LowestPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
                          { data: "sh_SellPrice", className: "right aligned" }, //中國經銷價
+                         {
+                             /* 利潤率(中國經銷價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_SellPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
                          { data: "sh_NetPrice", className: "right aligned" }, //中國網路價
+                         {
+                             /* 利潤率(中國網路價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_NetPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
                          { data: "PurPrice", className: "right aligned" }, //京東採購價
+                         {
+                             /* 利潤率(京東採購價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_PurPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
                          { data: "ListPrice", className: "right aligned" }, //京東頁面價
-                         { data: "sh_SalePrice", className: "right aligned" }, //定價
+                         {
+                             /* 利潤率(京東頁面價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_ListPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
+                         { data: "sh_SalePrice", className: "right aligned" }, //零售價
+                         {
+                             /* 利潤率(零售價) */
+                             data: function (source, type, val) {
+                                 var partX = source.sh_Rate_SalePrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
 
                          /* TW市場 */
                          { data: "tw_NetPrice", className: "right aligned" }, //台灣網路價
+                         {
+                             /* 利潤率(台灣網路價) */
+                             data: function (source, type, val) {
+                                 var partX = source.tw_Rate_NetPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
+
                          { data: "tw_InAgentPrice", className: "right aligned" }, //內銷經銷價
+                         {
+                             /* 利潤率(內銷經銷價) */
+                             data: function (source, type, val) {
+                                 var partX = source.tw_Rate_InAgentPrice;
+                                 //顯示結果
+                                 var result = partX == 0 ? '' : Math.round(partX) + ' %';
+
+                                 return result;
+                             }, className: "collapsing center aligned"
+                         },
 
                          { data: "ModelName", className: "left aligned" },
                          { data: "Packing", className: "left aligned" },
                          { data: "onlineDate", className: "center aligned" },
                          { data: "offlineDate", className: "center aligned" }
-                         //{ data: "AgentPrice_TW", className: "right aligned warning" },
-                         //{
-                         //    /* 利潤率 */
-                         //    data: function (source, type, val) {
-                         //        var showVal = source.ProfitTW;
 
-                         //        //組成html
-                         //        var html = showVal == 0 ? '' : Math.round(showVal * 1000) / 10 + ' %';
-
-                         //        return html;
-                         //    }, className: "collapsing center aligned"
-                         //},
 
                      ],
                      //自訂欄位格式
