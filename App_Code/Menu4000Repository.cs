@@ -4674,9 +4674,10 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
         #region *** 標準成本 S ***
         /// <summary>
-        /// [標準成本]
+        /// [標準成本] 成本List
         /// </summary>
         /// <param name="search">search集合</param>
+        /// <param name="dbs">DBS</param>
         /// <param name="startRow">StartRow(從0開始)</param>
         /// <param name="endRow">RecordsPerPage</param>
         /// <param name="doPaging">是否分頁</param>
@@ -4714,11 +4715,12 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                   - 幣別:NTD
                 */
                 WITH TblChkPrice_TW AS (
-                SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price
+                SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price, ChkPrice_TW.SupID
                 FROM (
 	                SELECT
 	                RTRIM([MB001]) AS ModelNo --AS [品號]
 	                , [MB011] AS Price --AS [採購單價]
+	                , MB002 AS SupID
 	                , RANK() OVER (
 		                PARTITION BY MB001 ORDER BY MB008 DESC
 	                ) AS RankSeq  --依核價日排序
@@ -4735,11 +4737,12 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                   - 幣別:RMB
                 */
                 , TblChkPrice_SH AS (
-                SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price
+                SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price, ChkPrice_SH.SupID
                 FROM (
 	                SELECT
 	                RTRIM([MB001]) AS ModelNo --AS [品號]
 	                , [MB011] AS Price --AS [採購單價]
+	                , MB002 AS SupID
 	                , RANK() OVER (
 		                PARTITION BY MB001 ORDER BY MB008 DESC
 	                ) AS RankSeq  --依核價日排序
@@ -4780,10 +4783,10 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 	                    , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
 	                    FROM [ProductCenter].dbo.Prod_Item Prod
 	                     INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
-	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo
-	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo
-	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo
-	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo
+	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
+	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
+	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
+	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
 	                    WHERE (Rel.DBS = @dbs)";
 
                     //append sql
@@ -4803,7 +4806,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                             {
                                 case "Keyword":
                                     sql.Append(" AND (");
-                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
                                     sql.Append(" )");
 
                                     sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
@@ -4890,10 +4893,10 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     SELECT COUNT(Prod.Model_No) AS TotalCnt
                     FROM [ProductCenter].dbo.Prod_Item Prod
                         INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
-                        LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo
-                        LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo
-                        LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo
-                        LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo
+                        LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
+	                    LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
+	                    LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
+	                    LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
                     WHERE (Rel.DBS = @dbs)";
 
                     //append
@@ -4914,7 +4917,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                             {
                                 case "Keyword":
                                     sql.Append(" AND (");
-                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
                                     sql.Append(" )");
 
                                     sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
@@ -5051,6 +5054,290 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
             }
             catch (Exception ex)
             {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [標準成本] 品號List
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable GetCost_ProdList(Dictionary<string, string> search
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                List<PurProdCostList> dataList = new List<PurProdCostList>(); //資料容器
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataTable myDT = new DataTable();
+                DataCnt = 0;    //資料總數
+
+
+                #region >> 主要資料SQL查詢 <<
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT TbAll.*
+                    FROM (
+	                    SELECT RTRIM(Prod.Model_No) AS ModelNo, RTRIM(Prod.Model_Name_zh_TW) AS ModelName	
+	                    , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
+	                    FROM [ProductCenter].dbo.Prod_Item Prod
+	                    WHERE (LEFT(Prod.Model_No, 1) <> '0')";
+
+                    //append sql
+                    sql.Append(mainSql);
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                    //case "ModelNo":
+                                    //    //指定品號(多筆)
+                                    //    string[] aryValID = Regex.Split(item.Value, ",");
+                                    //    ArrayList aryValLst = new ArrayList(aryValID);
+
+                                    //    /*
+                                    //     GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                                    //    */
+                                    //    string filterParams = CustomExtension.GetSQLParam(aryValLst, "pModel");
+                                    //    sql.Append(" AND (UPPER(Prod.Model_No) IN ({0}))".FormatThis(filterParams));
+
+                                    //    //SQL參數組成
+                                    //    for (int row = 0; row < aryValID.Count(); row++)
+                                    //    {
+                                    //        sqlParamList.Add(new SqlParameter("@pModel" + row, aryValID[row]));
+                                    //    }
+
+                                    //    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //Sql尾段
+                    sql.AppendLine(") AS TbAll");
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+
+                    //----- SQL 參數陣列 -----
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+                    AllErrMsg += ErrMsg;
+                }
+
+                #endregion
+
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    sql.Clear();
+
+                    string mainSql = @"
+                    SELECT COUNT(Prod.Model_No) AS TotalCnt
+	                FROM [ProductCenter].dbo.Prod_Item Prod
+	                WHERE (LEFT(Prod.Model_No, 1) <> '0')";
+
+                    //append
+                    sql.Append(mainSql);
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "Keyword":
+                                    sql.Append(" AND (");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+
+                                    //case "ModelNo":
+                                    //    //指定品號(多筆)
+                                    //    string[] aryValID = Regex.Split(item.Value, ",");
+                                    //    ArrayList aryValLst = new ArrayList(aryValID);
+
+                                    //    /*
+                                    //     GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                                    //    */
+                                    //    string filterParams = CustomExtension.GetSQLParam(aryValLst, "pModel");
+                                    //    sql.Append(" AND (UPPER(Prod.Model_No) IN ({0}))".FormatThis(filterParams));
+
+                                    //    //SQL參數組成
+                                    //    for (int row = 0; row < aryValID.Count(); row++)
+                                    //    {
+                                    //        sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryValID[row]));
+                                    //    }
+
+                                    //    break;
+
+                            }
+                        }
+                    }
+                    #endregion
+
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 參數陣列 -----
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+                //return
+                if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+
+                //回傳集合
+                return myDT;
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [標準成本] 品號關聯包材
+        /// </summary>
+        /// <param name="_models">逗號分隔的品號</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetCostRel_Pack(string _models, out string ErrMsg)
+        {
+            ErrMsg = "";
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string sql = @"
+                    SELECT Rel.UID AS DataID, Rel.ModelNo, Rel.DBS, Rel.PackItemNo, Rel.PackQty
+                    FROM [ProductCenter].dbo.Prod_Rel_Package Rel
+                    WHERE (1=1)";
+
+                    if (!string.IsNullOrWhiteSpace(_models))
+                    {
+                        //指定品號(多筆)
+                        string[] aryValID = Regex.Split(_models, ",");
+                        ArrayList aryValLst = new ArrayList(aryValID);
+
+                        /*
+                         GetSQLParam:SQL WHERE IN的方法 ,ex:UPPER(ModelNo) IN ({0})
+                        */
+                        string filterParams = CustomExtension.GetSQLParam(aryValLst, "pModel");
+                        sql += " AND (UPPER(Rel.ModelNo) IN ({0}))".FormatThis(filterParams);
+
+                        //SQL參數組成
+                        for (int row = 0; row < aryValID.Count(); row++)
+                        {
+                            cmd.Parameters.AddWithValue("@pModel" + row, aryValID[row]);
+                        }
+
+                    }
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql;
+
+                    //return
+                    return dbConn.LookupDT(cmd, out ErrMsg);
+                }
+            }
+            catch (Exception ex)
+            {
+
                 throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
             }
         }
@@ -5231,6 +5518,59 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
         }
 
+        #endregion
+
+
+        #region ** 標準成本 **
+        /// <summary>
+        /// [標準成本] 新增包材
+        /// </summary>
+        /// <param name="dbs"></param>
+        /// <param name="modelNo"></param>
+        /// <param name="packItem"></param>
+        /// <param name="qty"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool CreatePackItem(string dbs, string modelNo, string packItem, decimal qty
+            , out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+                    DECLARE @SupID AS VARCHAR(40)
+                    SET @SupID = (
+                    SELECT MB032 FROM [#dbName#].dbo.INVMB WHERE (MB001 = @PackItemNo)
+                    )
+
+                    IF (SELECT COUNT(*) FROM [ProductCenter].dbo.Prod_Rel_Package WHERE (DBS = @DBS) AND (ModelNo = @ModelNo) AND (PackItemNo = @PackItemNo)) = 0
+                    BEGIN
+                        INSERT INTO [ProductCenter].dbo.Prod_Rel_Package(
+                            DBS, SupID, ModelNo, PackItemNo, PackQty
+                            , Create_Who, Create_Time
+                        ) VALUES (
+                            @DBS, @SupID, @ModelNo, @PackItemNo, @PackQty
+                            , @Create_Who, GETDATE()
+                        )
+                    END";
+
+                sql = sql.Replace("#dbName#", dbs.Equals("TW") ? "prokit2" : "SHPK2");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("DBS", dbs);
+                cmd.Parameters.AddWithValue("ModelNo", modelNo);
+                cmd.Parameters.AddWithValue("PackItemNo", packItem);
+                cmd.Parameters.AddWithValue("PackQty", qty);
+                cmd.Parameters.AddWithValue("Create_Who", fn_Param.CurrentUser);
+
+
+                return dbConn.ExecuteSql(cmd, out ErrMsg);
+            }
+
+        }
+
 
         #endregion
 
@@ -5392,7 +5732,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
         #region *** 外廠包材庫存盤點 S ***
         /// <summary>
-        /// [開案中客訴] 刪除資料
+        /// 刪除資料
         /// </summary>
         /// <param name="dataID"></param>
         /// <returns></returns>
@@ -5441,6 +5781,29 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         }
 
         #endregion *** 外廠包材庫存盤點 E ***
+
+
+        #region ** 標準成本 **
+        public bool Delete_PackItem(string dataID)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" DELETE FROM Prod_Rel_Package WHERE (UID = @Data_ID)");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
+
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.Product, out ErrMsg);
+            }
+        }
+        #endregion
+
 
         #endregion
 

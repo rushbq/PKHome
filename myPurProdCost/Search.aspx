@@ -28,6 +28,7 @@
             <div class="right menu">
                 <a href="#!" id="exportExcel" class="item"><i class="file excel icon"></i><span class="mobile hidden">匯出</span></a>
                 <asp:Button ID="btn_Excel" runat="server" Text="excel trigger" OnClick="btn_Excel_Click" Style="display: none;" />
+                <a href="<%:fn_Param.WebUrl %>myPurProdCost/Search_Prod.aspx" class="item" target="_blank" title="開新視窗"><i class="window restore outline icon"></i><span class="mobile hidden">包材維護</span></a>
             </div>
         </div>
     </div>
@@ -132,7 +133,7 @@
                     e.preventDefault();
                 }
             });
-            
+
             //匯出excel
             $("#exportExcel").click(function () {
                 //trigger button
@@ -302,7 +303,7 @@
                              /* 產品備註 */
                              data: function (source, type, val) {
                                  var showID = source.RowIdx;
-                                 var getMsgTW = source.ProdNote;
+                                 var getMsgTW = htmlEncode(source.ProdNote);
 
                                  //modal用的hidden欄位
                                  var msgTW = '<input type="hidden" id="TWmsgDetail_' + showID + '" value="' + getMsgTW + '">';
@@ -385,7 +386,15 @@
                      }
                  }
 
+                 function htmlEncode(value) {
+                     //create a in-memory div, set it's inner text(which jQuery automatically encodes)
+                     //then grab the encoded contents back out. The div never exists on the page.
+                     return $('<div/>').text(value).html();
+                 }
 
+                 function htmlDecode(value) {
+                     return $('<div/>').html(value).text();
+                 }
                 /* DataTables UI End */
              }
         });
