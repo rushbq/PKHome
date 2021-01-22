@@ -1325,6 +1325,23 @@ namespace Menu3000Data.Controllers
                 #region >> [前置作業] SQL主體 <<
 
                 mainSql = @"
+DECLARE @YM AS VARCHAR(6)
+SET @YM = LEFT(CONVERT(VARCHAR, GETDATE(), 112), 6)
+
+DECLARE @twRate AS NUMERIC(10,2), @shRate AS NUMERIC(10,2)
+SET @twRate = (
+  SELECT CONVERT(NUMERIC(10,2), E_IDE_SaleRate) AS SaleRate
+  FROM [ReportCenter].[dbo].[R_GROUPRATE]
+  WHERE (E_SYS_PKflow = 'TW') and (E_IDE_CurrencyClass = 'NTD')
+  AND (E_IDE_SaleYearMonth = @YM)
+)
+SET @shRate = (
+  SELECT CONVERT(NUMERIC(10,2), E_IDE_SaleRate) AS SaleRate
+  FROM [ReportCenter].[dbo].[R_GROUPRATE]
+  WHERE (E_SYS_PKflow = 'SH') and (E_IDE_CurrencyClass = 'RMB')
+  AND (E_IDE_SaleYearMonth = @YM)
+)
+
 /*
  品號基本資料價格
  DB:prokit2
@@ -1361,11 +1378,12 @@ WHERE (LEFT(MB001, 1) <> '0')
   - 幣別:NTD
 */
 , TblChkPrice_TW AS (
-SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price
+SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price, ChkPrice_TW.ChkDay
 FROM (
 	SELECT
 	RTRIM([MB001]) AS ModelNo --AS [品號]
 	, [MB011] AS Price --AS [採購單價]
+	, MB008 AS ChkDay
 	, RANK() OVER (
 		PARTITION BY MB001 ORDER BY MB008 DESC
 	) AS RankSeq  --依核價日排序
@@ -1382,11 +1400,12 @@ WHERE (ChkPrice_TW.RankSeq = 1)
   - 幣別:RMB
 */
 , TblChkPrice_SH AS (
-SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price
+SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price, ChkPrice_SH.ChkDay
 FROM (
 	SELECT
 	RTRIM([MB001]) AS ModelNo --AS [品號]
 	, [MB011] AS Price --AS [採購單價]
+	, MB008 AS ChkDay
 	, RANK() OVER (
 		PARTITION BY MB001 ORDER BY MB008 DESC
 	) AS RankSeq  --依核價日排序
@@ -1396,7 +1415,6 @@ FROM (
 ) AS ChkPrice_SH
 WHERE (ChkPrice_SH.RankSeq = 1)
 )
-
 
 /*
  台灣Agent價,生效日
@@ -1495,57 +1513,60 @@ FROM (
 	/* TW:Agent價 */
 	, ISNULL(TblTW.tw_AgentPrice, 0) AS tw_AgentPrice
 	/* 利潤率(TW:Agent價) */
-	, (CASE WHEN TblTW.tw_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_AgentPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_AgentPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_AgentPrice
+	, (CASE WHEN TblTW.tw_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_AgentPrice*@twRate - TblTW.tw_StdCost) / (TblTW.tw_AgentPrice*@twRate))*100, 0)) ELSE 0 END) AS tw_Rate_AgentPrice
 	/* 台灣網路價 */
 	, ISNULL(TblTW.tw_NetPrice, 0) AS tw_NetPrice
 	/* 利潤率(台灣網路價) */
-	, (CASE WHEN TblTW.tw_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_NetPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_NetPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_NetPrice
+	, (CASE WHEN TblTW.tw_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_NetPrice - TblTW.tw_StdCost) / (TblTW.tw_NetPrice))*100, 0)) ELSE 0 END) AS tw_Rate_NetPrice
 	/* 內銷經銷價 */
 	, ISNULL(TblTW.tw_InAgentPrice, 0) AS tw_InAgentPrice
 	/* 利潤率(內銷經銷價) */
-	, (CASE WHEN TblTW.tw_InAgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_InAgentPrice*32 - TblTW.tw_StdCost) / (TblTW.tw_InAgentPrice*32))*100, 0)) ELSE 0 END) AS tw_Rate_InAgentPrice
+	, (CASE WHEN TblTW.tw_InAgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblTW.tw_InAgentPrice - TblTW.tw_StdCost) / (TblTW.tw_InAgentPrice))*100, 0)) ELSE 0 END) AS tw_Rate_InAgentPrice
 	/* 標準成本 */
 	, ISNULL(TblTW.tw_StdCost, 0) AS tw_StdCost
 	/* 核價 */
 	, ISNULL(TblChkPrice_TW.Price, 0) AS tw_PurPrice
+	, ISNULL(TblChkPrice_TW.ChkDay, '') AS tw_ChkDay
 
 	/* SH:Agent價 */
 	, ISNULL(TblSH.sh_AgentPrice, 0) AS sh_AgentPrice
-	/* 利潤率(SH:Agent價) */
-	, (CASE WHEN TblSH.sh_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_AgentPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_AgentPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_AgentPrice
+	/* 利潤率(SH:Agent價)(8) */
+	, (CASE WHEN TblSH.sh_AgentPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_AgentPrice*@shRate - TblSH.sh_StdCost) / (TblSH.sh_AgentPrice*@shRate))*100, 0)) ELSE 0 END) AS sh_Rate_AgentPrice
 	/* 業務底價 */
 	, ISNULL(TblSH.sh_LowestPrice, 0) AS sh_LowestPrice
 	/* 利潤率(業務底價) */
-	, (CASE WHEN TblSH.sh_LowestPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_LowestPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_LowestPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_LowestPrice
+	, (CASE WHEN TblSH.sh_LowestPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_LowestPrice - TblSH.sh_StdCost) / (TblSH.sh_LowestPrice))*100, 0)) ELSE 0 END) AS sh_Rate_LowestPrice
 	/* 零售價 */
 	, ISNULL(TblSH.sh_SalePrice, 0) AS sh_SalePrice
 	/* 利潤率(零售價) */
-	, (CASE WHEN TblSH.sh_SalePrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SalePrice*8 - TblSH.sh_StdCost) / (TblSH.sh_SalePrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_SalePrice
+	, (CASE WHEN TblSH.sh_SalePrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SalePrice - TblSH.sh_StdCost) / (TblSH.sh_SalePrice))*100, 0)) ELSE 0 END) AS sh_Rate_SalePrice
 
 	/* 中國經銷價 */
 	, ISNULL(TblSH.sh_SellPrice, 0) AS sh_SellPrice
 	/* 利潤率(中國經銷價) */
-	, (CASE WHEN TblSH.sh_SellPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SellPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_SellPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_SellPrice
+	, (CASE WHEN TblSH.sh_SellPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_SellPrice - TblSH.sh_StdCost) / (TblSH.sh_SellPrice))*100, 0)) ELSE 0 END) AS sh_Rate_SellPrice
 
 	/* 中國網路價 */
 	, ISNULL(TblSH.sh_NetPrice, 0) AS sh_NetPrice
 	/* 利潤率(中國網路價) */
-	, (CASE WHEN TblSH.sh_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_NetPrice*8 - TblSH.sh_StdCost) / (TblSH.sh_NetPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_NetPrice
+	, (CASE WHEN TblSH.sh_NetPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblSH.sh_NetPrice - TblSH.sh_StdCost) / (TblSH.sh_NetPrice))*100, 0)) ELSE 0 END) AS sh_Rate_NetPrice
 
 	/* 京東:頁面價 */
 	, ISNULL(TblVC.ListPrice, 0) ListPrice
 	/* 利潤率(頁面價) */
-	, (CASE WHEN TblVC.ListPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.ListPrice*8 - TblSH.sh_StdCost) / (TblVC.ListPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_ListPrice
+	, (CASE WHEN TblVC.ListPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.ListPrice - TblSH.sh_StdCost) / (TblVC.ListPrice))*100, 0)) ELSE 0 END) AS sh_Rate_ListPrice
 
 	/* 京東:採購價 */
 	, ISNULL(TblVC.PurPrice, 0) PurPrice
 	/* 利潤率(採購價) */
-	, (CASE WHEN TblVC.PurPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.PurPrice*8 - TblSH.sh_StdCost) / (TblVC.PurPrice*8))*100, 0)) ELSE 0 END) AS sh_Rate_PurPrice
+	, (CASE WHEN TblVC.PurPrice > 0 THEN CONVERT(FLOAT, ROUND(((TblVC.PurPrice - TblSH.sh_StdCost) / (TblVC.PurPrice))*100, 0)) ELSE 0 END) AS sh_Rate_PurPrice
 
 	/* 標準成本*/
 	, ISNULL(TblSH.sh_StdCost, 0) sh_StdCost
 	/* 核價 */
 	, ISNULL(TblChkPrice_SH.Price, 0) AS sh_PurPrice
+	, ISNULL(TblChkPrice_SH.ChkDay, '') AS sh_ChkDay
+
 	/* TW/SH生效日(from COPMB) */
 	, TblTWSale.ValidDate AS tw_ValidDate, TblSHSale.ValidDate AS sh_ValidDate
 	/* 上市日,停售日 */
@@ -1818,6 +1839,46 @@ FROM (
             }
         }
 
+
+        /// <summary>
+        /// 取得目前匯率
+        /// </summary>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetQuote_NowRate(out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+                    DECLARE @YM AS VARCHAR(6)
+                    SET @YM = LEFT(CONVERT(VARCHAR, GETDATE(), 112), 6)
+
+                    ;WITH TblTW AS (
+	                    SELECT CONVERT(NUMERIC(10,2), E_IDE_SaleRate) AS SaleRate_tw, @YM AS ym
+	                    FROM [ReportCenter].[dbo].[R_GROUPRATE]
+	                    WHERE (E_SYS_PKflow = 'TW') and (E_IDE_CurrencyClass = 'NTD')
+	                    AND (E_IDE_SaleYearMonth = @YM)
+                    )
+                    , TblSH AS (
+	                    SELECT CONVERT(NUMERIC(10,2), E_IDE_SaleRate) AS SaleRate_sh, @YM AS ym
+	                    FROM [ReportCenter].[dbo].[R_GROUPRATE]
+	                    WHERE (E_SYS_PKflow = 'SH') and (E_IDE_CurrencyClass = 'RMB')
+	                    AND (E_IDE_SaleYearMonth = @YM)
+                    )
+                    SELECT TblTW.SaleRate_tw, TblSH.SaleRate_sh
+                    FROM TblTW FULL OUTER JOIN TblSH ON TblTW.ym = TblSH.ym
+                    ";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+
+
+                //回傳
+                return dbConn.LookupDT(cmd, out ErrMsg);
+            }
+        }
 
         #endregion *** 集團報價 E ***
 

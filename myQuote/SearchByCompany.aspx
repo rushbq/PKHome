@@ -83,14 +83,19 @@
                     </div>
                 </div>
             </div>
-            <div class="ui three column grid">
-                <div class="column">
+            <div class="ui grid">
+                <div class="five wide column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
                 </div>
-                <div class="column">
-                    USD = NTD / 32 ; RMB = NTD / 8
+                <div class="six wide column">
+                    <span class="ui tag label">值：USD=NTD</span>
+                    <span class="ui tag label">毛利率：NTD =
+                        <asp:Label ID="lb_twRate" runat="server" CssClass="green-text text-darken-3"></asp:Label>
+                        ; RMB =
+                        <asp:Label ID="lb_shRate" runat="server" CssClass="teal-text text-darken-1"></asp:Label>
+                    </span>
                 </div>
-                <div class="column right aligned">
+                <div class="five wide column right aligned">
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
                 </div>
             </div>
@@ -120,8 +125,8 @@
                             <th class="grey-bg lighten-3" rowspan="2">頁次</th>
                             <th class="grey-bg lighten-3" rowspan="2">主要<br />
                                 出貨地</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="2">台灣成本(NTD)</th>
-                            <th class="grey-bg lighten-3 center aligned" colspan="2">上海成本(RMB)</th>
+                            <th class="grey-bg lighten-3 center aligned" colspan="3">台灣成本(NTD)</th>
+                            <th class="grey-bg lighten-3 center aligned" colspan="3">上海成本(RMB)</th>
                             <th class="grey-bg lighten-3 center aligned" colspan="6">外銷(USD)</th>
                             <th class="blue-bg lighten-3 center aligned" colspan="12">中國市場(RMB)</th>
                             <th class="green-bg lighten-3 center aligned" colspan="4">台灣市場(NTD)</th>
@@ -136,10 +141,12 @@
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">採購<br />
                                 最新核價</th>
+                            <th class="grey-bg lighten-3 center aligned">核價日</th>
                             <!-- 上海成本 -->
                             <th class="grey-bg lighten-3 right aligned numFmt">標準成本</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">採購<br />
                                 最新核價</th>
+                            <th class="grey-bg lighten-3 center aligned">核價日</th>
 
                             <!-- 外銷(USD) -->
                             <th class="grey-bg lighten-3 right aligned numFmt">台灣<br />
@@ -311,10 +318,14 @@
                          /* TW成本 */
                          { data: "tw_StdCost", className: "right aligned" },
                          { data: "tw_PurPrice", className: "right aligned" },
+                         { data: "tw_ChkDay", className: "center aligned" },
+
 
                          /* SH成本 */
                          { data: "sh_StdCost", className: "right aligned" },
                          { data: "sh_PurPrice", className: "right aligned" },
+                         { data: "sh_ChkDay", className: "center aligned" },
+
                          { data: "tw_AgentPrice", className: "right aligned" }, //TW-Agent價
                          {
                              /* 利潤率(TW-Agent價) */

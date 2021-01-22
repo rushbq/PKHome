@@ -33,6 +33,9 @@ public partial class myQuote_SearchByProd : SecurityCheck
                 //建立選單
                 GetProdClassMenu(ddl_Class);
                 GetProdVolMenu(ddl_Vol);
+
+                //讀取基本資料
+                LookupBaseData();
             }
         }
         catch (Exception)
@@ -41,6 +44,40 @@ public partial class myQuote_SearchByProd : SecurityCheck
             throw;
         }
     }
+
+
+    #region -- 資料取得 --
+    private void LookupBaseData()
+    {
+        //----- 宣告:資料參數 -----
+        Menu3000Repository _data = new Menu3000Repository();
+
+        try
+        {
+            //----- 原始資料:取得資料 -----
+            var data = _data.GetQuote_NowRate(out ErrMsg);
+
+            if (data.Rows.Count > 0)
+            {
+                lb_twRate.Text = data.Rows[0]["SaleRate_tw"].ToString();
+                lb_shRate.Text = data.Rows[0]["SaleRate_sh"].ToString();
+            }
+
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            //release
+            _data = null;
+        }
+    }
+
+
+    #endregion
 
 
     #region -- 按鈕事件 --
@@ -145,8 +182,10 @@ public partial class myQuote_SearchByProd : SecurityCheck
 
         _col.Add("tw_StdCost", "標準成本-台灣成本(NTD)");
         _col.Add("tw_PurPrice", "採購最新核價-台灣成本(NTD)");
+        _col.Add("tw_ChkDay", "核價日-台灣");
         _col.Add("sh_StdCost", "標準成本-上海成本(RMB)");
         _col.Add("sh_PurPrice", "採購最新核價-上海成本(RMB)");
+        _col.Add("sh_ChkDay", "核價日-上海");
 
         _col.Add("tw_AgentPrice", "台灣Agent價");
         _col.Add("tw_Rate_AgentPrice", "利潤率%(台灣Agent)");

@@ -43,8 +43,6 @@ public partial class mySupInvCheck_SettingEdit : SecurityCheck
                     LookupData();
 
                 }
-
-
             }
         }
         catch (Exception)
@@ -458,6 +456,7 @@ public partial class mySupInvCheck_SettingEdit : SecurityCheck
 
 
     #endregion
+
 
     #region -- 網址參數 --
 

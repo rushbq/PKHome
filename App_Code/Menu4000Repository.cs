@@ -4769,25 +4769,24 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     string subSql = @"
                     SELECT TbAll.*
                     FROM (
-	                    SELECT
-	                    Rel.DBS
-	                    , (CASE Rel.DBS WHEN 'SH' THEN 'RMB' ELSE 'NTD' END) AS Currency
-	                    , Rel.ModelNo, Rel.PackItemNo, Rel.PackQty, Prod.Pub_Notes
+                      SELECT ISNULL(Rel.DBS, '') AS DBS
+	                    , (CASE Rel.DBS WHEN 'SH' THEN 'RMB' WHEN 'TW' THEN 'NTD' ELSE '' END) AS Currency
+	                    , RTRIM(Prod.Model_No) AS ModelNo, ISNULL(Rel.PackItemNo, '') PackItemNo, ISNULL(Rel.PackQty, 0) PackQty, Prod.Pub_Notes
 	                    , CONVERT(numeric(10,2), ISNULL(tw_ModelPrice.Price, 0)) AS tw_PurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(sh_ModelPrice.Price, 0)) AS sh_PurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(tw_PackPrice.Price, 0)) AS tw_PackPurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(sh_PackPrice.Price, 0)) AS sh_PackPurPrice
 	                    , ROW_NUMBER() OVER(
-	                      PARTITION BY Rel.DBS, Rel.ModelNo ORDER BY Rel.PackItemNo
-	                    ) AS RowGroupIdx
+	                          PARTITION BY Prod.Ship_From, Prod.Model_No ORDER BY Prod.Model_No, Rel.PackItemNo
+	                      ) AS RowGroupIdx
 	                    , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
 	                    FROM [ProductCenter].dbo.Prod_Item Prod
-	                     INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
+	                     LEFT JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo AND Prod.Ship_From = Rel.DBS
 	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
 	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
 	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
 	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
-	                    WHERE (Rel.DBS = @dbs)";
+	                    WHERE (Prod.Ship_From = @dbs) AND (LEFT(Prod.Model_No, 1) <> '0')";
 
                     //append sql
                     sql.Append(subSql);
@@ -4892,12 +4891,12 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     string subsql = @"
                     SELECT COUNT(Prod.Model_No) AS TotalCnt
                     FROM [ProductCenter].dbo.Prod_Item Prod
-                        INNER JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo
-                        LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
-	                    LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
-	                    LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
-	                    LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
-                    WHERE (Rel.DBS = @dbs)";
+	                     LEFT JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo AND Prod.Ship_From = Rel.DBS
+	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
+	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
+	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
+	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
+                    WHERE (Prod.Ship_From = @dbs) AND (LEFT(Prod.Model_No, 1) <> '0')";
 
                     //append
                     sql.Append(subsql);
@@ -5084,7 +5083,6 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
                 //----- 宣告 -----
                 StringBuilder sql = new StringBuilder(); //SQL語法容器
-                List<PurProdCostList> dataList = new List<PurProdCostList>(); //資料容器
                 List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
                 List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
                 DataTable myDT = new DataTable();

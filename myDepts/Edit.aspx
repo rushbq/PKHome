@@ -172,7 +172,7 @@
                                             <table id="table1" class="ui celled selectable compact small table">
                                                 <thead>
                                                     <tr>
-                                                        <th class="grey-bg lighten-3 center aligned" colspan="3">人員</th>
+                                                        <th class="grey-bg lighten-3 center aligned" colspan="5">人員</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -185,6 +185,8 @@
                                                 <td class="center aligned"><%#Eval("ProfID") %></td>
                                                 <td class="center aligned"><%#Eval("ProfName") %></td>
                                                 <td class="center aligned"><%#Eval("NickName") %></td>
+                                                <td class="center aligned"><%#Eval("Email") %></td>
+                                                <td class="center aligned">#<%#Eval("Tel_Ext") %></td>
                                             </tr>
                                         </ItemTemplate>
                                         <EmptyDataTemplate>

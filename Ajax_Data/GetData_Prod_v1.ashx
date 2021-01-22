@@ -30,7 +30,8 @@ public class GetData_Prod_v1 : IHttpHandler
         //----- 原始資料:條件篩選 -----
         if (!string.IsNullOrEmpty(searchVal))
         {
-            search.Add((int)Common.ProdSearch.Keyword, searchVal);
+            //品號關鍵字
+            search.Add((int)Common.ProdSearch.ItemKey, searchVal);
         }
 
 
