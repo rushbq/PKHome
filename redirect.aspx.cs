@@ -21,6 +21,7 @@ public partial class redirect : SecurityCheck
                     if (!resp.Create_ClickInfo(2, Convert.ToInt32(Req_MenuID), fn_Param.CurrentUser, out ErrMsg))
                     {
                         Response.Write("---- Log記錄失敗 ----");
+                        return;
                     }
 
                     //Redirect

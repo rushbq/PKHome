@@ -178,7 +178,7 @@
                         <table class="ui celled selectable compact small table">
                             <thead>
                                 <tr>
-                                    <th class="grey-bg lighten-3 center aligned">
+                                    <th class="grey-bg lighten-3 center aligned collapsing">
                                         <asp:Literal ID="lt_header1" runat="server"></asp:Literal></th>
                                     <th class="grey-bg lighten-3">
                                         <asp:Literal ID="lt_header2" runat="server"></asp:Literal></th>
@@ -213,7 +213,7 @@
                 </LayoutTemplate>
                 <ItemTemplate>
                     <tr id="trItem" runat="server">
-                        <td class="center aligned collapsing">
+                        <td class="center aligned">
                             <a href="<%=FuncPath() %>/View/<%#Eval("Data_ID") %>">
                                 <h5><%#Eval("TraceID") %></h5>
                             </a>

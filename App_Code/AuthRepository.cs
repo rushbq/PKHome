@@ -637,6 +637,10 @@ namespace AuthData.Controllers
             }
         }
 
+        #endregion
+
+        #region -- 取得原始資料 --
+
 
         /// <summary>
         /// 取得資料庫實體名稱
@@ -675,9 +679,6 @@ namespace AuthData.Controllers
 
             }
         }
-        #endregion
-
-        #region -- 取得原始資料 --
 
         /// <summary>
         /// 取得原始資料

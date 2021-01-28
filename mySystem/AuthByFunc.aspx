@@ -173,7 +173,8 @@
 
                       //auto expandAll
                       var treeObj = $.fn.zTree.getZTreeObj("authList");
-                      treeObj.expandAll(true);
+                   
+	  treeObj.expandAll(true);
                   })
                   .fail(function () {
                       alert("權限選單載入失敗");

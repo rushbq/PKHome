@@ -1188,11 +1188,12 @@ namespace Menu3000Data.Controllers
                     sql.AppendLine("	, ISNULL(TblOrder_SH.OrderDate, '') AS LastOrderDate_SH");
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_TW.MB057 + INVMB_TW.MB058 + INVMB_TW.MB059 + INVMB_TW.MB060), 0)) AS PaperCost_TW");
                     sql.AppendLine("	, CONVERT(FLOAT, ISNULL((INVMB_SH.MB057 + INVMB_SH.MB058 + INVMB_SH.MB059 + INVMB_SH.MB060), 0)) AS PaperCost_SH");
+                    /*20210127, agent*客戶折扣率, 移除客戶折扣率*/
                     sql.AppendLine("	, ISNULL(");
-                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_TW.MB053/32) * (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END), 2))");
+                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_TW.MB053/32), 2))");
                     sql.AppendLine("		, 0) AS AgentPrice_TW");
                     sql.AppendLine("    , ISNULL(");
-                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_SH.MB053/8) * (CASE WHEN TblQuote.DisRate = 0 THEN 1 ELSE TblQuote.DisRate END), 2))");
+                    sql.AppendLine("       CONVERT(FLOAT, ROUND((INVMB_SH.MB053/8), 2))");
                     sql.AppendLine("		, 0) AS AgentPrice_SH");
                     sql.AppendLine("    , ROW_NUMBER() OVER(ORDER BY TblQuote.CustID, TblQuote.ModelNo) AS RowIdx");
                     sql.AppendLine(" FROM TblQuote");
