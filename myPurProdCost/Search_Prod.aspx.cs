@@ -188,7 +188,7 @@ public partial class myPurProdCost_Search_Prod : SecurityCheck
                         html.Append("<td class=\"green-text text-darken-3\"><h5>{0}</h5></td>".FormatThis(
                             item.Field<string>("PackItemNo")));
                         html.Append("<td class=\"center aligned\" style=\"width:20%\"><h5>{0}</h5></td>".FormatThis(
-                            item.Field<decimal>("PackQty")));
+                           Math.Round(item.Field<decimal>("PackQty"), 2)));
 
                         //Del Button
                         html.Append("<td class=\"collapsing\">");

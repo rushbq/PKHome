@@ -990,8 +990,8 @@ namespace Menu3000Data.Controllers
                             //    }
                             //    break;
                             case "Keyword":
-                                strQuoteModel = "AND (MB002 LIKE '%' + UPPER(@keyword) + '%')";
-                                strOrderModel = "AND (COPTD.TD004 LIKE '%' + UPPER(@keyword) + '%')";
+                                strQuoteModel = "AND (MB002 LIKE UPPER(@keyword) + '%')";
+                                strOrderModel = "AND (COPTD.TD004 LIKE UPPER(@keyword) + '%')";
 
 
                                 sqlParamList.Add(new SqlParameter("@keyword", item.Value));
@@ -1602,7 +1602,7 @@ FROM (
                             {
                                 case "Keyword":
                                     sql.Append(" AND (");
-                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
                                     sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
                                     sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
                                     sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
@@ -4223,7 +4223,7 @@ FROM (
             sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Base.Create_Who)) AS Create_Name");
             sql.AppendLine("  , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Base.Update_Who)) AS Update_Name");
             sql.AppendLine("  , (SELECT COUNT(*) FROM Cust_Complaint_Temp WHERE (CC_Type = Base.CC_Type) AND (IsInvoke = 'N')) AS unOpenCnt");
-            sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY Base.FlowStatus, Base.Create_Time DESC) AS RowIdx");
+            sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY RefFlow.Sort ASC, Base.Create_Time DESC) AS RowIdx");
             sql.AppendLine(" FROM Cust_Complaint Base");
             sql.AppendLine("  INNER JOIN Cust_Complaint_RefType RefType ON Base.CC_Type = RefType.Class_ID");
             sql.AppendLine("  LEFT JOIN Cust_Complaint_RefClass RefCustType ON Base.CustType = RefCustType.Class_ID AND RefCustType.Class_Type = 2");

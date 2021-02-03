@@ -5120,10 +5120,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                             {
                                 case "Keyword":
                                     sql.Append(" AND (");
-                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
                                     sql.Append(" )");
 
                                     sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
@@ -5212,10 +5209,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                             {
                                 case "Keyword":
                                     sql.Append(" AND (");
-                                    sql.Append("  (UPPER(Prod.Model_No) LIKE UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_TW) LIKE '%' + UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_zh_CN) LIKE '%' + UPPER(@Keyword) + '%')");
-                                    sql.Append("  OR (UPPER(Prod.Model_Name_en_US) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("  (UPPER(Prod.Model_No) LIKE '%' + UPPER(@Keyword) + '%')");
                                     sql.Append(" )");
 
                                     sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));

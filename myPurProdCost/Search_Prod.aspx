@@ -31,7 +31,7 @@
                 <div class="column">
                     <div class="ui small form">
                         <div class="field">
-                            <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="查詢關鍵字:品號, 品名" MaxLength="20"></asp:TextBox>
+                            <asp:TextBox ID="filter_Keyword" runat="server" autocomplete="off" placeholder="查詢關鍵字:品號" MaxLength="20"></asp:TextBox>
                         </div>
                     </div>
                 </div>
