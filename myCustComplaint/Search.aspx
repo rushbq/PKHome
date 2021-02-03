@@ -173,14 +173,14 @@
                                 <tr>
                                     <th>客訴編號</th>
                                     <th>品號</th>
-                                    <th>數量</th>
+                                    <th class="collapsing">數量</th>
                                     <th>客戶類別</th>
                                     <th>客訴內容</th>
-                                    <th>流程狀態</th>
-                                    <th class="center aligned">一線</th>
-                                    <th class="center aligned">二線</th>
-                                    <th class="center aligned">業務</th>
-                                    <th class="center aligned">資材</th>
+                                    <th class="collapsing">流程狀態</th>
+                                    <th class="center aligned collapsing">一線</th>
+                                    <th class="center aligned collapsing">二線</th>
+                                    <th class="center aligned collapsing">業務</th>
+                                    <th class="center aligned collapsing">資材</th>
                                     <th></th>
                                 </tr>
                             </thead>

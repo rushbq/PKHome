@@ -43,9 +43,7 @@
                 <div class="fields">
                     <div class="five wide field">
                         <label><%:GetLocalResourceObject("sh_關鍵字查詢")%></label>
-                        <div class="ui fluid search ac-Employee">
-                            <asp:TextBox ID="filter_Keyword" runat="server"></asp:TextBox>
-                        </div>
+                        <asp:TextBox ID="filter_Keyword" runat="server"></asp:TextBox>
                     </div>
                     <div class="five wide field">
                         <label><%:GetLocalResourceObject("sh_登記日期")%></label>
