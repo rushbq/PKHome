@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -637,7 +637,7 @@ namespace ARData.Controllers
                 //----- SQL 查詢語法 -----
                 string sql = @"
                  ;WITH TblPreGet AS (
-                     SELECT ISNULL(SUM(TA029+TA030), 0) AS unGetPrice
+                     SELECT ISNULL(SUM(TA029+TA030-TA031), 0) AS unGetPrice
                      , COUNT(*) AS Cnt
                      , TA004 AS CustID
                      FROM [##dbName##].dbo.ACRTA
