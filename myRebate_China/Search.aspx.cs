@@ -54,6 +54,11 @@ public partial class myRebate_Search : SecurityCheck
                 {
                     this.filter_Cust.Text = Req_Cust;
                 }
+                //[取得/檢查參數] - Req_DateSet
+                if (!string.IsNullOrWhiteSpace(Req_DateSet))
+                {
+                    this.filter_dateSet.SelectedValue = Req_DateSet;
+                }
                 #endregion
 
 
@@ -89,6 +94,7 @@ public partial class myRebate_Search : SecurityCheck
         //----- 原始資料:條件篩選 -----
         PageParam.Add("yy=" + Server.UrlEncode(inputY));
         PageParam.Add("mm=" + Server.UrlEncode(inputM));
+        PageParam.Add("dateset=" + Server.UrlEncode(Req_DateSet));
 
         #region >> 條件篩選 <<
 
@@ -102,7 +108,7 @@ public partial class myRebate_Search : SecurityCheck
         #endregion
 
         //----- 原始資料:取得所有資料 -----
-        var query = _data.GetCustRebateList(inputY, inputM, search, out ErrMsg);
+        var query = _data.GetCustRebateList(inputY, inputM, search, Req_DateSet, out ErrMsg);
 
         //----- 資料整理:繫結 ----- 
         this.lvDataList.DataSource = query;
@@ -201,7 +207,7 @@ public partial class myRebate_Search : SecurityCheck
         #endregion
 
         //----- 方法:取得資料(輸出順序以此為主) -----
-        var query = _data.GetCustRebateList(Req_Year, Req_Month, search, out ErrMsg)
+        var query = _data.GetCustRebateList(Req_Year, Req_Month, search, Req_DateSet, out ErrMsg)
             .Select(fld => new
             {
                 DeptName = fld.DeptName,
@@ -367,6 +373,7 @@ public partial class myRebate_Search : SecurityCheck
         string _Year = this.filter_Year.SelectedValue;
         string _Month = this.filter_Month.SelectedValue;
         string _Cust = this.filter_Cust.Text;
+        string _ds = filter_dateSet.SelectedValue;
 
         //url string
         StringBuilder url = new StringBuilder();
@@ -388,6 +395,11 @@ public partial class myRebate_Search : SecurityCheck
         if (!string.IsNullOrWhiteSpace(_Cust))
         {
             url.Append("&Cust=" + Server.UrlEncode(_Cust));
+        }
+        //[查詢條件] - DateSet
+        if (!string.IsNullOrWhiteSpace(_ds))
+        {
+            url.Append("&dateSet=" + Server.UrlEncode(_ds));
         }
 
         return url.ToString();
@@ -504,6 +516,24 @@ public partial class myRebate_Search : SecurityCheck
         }
     }
     private string _Req_Month;
+
+    /// <summary>
+    /// 取得傳遞參數 - DateSet
+    /// </summary>
+    public string Req_DateSet
+    {
+        get
+        {
+            String _data = Request.QueryString["dateset"];
+            return (CustomExtension.String_資料長度Byte(_data, "1", "1", out ErrMsg)) ? _data.Trim() : "A";
+        }
+        set
+        {
+            this._Req_DateSet = value;
+        }
+    }
+    private string _Req_DateSet;
+
 
     /// <summary>
     /// 設定參數 - 本頁Url

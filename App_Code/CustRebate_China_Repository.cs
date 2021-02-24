@@ -23,13 +23,14 @@ namespace CustRebate_China_Data.Controllers
         /// <param name="inputYear">年</param>
         /// <param name="inputMonth">月</param>
         /// <param name="search">查詢參數</param>
+        /// <param name="dateSet">截止日選項=A:1225, B:1231</param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
         /// <remarks>
         /// 必填:inputYear / inputMonth(當月)
         /// </remarks>
         public IQueryable<CustRebateItem> GetCustRebateList(string inputYear, string inputMonth
-            , Dictionary<string, string> search, out string ErrMsg)
+            , Dictionary<string, string> search, string dateSet, out string ErrMsg)
         {
             //----- 宣告 -----
             List<CustRebateItem> dataList = new List<CustRebateItem>();
@@ -45,13 +46,13 @@ namespace CustRebate_China_Data.Controllers
 	                SELECT Base.TG001, Base.TG002, Base.TG003, Base.TG004
 	                , Base.TH004, Base.TH013, Base.TH037, Base.TH038
 	                FROM [ReportCenter].dbo.Ref_SalesOrder Base
-	                WHERE (LEFT(Base.TG003, 4) = @paramYear) AND (Base.DBS IN ('SH','SZ')) AND (Base.CREATE_DATE <= @paramYear+'1225')
+	                WHERE (LEFT(Base.TG003, 4) = @paramYear) AND (Base.DBS IN ('SH','SZ')) AND (Base.CREATE_DATE <= @paramYear+'##dateSet##')
                 )
                 , TblSOReback AS (
 	                /* 銷退單資料 (全年), 12/25以前 */
 	                SELECT Reb.TI001, Reb.TI002, Reb.TI003, Reb.TI004, Reb.TJ033, Reb.TJ034
 	                FROM [ReportCenter].[dbo].[Ref_SalesReback] Reb
-	                WHERE (LEFT(Reb.TI003, 4) = @paramYear) AND (Reb.DBS IN ('SH','SZ')) AND (Reb.CREATE_DATE <= @paramYear+'1225')
+	                WHERE (LEFT(Reb.TI003, 4) = @paramYear) AND (Reb.DBS IN ('SH','SZ')) AND (Reb.CREATE_DATE <= @paramYear+'##dateSet##')
                 )
                 , TblPaperCost AS (
 	                /* 成本資料 (全年), 來源:報表中心底層 */
@@ -229,6 +230,9 @@ namespace CustRebate_China_Data.Controllers
 
                 sql += " ORDER BY TblBase.DeptName, TblBase.CustID";
 
+                //replace 指定參數(A:1225, B:1231)
+                sql = sql.Replace("##dateSet##", dateSet.Equals("A") ? "1225" : "1231");
+
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
                 cmd.CommandTimeout = 60;   //單位:秒
@@ -370,8 +374,8 @@ namespace CustRebate_China_Data.Controllers
                         {
                             _cnt_c = 0;
                         }
-                        
-                        
+
+
                         //(剩餘回饋金額)-d = c - B  (** after _cnt_c **)
                         _cnt_d = _cnt_c - _cntBase_B;
 
@@ -386,7 +390,7 @@ namespace CustRebate_China_Data.Controllers
                             _cnt_b = (_cntBase_C + _cntBase_cB) * 0.5;
                         }
 
-                        
+
                         /* 返利前毛利率 = (未稅A - 成本)/未稅A */
                         _profitA = _cntBase_utA > 0
                             ? ((_cntBase_utA - _cntBase_costA) / _cntBase_utA) * 100
@@ -538,7 +542,7 @@ namespace CustRebate_China_Data.Controllers
                             DataYear = item.Field<string>("DataYear"),
                             CustID = item.Field<string>("CustID"),
                             CustName = item.Field<string>("CustName"),
-                            DeptName = item.Field<string>("DeptName"),
+                            //DeptName = item.Field<string>("DeptName"),
                             Formula = item.Field<string>("Formula"),
                             Remark = item.Field<string>("Remark"),
                             Cnt_e = item.Field<double>("RespMoney"),

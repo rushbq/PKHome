@@ -133,6 +133,12 @@
 
                             <th class="grey-bg lighten-3" rowspan="2">品名</th>
                             <th class="grey-bg lighten-3" rowspan="2">包裝方式</th>
+                            <th class="grey-bg lighten-3" rowspan="2">內盒<br />
+                                產品數量</th>
+                            <th class="grey-bg lighten-3" rowspan="2">整箱數量</th>
+                            <th class="grey-bg lighten-3" rowspan="2">材積</th>
+                            <th class="grey-bg lighten-3" rowspan="2">淨重</th>
+                            <th class="grey-bg lighten-3" rowspan="2">毛重</th>
                             <th class="grey-bg lighten-3" rowspan="2">上市日</th>
                             <th class="grey-bg lighten-3" rowspan="2">停售日</th>
                         </tr>
@@ -449,9 +455,25 @@
                                  return result;
                              }, className: "collapsing center aligned"
                          },
+                         {
+                             /* 品名 */
+                             data: function (source, type, val) {
+                                 var nameTW = source.ModelName_TW;
+                                 var nameEN = source.ModelName_EN;
 
-                         { data: "ModelName", className: "left aligned" },
+                                 var result = '<div class="ui basic fluid label" style="margin-bottom: 1px;">' + nameTW + '</div><br>'
+                                    + '<div class="ui basic fluid label">' + nameEN + '</div>'
+
+                                 return result;
+                             }, className: "left aligned"
+                         },
+
                          { data: "Packing", className: "left aligned" },
+                         { data: "InnerBox", className: "center aligned" }, /* 內盒產品數 */
+                         { data: "CTNQty", className: "center aligned" }, /* 整箱數量 */
+                         { data: "IB_Cuft", className: "center aligned" }, /* 材積 */
+                         { data: "IB_NW", className: "center aligned" }, /* 淨重 */
+                         { data: "IB_GW", className: "center aligned" }, /* 毛重 */
                          { data: "onlineDate", className: "center aligned" },
                          { data: "offlineDate", className: "center aligned" }
 

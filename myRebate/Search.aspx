@@ -59,7 +59,7 @@
                     </div>
                 </div>
             </div>
-            <div class="ui two column grid">
+            <%-- <div class="ui two column grid">
                 <div class="column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
                 </div>
@@ -67,8 +67,20 @@
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
                     <asp:Button ID="btn_Search" runat="server" Text="Button" OnClick="btn_Search_Click" Style="display: none" />
                 </div>
+            </div>--%>
+            <div class="ui grid">
+                <div class="five wide column">
+                    <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
+                </div>
+                <div class="six wide column center aligned">
+                    <span class="ui tag label">本表所列皆為「<span class="red-text text-darken-3">含稅金額</span>」
+                    </span>
+                </div>
+                <div class="five wide column right aligned">
+                    <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
+                    <asp:Button ID="btn_Search" runat="server" Text="Button" OnClick="btn_Search_Click" Style="display: none" />
+                </div>
             </div>
-
         </div>
         <!-- Advance Search End -->
 
@@ -340,7 +352,7 @@
                         .reduce(function (a, b) {
                             return Math.round((intVal(a) + intVal(b)) * 100) / 100;
                         }, 0);
-   
+
                     //與挑戰目標差額
                     total_D = api
                         .column(10)

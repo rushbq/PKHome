@@ -49,6 +49,13 @@
                         <asp:DropDownList ID="filter_Month" runat="server">
                         </asp:DropDownList>
                     </div>
+                    <div class="three wide field">
+                        <label>資料範圍</label>
+                        <asp:DropDownList ID="filter_dateSet" runat="server">
+                            <asp:ListItem Value="A" Selected="True">12/25以前</asp:ListItem>
+                            <asp:ListItem Value="B">12/31以前</asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
                     <div class="five wide field">
                         <label>客戶</label>
                         <div class="ui fluid search ac-Cust">
@@ -60,11 +67,15 @@
                     </div>
                 </div>
             </div>
-            <div class="ui two column grid">
-                <div class="column">
+            <div class="ui grid">
+                <div class="five wide column">
                     <a href="<%=FuncPath() %>" class="ui small button"><i class="refresh icon"></i>重置條件</a>
                 </div>
-                <div class="column right aligned">
+                <div class="six wide column center aligned">
+                    <span class="ui tag label">本表所列皆為「<span class="red-text text-darken-3">含稅金額</span>」
+                    </span>
+                </div>
+                <div class="five wide column right aligned">
                     <button type="button" id="doSearch" class="ui blue small button"><i class="search icon"></i>查詢</button>
                     <asp:Button ID="btn_Search" runat="server" Text="Button" OnClick="btn_Search_Click" Style="display: none" />
                 </div>

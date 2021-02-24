@@ -18,7 +18,7 @@ using PKLib_Method.Methods;
   [電商數據]-eCommerceData
   [出貨明細表]-ShipData
   [外銷客戶歷史報價]-GetQuote_History
-  [集團報價表]
+  [集團報價表]-myQuote/SearchByCompany
 */
 namespace Menu3000Data.Controllers
 {
@@ -1505,8 +1505,14 @@ SELECT TbAll.*
 FROM (
   SELECT
 	RTRIM(Prod.Model_No) AS Model_No
-	, Prod.Model_Name_zh_TW AS ModelName
+	, ISNULL(Prod.Model_Name_zh_TW, '') AS ModelName_TW
+	, ISNULL(Prod.Model_Name_en_US, '') AS ModelName_EN
 	, Prod.Pub_Individual_Packing_zh_TW AS Packing /* 包裝明細 */
+	, Prod.Pub_Carton_Qty_CTN AS CTNQty /* 整箱數量 */
+    , Prod.Pub_IB_Qty AS InnerBox /* 內盒產品數 */
+	, Prod.Pub_IB_CUFT AS IB_Cuft /* 材積 */
+	, Prod.Pub_IB_NW AS IB_NW /* 淨重 */
+	, Prod.Pub_IB_GW AS IB_GW /* 毛重 */
 	, Prod.Ship_From
 	, REPLACE(ISNULL(Prod.Catelog_Vol, ''), 'NULL', '') AS CatVol
 	, REPLACE(ISNULL(Prod.Page, ''), 'NULL', '') AS CatPage

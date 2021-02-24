@@ -219,8 +219,14 @@ public partial class myQuote_SearchByProd : SecurityCheck
         _col.Add("tw_InAgentPrice", "內銷經銷價-台灣市場(NTD)");
         _col.Add("tw_Rate_InAgentPrice", "利潤率%(內銷經銷價)");
 
-        _col.Add("ModelName", "品名");
+        _col.Add("ModelName_TW", "中文品名");
+        _col.Add("ModelName_EN", "英文品名");
         _col.Add("Packing", "包裝方式");
+        _col.Add("InnerBox", "內盒產品數");
+        _col.Add("CTNQty", "整箱數量");
+        _col.Add("IB_Cuft", "材積");
+        _col.Add("IB_NW", "淨重");
+        _col.Add("IB_GW", "毛重");
         _col.Add("onlineDate", "上市日");
         _col.Add("offlineDate", "停售日");
 
