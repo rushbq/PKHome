@@ -165,7 +165,7 @@ namespace Menu4000Data.Models
         public string ModelNo { get; set; }
 
         /// <summary>
-        /// 卡片品號
+        /// 包材品號
         /// </summary>
         public string PackItemNo { get; set; }
 
@@ -174,6 +174,10 @@ namespace Menu4000Data.Models
         /// </summary>
         public string Currency { get; set; }
 
+        /// <summary>
+        /// 廠商
+        /// </summary>
+        public string SupName { get; set; }
 
         /// <summary>
         /// 品號核價單價
@@ -181,12 +185,12 @@ namespace Menu4000Data.Models
         public decimal ModelPrice { get; set; }
 
         /// <summary>
-        /// 卡片核價單價
+        /// 包材核價單價
         /// </summary>
         public decimal PackPrice { get; set; }
 
         /// <summary>
-        /// 卡片數量
+        /// 包材數量
         /// </summary>
         public decimal PackQty { get; set; }
 
@@ -196,13 +200,18 @@ namespace Menu4000Data.Models
         public string ProdNote { get; set; }
 
         /// <summary>
-        /// 標準成本
+        /// 計算標準成本
         /// 品號核價單價 + (卡片核價單價 * 數量)
         /// </summary>
         public decimal ProdCost { get; set; }
 
         /// <summary>
-        /// 卡片核價單價 * 數量
+        /// ERP標準成本
+        /// </summary>
+        public decimal ERPStdCost { get; set; }
+
+        /// <summary>
+        /// 包材核價單價 * 數量
         /// </summary>
         public decimal PackSumPrice { get; set; }
 

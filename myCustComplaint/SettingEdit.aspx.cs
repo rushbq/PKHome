@@ -92,7 +92,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
                 Get_ClassList("3", ddl_FreightType, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("11", ddl_PlanType, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
                 Get_ClassList("12", ddl_BadReason, _ccType, GetLocalResourceObject("ddl_請選擇").ToString());
-                
+
 
                 //    /* 多語系設定 */
                 //    lt_TraceID.Text = GetLocalResourceObject("txt_系統自動產生").ToString();
@@ -357,6 +357,20 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
         {
             CustomExtension.AlertMsg(errTxt, "");
             return;
+        }
+
+        //空白不檢查
+        if(!string.IsNullOrWhiteSpace(_mallID) && !string.IsNullOrWhiteSpace(_platform_ID))
+        {
+            //判斷重複(商城+單號)
+            string _traceid = _data.Check_CCP_MallData(_mallID, _platform_ID, Req_DataID);
+
+            if (!string.IsNullOrWhiteSpace(_traceid))
+            {
+                string strJS = "alert('請注意,平台單號重複新增,請檢查後再執行存檔。\\n重複資料的追蹤碼為：{0}')".FormatThis(_traceid);
+                ScriptManager.RegisterClientScriptBlock((Page)HttpContext.Current.Handler, typeof(string), "js", strJS, true);
+                return;
+            }
         }
 
         //----- 設定:資料欄位 -----
@@ -1131,7 +1145,7 @@ public partial class myCustComplaint_SettingEdit : SecurityCheck
                 {
                     errCnt++;
                 }
-                
+
             }
 
             if (errCnt > 0)

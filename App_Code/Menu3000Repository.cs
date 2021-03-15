@@ -8269,6 +8269,49 @@ FROM (
 
         #endregion *** 出貨明細表(上海) E ***
 
+
+        #region *** 客訴 S ***
+
+        /// <summary>
+        /// 檢查商城資料是否重複
+        /// </summary>
+        /// <param name="_mallID">商城代號</param>
+        /// <param name="_mallNo">商城單號</param>
+        /// <param name="_currID">目前的資料代號</param>
+        /// <returns></returns>
+        public string Check_CCP_MallData(string _mallID, string _mallNo, string _currID)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                string sql = @"
+                SELECT TraceID
+                FROM [PKEF].dbo.Cust_Complaint_Temp
+                WHERE (RefMallID = @RefMallID) AND (Platform_ID = @Platform_ID) AND (Data_ID <> @CurrID)";
+
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("RefMallID", _mallID);
+                cmd.Parameters.AddWithValue("Platform_ID", _mallNo);
+                cmd.Parameters.AddWithValue("CurrID", _currID);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKEF, out ErrMsg))
+                {
+                    if (DT.Rows.Count == 0)
+                    {
+                        return "";
+                    }
+                    else
+                    {
+                        return DT.Rows[0]["TraceID"].ToString();
+                    }
+                }
+            }
+        }
+
+        #endregion *** 客訴 E ***
+
+
+
         #endregion
 
 

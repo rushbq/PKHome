@@ -80,13 +80,15 @@
                     <thead>
                         <tr>
                             <th class="grey-bg lighten-3">品號</th>
+                            <th class="grey-bg lighten-3 center aligned">主供應商</th>
                             <th class="grey-bg lighten-3 center aligned">幣別</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">品號核價單價</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">卡片核價單價*數量</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt" title="品號核價單價+(卡片核價單價*數量)">標準成本</th>
-                            <th class="grey-bg lighten-3">卡片品號</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">卡片核價單價</th>
-                            <th class="grey-bg lighten-3 center aligned numFmt">卡片數量</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">包材核價單價*數量</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt" title="品號核價單價+(包材核價單價*數量)">計算標準成本</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">ERP標準成本</th>
+                            <th class="grey-bg lighten-3">包材品號</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">包材核價單價</th>
+                            <th class="grey-bg lighten-3 center aligned numFmt">包材數量</th>
                             <th class="grey-bg lighten-3">品號備註</th>
                         </tr>
                     </thead>
@@ -162,7 +164,7 @@
         });
         //取得複選選單欄位值
         function doGetSupDrpVals() {
-            //取得多選的值
+            //取得值
             var procValue = $("#menuSup").dropdown("get value");
             var $fldCust = $("#MainContent_val_Sups");
 
@@ -292,10 +294,30 @@
                      //自訂顯示欄位
                      "columns": [
                          { data: "ModelNo", className: "green-text text-darken-2" },
+                         { data: "SupName", className: "center aligned" },
                          { data: "Currency", className: "collapsing center aligned" },
                          { data: "ModelPrice", className: "right aligned" },
                          { data: "PackSumPrice", className: "right aligned" },
                          { data: "ProdCost", className: "right aligned" },
+                         /* ERP 標準成本 */
+                         //{ data: "ERPStdCost", className: "right aligned" },
+                         {
+                             data: function (source, type, val) {
+                                 var cntStdCost = source.ProdCost;
+                                 var erpStdCost = source.ERPStdCost;
+                                 var _css = "";
+
+                                 if(cntStdCost != erpStdCost){
+                                     _css = "red-text text-darken-1"
+                                 }
+
+                                 //組成html
+                                 var html = '<span class="'+ _css +'">'+ erpStdCost +'</span>';
+
+                                 return html;
+                             }, className: "right aligned"
+                         },
+
                          { data: "PackItemNo", className: "blue-text text-darken-2" },
                          { data: "PackPrice", className: "right aligned" },
                          { data: "PackQty", className: "center aligned" },

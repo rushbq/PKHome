@@ -4715,20 +4715,19 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                   - 幣別:NTD
                 */
                 WITH TblChkPrice_TW AS (
-                SELECT ChkPrice_TW.ModelNo, ChkPrice_TW.Price, ChkPrice_TW.SupID
-                FROM (
-	                SELECT
-	                RTRIM([MB001]) AS ModelNo --AS [品號]
-	                , [MB011] AS Price --AS [採購單價]
-	                , MB002 AS SupID
-	                , RANK() OVER (
-		                PARTITION BY MB001 ORDER BY MB008 DESC
-	                ) AS RankSeq  --依核價日排序
-	                FROM [prokit2].dbo.PURMB
-	                WHERE (MB003 = 'NTD')
-	                 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112))
-                ) AS ChkPrice_TW
-                WHERE (ChkPrice_TW.RankSeq = 1)
+	                SELECT ChkPrice.ModelNo, ChkPrice.Price, ChkPrice.SupID, ChkPrice.Currency, ChkPrice.CfmCode
+	                FROM (
+		                SELECT Base.TL004 AS SupID, Base.TL005 AS Currency, DT.TM004 AS ModelNo, ISNULL(DT.TM010, 0) AS Price
+		                , Base.TL006 AS CfmCode
+		                , RANK() OVER (
+			                PARTITION BY Base.TL004, DT.TM004
+			                ORDER BY Base.TL003 DESC
+		                ) AS myTbSeq	
+		                FROM [prokit2].dbo.PURTL Base WITH(NOLOCK)
+			                INNER JOIN [prokit2].dbo.PURTM DT WITH(NOLOCK) ON Base.TL001 = DT.TM001 AND Base.TL002 = DT.TM002
+		                WHERE (DT.TM015 = '')
+	                ) AS ChkPrice
+	                WHERE ChkPrice.myTbSeq = 1
                 )
 
                 /*
@@ -4737,20 +4736,19 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                   - 幣別:RMB
                 */
                 , TblChkPrice_SH AS (
-                SELECT ChkPrice_SH.ModelNo, ChkPrice_SH.Price, ChkPrice_SH.SupID
-                FROM (
-	                SELECT
-	                RTRIM([MB001]) AS ModelNo --AS [品號]
-	                , [MB011] AS Price --AS [採購單價]
-	                , MB002 AS SupID
-	                , RANK() OVER (
-		                PARTITION BY MB001 ORDER BY MB008 DESC
-	                ) AS RankSeq  --依核價日排序
-	                FROM [SHPK2].dbo.PURMB
-	                WHERE (MB003 = 'RMB')
-	                 AND (MB014 <= CONVERT(CHAR(8),GETDATE(),112))
-                ) AS ChkPrice_SH
-                WHERE (ChkPrice_SH.RankSeq = 1)
+	                SELECT ChkPrice.ModelNo, ChkPrice.Price, ChkPrice.SupID, ChkPrice.Currency, ChkPrice.CfmCode
+	                FROM (
+		                SELECT Base.TL004 AS SupID, Base.TL005 AS Currency, DT.TM004 AS ModelNo, ISNULL(DT.TM010, 0) AS Price
+		                , Base.TL006 AS CfmCode
+		                , RANK() OVER (
+			                PARTITION BY Base.TL004, DT.TM004
+			                ORDER BY Base.TL003 DESC
+		                ) AS myTbSeq	
+		                FROM [SHPK2].dbo.PURTL Base WITH(NOLOCK)
+			                INNER JOIN [SHPK2].dbo.PURTM DT WITH(NOLOCK) ON Base.TL001 = DT.TM001 AND Base.TL002 = DT.TM002
+		                WHERE (DT.TM015 = '')
+	                ) AS ChkPrice
+	                WHERE ChkPrice.myTbSeq = 1
                 )";
 
                 #endregion
@@ -4770,23 +4768,27 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     SELECT TbAll.*
                     FROM (
                       SELECT ISNULL(Rel.DBS, '') AS DBS
-	                    , (CASE Rel.DBS WHEN 'SH' THEN 'RMB' WHEN 'TW' THEN 'NTD' ELSE '' END) AS Currency
+	                    , ISNULL((CASE WHEN Prod.Ship_From = 'SH' THEN sh_ModelPrice.Currency ELSE tw_ModelPrice.Currency END), '') AS Currency
 	                    , RTRIM(Prod.Model_No) AS ModelNo, ISNULL(Rel.PackItemNo, '') PackItemNo, ISNULL(Rel.PackQty, 0) PackQty, Prod.Pub_Notes
+	                    , Prod.Provider AS SupID, RTRIM(Sup.MA002) AS SupName
 	                    , CONVERT(numeric(10,2), ISNULL(tw_ModelPrice.Price, 0)) AS tw_PurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(sh_ModelPrice.Price, 0)) AS sh_PurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(tw_PackPrice.Price, 0)) AS tw_PackPurPrice
 	                    , CONVERT(numeric(10,2), ISNULL(sh_PackPrice.Price, 0)) AS sh_PackPurPrice
+                        , CONVERT(numeric(10,2), ISNULL((SELECT MB057 FROM [prokit2].dbo.INVMB WHERE INVMB.MB001 = Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN), 0)) AS tw_StdPrice
+                        , CONVERT(numeric(10,2), ISNULL((SELECT MB057 FROM [SHPK2].dbo.INVMB WHERE INVMB.MB001 = Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN), 0)) AS sh_StdPrice
 	                    , ROW_NUMBER() OVER(
 	                          PARTITION BY Prod.Ship_From, Prod.Model_No ORDER BY Prod.Model_No, Rel.PackItemNo
 	                      ) AS RowGroupIdx
 	                    , ROW_NUMBER() OVER(ORDER BY Prod.Model_No) AS RowIdx
 	                    FROM [ProductCenter].dbo.Prod_Item Prod
 	                     LEFT JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo AND Prod.Ship_From = Rel.DBS
-	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
-	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
-	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
-	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
-	                    WHERE (Prod.Ship_From = @dbs) AND (LEFT(Prod.Model_No, 1) <> '0')";
+	                     LEFT JOIN [PKSYS].dbo.Supplier_ERPData Sup ON Prod.Provider = Sup.MA001 AND Sup.COMPANY = (CASE WHEN Prod.Ship_From = 'TW' THEN 'prokit(II)' ELSE 'SHPK2' END)
+	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID AND tw_ModelPrice.CfmCode = 'N'
+	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID AND sh_ModelPrice.CfmCode = 'N'
+	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID AND tw_PackPrice.CfmCode = 'Y'
+	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID AND sh_PackPrice.CfmCode = 'Y'
+	                    WHERE (Prod.Ship_From = @dbs) AND (ISNULL(Prod.Provider, '') <> '') AND (Prod.Pub_Property = 'P')";
 
                     //append sql
                     sql.Append(subSql);
@@ -4892,11 +4894,12 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     SELECT COUNT(Prod.Model_No) AS TotalCnt
                     FROM [ProductCenter].dbo.Prod_Item Prod
 	                     LEFT JOIN [ProductCenter].dbo.Prod_Rel_Package Rel ON Prod.Model_No = Rel.ModelNo AND Prod.Ship_From = Rel.DBS
-	                     LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID
-	                     LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID
-	                     LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID
-	                     LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID
-                    WHERE (Prod.Ship_From = @dbs) AND (LEFT(Prod.Model_No, 1) <> '0')";
+                         LEFT JOIN [PKSYS].dbo.Supplier_ERPData Sup ON Prod.Provider = Sup.MA001 AND Sup.COMPANY = (CASE WHEN Prod.Ship_From = 'TW' THEN 'prokit(II)' ELSE 'SHPK2' END)
+                         LEFT JOIN TblChkPrice_TW AS tw_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = tw_ModelPrice.SupID AND tw_ModelPrice.CfmCode = 'N'
+                         LEFT JOIN TblChkPrice_SH AS sh_ModelPrice ON Prod.Model_No COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.ModelNo AND Prod.Provider COLLATE Chinese_Taiwan_Stroke_BIN = sh_ModelPrice.SupID AND sh_ModelPrice.CfmCode = 'N'
+                         LEFT JOIN TblChkPrice_TW AS tw_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = tw_PackPrice.SupID AND tw_PackPrice.CfmCode = 'Y'
+                         LEFT JOIN TblChkPrice_SH AS sh_PackPrice ON Rel.PackItemNo COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.ModelNo AND Rel.SupID COLLATE Chinese_Taiwan_Stroke_BIN = sh_PackPrice.SupID AND sh_PackPrice.CfmCode = 'Y'
+                    WHERE (Prod.Ship_From = @dbs) AND (ISNULL(Prod.Provider, '') <> '') AND (Prod.Pub_Property = 'P')";
 
                     //append
                     sql.Append(subsql);
@@ -5002,14 +5005,15 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     */
                     /*
                        品號 = string ModelNo
-                       卡片品號 = string PackItemNo
+                       包材品號 = string PackItemNo
                        幣別 = string Currency
-                       品號核價單價 = double ModelPrice
-                       卡片核價單價 = double PackPrice
-                       卡片數量 = Int16 PackQty
+                       品號核價單價 = ModelPrice
+                       包材核價單價 = PackPrice
+                       包材數量 = Int16 PackQty
                        品號備註 = string ProdNote
-                       標準成本 = double ProdCost (品號核價單價 + (卡片核價單價*數量))
-                       卡片核價單價*數量 = double PackSumPrice
+                       標準成本 = ProdCost (品號核價單價 + (包材核價單價*數量))
+                       ERP標準成本 = ERPStdCost
+                       包材核價單價*數量 = double PackSumPrice
                     */
 
                     //品號核價單價
@@ -5017,10 +5021,13 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     Int64 _rowGroupIdx = item.Field<Int64>("RowGroupIdx");
                     if (_rowGroupIdx > 1) _modelPrice = 0;
 
-                    //卡片核價單價
+                    //包材核價單價
                     decimal _packPrice = dbs.Equals("TW") ? item.Field<decimal>("tw_PackPurPrice") : item.Field<decimal>("sh_PackPurPrice");
 
-                    //卡片數量
+                    //ERP標準成本
+                    decimal _ERPStdCost = dbs.Equals("TW") ? item.Field<decimal>("tw_StdPrice") : item.Field<decimal>("sh_StdPrice");
+
+                    //包材數量
                     decimal _packQty = item.Field<decimal>("PackQty");
 
                     //加入項目
@@ -5029,12 +5036,14 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                         ModelNo = item.Field<string>("ModelNo"),
                         PackItemNo = item.Field<string>("PackItemNo"),
                         Currency = item.Field<string>("Currency"),
+                        SupName = item.Field<string>("SupName"),
                         ModelPrice = _modelPrice,
                         PackPrice = _packPrice,
                         PackQty = _packQty,
                         ProdNote = item.Field<string>("Pub_Notes").Replace("\r\n", "<br/>"),
-                        ProdCost = Math.Round(_modelPrice + (_packPrice * _packQty), 1),
+                        ProdCost = Math.Round(_modelPrice + (_packPrice * _packQty), 2),
                         PackSumPrice = Math.Round(_packPrice * _packQty, 2),
+                        ERPStdCost = _ERPStdCost,
                         RowIdx = item.Field<Int64>("RowIdx")
                     };
 

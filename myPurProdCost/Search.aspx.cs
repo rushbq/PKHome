@@ -126,13 +126,15 @@ public partial class myPurProdCost_Search : SecurityCheck
 
         Dictionary<string, string> _col = new Dictionary<string, string>();
         _col.Add("ModelNo", "品號");
+        _col.Add("SupName", "主供應商");
         _col.Add("Currency", "幣別");
         _col.Add("ModelPrice", "品號核價單價");
-        _col.Add("PackSumPrice", "卡片核價單價*數量");
-        _col.Add("ProdCost", "標準成本");
-        _col.Add("PackItemNo", "卡片品號");
-        _col.Add("PackPrice", "卡片核價單價");
-        _col.Add("PackQty", "卡片數量");
+        _col.Add("PackSumPrice", "包材核價單價*數量");
+        _col.Add("ProdCost", "計算標準成本");
+        _col.Add("ERPStdCost", "ERP標準成本");
+        _col.Add("PackItemNo", "包材品號");
+        _col.Add("PackPrice", "包材核價單價");
+        _col.Add("PackQty", "包材數量");
         _col.Add("ProdNote", "品號備註");
 
         //將指定的欄位,轉成陣列
