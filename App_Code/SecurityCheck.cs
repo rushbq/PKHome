@@ -63,8 +63,8 @@ public class SecurityCheck : System.Web.UI.Page
             }
             else
             {
-                ////取得登入名稱
-                //HttpContext.Current.Session["Login_UserName"] = listAttr[1];
+                //取得登入名稱
+                UnobtrusiveSession.Session["Login_UserName"] = listAttr[1];
 
                 //取得登入帳號
                 UnobtrusiveSession.Session["Login_UserID"] = listAttr[2];

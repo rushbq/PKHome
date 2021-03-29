@@ -162,8 +162,26 @@ public class fn_Param
     }
     private static string _CurrentUserAccount;
 
-
     
+    /// <summary>
+    /// 目前使用者Name
+    /// </summary>
+    public static string CurrentUserName
+    {
+        get
+        {
+            var id = UnobtrusiveSession.Session["Login_UserName"];
+
+            return (id == null) ? "" : id.ToString();
+        }
+        set
+        {
+            _CurrentUserName = value;
+        }
+    }
+    private static string _CurrentUserName;
+
+
     /// <summary>
     /// 依傳入的公司區域簡稱回傳對應的UID
     /// </summary>
