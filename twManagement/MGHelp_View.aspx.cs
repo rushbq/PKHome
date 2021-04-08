@@ -138,6 +138,7 @@ public partial class MGHelp_View : SecurityCheck
             rbl_RateScore.SelectedValue = query.RateScore.ToString();
             tb_RateContent.Text = query.RateContent;
             lt_RateWho.Text = query.RateWhoName;
+            ph_IsDoneWrite.Visible = !string.IsNullOrWhiteSpace(query.RateWhoName);
 
             #endregion
 

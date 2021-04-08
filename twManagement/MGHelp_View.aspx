@@ -18,9 +18,9 @@
             <div class="right menu">
                 <a class="anchor" id="top" title="置頂用錨點"></a>
                 <a href="<%:Page_SearchUrl %>" class="item"><i class="undo icon"></i><span class="mobile hidden">返回列表</span></a>
-                <a class="item" id="tips">
+                <%--<a class="item" id="tips">
                     <i class="question circle icon"></i>
-                </a>
+                </a>--%>
             </div>
         </div>
     </div>
@@ -316,7 +316,13 @@
                         <asp:PlaceHolder ID="ph_section3" runat="server">
                             <div class="ui segments">
                                 <div class="ui olive segment">
-                                    <h5 class="ui header"><a class="anchor" id="section3"></a>驗收意見</h5>
+                                    <h5 class="ui header"><a class="anchor" id="section3"></a>驗收意見
+                                        <asp:PlaceHolder ID="ph_IsDoneWrite" runat="server" Visible="false">
+                                            <span class="ui orange right corner label" title="填寫完成">
+                                                <i class="check icon"></i>
+                                            </span>
+                                        </asp:PlaceHolder>
+                                    </h5>
                                 </div>
                                 <asp:PlaceHolder ID="ph_unClose" runat="server">
                                     <div class="ui placeholder segment">

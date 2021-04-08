@@ -672,25 +672,23 @@
                     說明文件
                 </div>
                 <div class="content">
-                    <div class="ui header">
+                    <%--<div class="ui header">
                         處理狀態說明
                     </div>
                     <ul class="ui list">
                         <li><span>待處理</span>：需求者發出新需求</li>
-                        <li><span>處理中</span>：資訊人員努力處理中。</li>
+                        <li><span>處理中</span>：執行單位努力處理中。</li>
                         <li><span>測試中</span>：處理完畢，通知需求者測試。</li>
                         <li><span>已結案</span>：案件已結案。</li>
-                    </ul>
+                    </ul>--%>
                     <div class="ui header">
                         通知信發送時機
                     </div>
                     <ul class="ui list">
                         <li><span>新需求</span>：通知執行單位(管理部)、轉寄人員(若有勾選)</li>
-                        <li><span class="red-text text-darken-1">提供資料</span>：缺資料或改善效益未填時可使用.</li>
-                        <li><span class="red-text text-darken-1">測試通知</span>：專案交付測試後通知測試, 發送後狀態會變成「測試中」.</li>
-                        <li><span class="red-text text-darken-1">驗收通知</span>：結案時會發第一則通知, 後續可繼續手動通知.</li>
+                        <li><span class="red-text text-darken-1">通知信</span>：由執行單位手動按通知, 內容自行定義.</li>
+                        <li><span>驗收通知</span>：結案時會發第一則通知, 後續可繼續手動通知.</li>
                         <li><span>結案</span>：通知執行單位、轉寄人員、需求者。</li>
-                        <li>以上紅色為管理人員手動按鈕通知.</li>
                     </ul>
                 </div>
                 <div class="actions">
@@ -779,7 +777,7 @@
                         }
                     }
 
-                    //將陣列組成以','分隔的字串，並填入欄位
+                    //將陣列組成以','分隔的字串，並填入欄位(轉寄人員Guid)
                     $("#MainContent_tb_InfoWho").val(valAry.join(","));
 
                 }

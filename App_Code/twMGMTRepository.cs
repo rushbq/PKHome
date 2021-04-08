@@ -22,7 +22,6 @@ namespace twMGMTData.Controllers
         /// [管理工作需求] 取得不分頁的清單
         /// </summary>
         /// <param name="search"></param>
-        /// <param name="dbs"></param>
         /// <param name="ErrMsg"></param>
         /// <returns></returns>
         public IQueryable<MgHelpData> GetOne_MGhelp(Dictionary<string, string> search, out string ErrMsg)
@@ -35,13 +34,12 @@ namespace twMGMTData.Controllers
         /// [管理工作需求] 取得已設定的清單
         /// </summary>
         /// <param name="search">search集合</param>
-        /// <param name="dbs">TW/SH</param>
         /// <param name="startRow">StartRow(從0開始)</param>
         /// <param name="endRow">RecordsPerPage</param>
         /// <param name="doPaging">是否分頁</param>
         /// <param name="DataCnt">傳址參數(資料總筆數)</param>
         /// <param name="ErrMsg"></param>
-        /// <returns>DataTable</returns>
+        /// <returns></returns>
         public IQueryable<MgHelpData> Get_MGhelpList(Dictionary<string, string> search
             , int startRow, int endRow, bool doPaging
             , out int DataCnt, out string ErrMsg)
@@ -85,6 +83,7 @@ namespace twMGMTData.Controllers
                     {
                         //過濾空值
                         var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+                        string filterDateType = "Base.Create_Time";
 
                         //查詢內容
                         foreach (var item in thisSearch)
@@ -110,18 +109,32 @@ namespace twMGMTData.Controllers
 
                                     break;
 
-                                case "sDate":
-                                    //--登記日期(開始)
-                                    sql.Append(" AND (Base.Create_Time >= @sDate)");
+                                case "DateType":
+                                    switch (item.Value)
+                                    {
+                                        case "A":
+                                            filterDateType = "Base.Create_Time";
+                                            break;
 
-                                    sqlParamList_Cnt.Add(new SqlParameter("@sDate", item.Value));
+                                        case "B":
+                                            filterDateType = "Base.Finish_Time";
+                                            break;
+
+                                        default:
+                                            filterDateType = "Base.Create_Time";
+                                            break;
+                                    }
+
+                                    break;
+
+                                case "sDate":
+                                    sql.Append(" AND ({0} >= @sDate)".FormatThis(filterDateType));
+                                    sqlParamList.Add(new SqlParameter("@sDate", item.Value + " 00:00:00"));
 
                                     break;
                                 case "eDate":
-                                    //--登記日期(結束)
-                                    sql.Append(" AND (Base.Create_Time <= @eDate)");
-
-                                    sqlParamList_Cnt.Add(new SqlParameter("@eDate", item.Value));
+                                    sql.Append(" AND ({0} <= @eDate)".FormatThis(filterDateType));
+                                    sqlParamList.Add(new SqlParameter("@eDate", item.Value + " 23:59:59"));
 
                                     break;
 
@@ -636,7 +649,7 @@ namespace twMGMTData.Controllers
                 //----- SQL 查詢語法 -----
                 sql.AppendLine(" SELECT Prof.Display_Name AS Who, Base.CC_Email AS Email");
                 sql.AppendLine(" FROM twMG_Help_CC Base");
-                sql.AppendLine("  INNER JOIN PKSYS.dbo.User_Profile Prof ON Base.CC_Who = Prof.Account_Name");
+                sql.AppendLine("  INNER JOIN PKSYS.dbo.User_Profile Prof ON Base.CC_Who = Prof.Guid");
                 sql.AppendLine(" WHERE (ParentID = @ParentID)");
                 sql.AppendLine(" ORDER BY Prof.DeptID, Prof.Account_Name");
 
@@ -980,7 +993,7 @@ namespace twMGMTData.Controllers
                 sql.AppendLine(" UPDATE twMG_Help_CC");
                 sql.AppendLine(" SET CC_Email = Prof.Email");
                 sql.AppendLine(" FROM [PKSYS].dbo.User_Profile Prof");
-                sql.AppendLine(" WHERE (CC_Who = Prof.Account_Name) AND (ParentID = @ParentID);"); //工號對應
+                sql.AppendLine(" WHERE (CC_Who = Prof.Guid) AND (ParentID = @ParentID);"); //工號對應
 
                 sql.AppendLine(" DELETE FROM twMG_Help_CC");
                 sql.AppendLine(" WHERE (CC_Email IS NULL) AND (ParentID = @ParentID);");
