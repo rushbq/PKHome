@@ -51,7 +51,7 @@
                                 <label>&nbsp;</label>
                                 <div class="ui left icon input datepicker">
                                     <asp:TextBox ID="filter_eDate" runat="server" autocomplete="off"></asp:TextBox>
-                                    <i class="calendar alternate outline icon"></i>
+                                    <i class="calendar alternate icon"></i>
                                 </div>
                             </div>
                         </div>

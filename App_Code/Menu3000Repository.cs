@@ -19,6 +19,7 @@ using PKLib_Method.Methods;
   [出貨明細表]-ShipData
   [外銷客戶歷史報價]-GetQuote_History
   [集團報價表]-myQuote/SearchByCompany
+  [OPCS備註]-myOpcsRemark/
 */
 namespace Menu3000Data.Controllers
 {
@@ -7129,6 +7130,656 @@ FROM (
         #endregion *** 出貨明細表(上海) E ***
 
 
+        #region *** OPCS備註 S ***
+        /// <summary>
+        /// [OPCS備註] 客戶備註:取得不分頁的清單
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetOne_CustRemk(Dictionary<string, string> search, string dbs, out string ErrMsg)
+        {
+            int DataCnt = 0;
+            return Get_CustRemkList(search, dbs, 0, 0, false, out DataCnt, out ErrMsg);
+        }
+
+        /// <summary>
+        /// [OPCS備註] 客戶備註
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable Get_CustRemkList(Dictionary<string, string> search, string dbs
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataCnt = 0;    //資料總數
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT COUNT(*) AS TotalCnt
+                    FROM [PKSYS].dbo.Customer Cust
+	                 INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBC) = UPPER(Corp.Corp_ID)
+	                 LEFT JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Cust.MA001 = Remk.CustID AND (Remk.DBS = @dbs)
+	                WHERE (Cust.DBS = Cust.DBC) AND (Corp.Corp_ShortName = @dbs)";
+
+                    //append
+                    sql.Append(mainSql);
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (Remk.Data_ID = @DataID)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //客戶
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(Cust.MA001) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(Cust.MA002) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList_Cnt.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+                sql.Clear();
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT TbAll.*
+                    FROM (
+	                    SELECT
+	                    Remk.Data_ID, RTRIM(Cust.MA001) AS CustID, RTRIM(Cust.MA002) AS CustName
+                        , Remk.Create_Time, Remk.Update_Time
+	                    , ISNULL(Remk.Remk_Normal, '') AS Remk_Normal, ISNULL(Remk.Remk_2210, '') AS Remk_2210
+	                    , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Remk.Create_Who)) AS Create_Name
+                        , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Remk.Update_Who)) AS Update_Name
+	                    , ROW_NUMBER() OVER (ORDER BY Cust.MA001) AS RowIdx
+	                    FROM [PKSYS].dbo.Customer Cust
+	                     INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBC) = UPPER(Corp.Corp_ID)
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Cust.MA001 = Remk.CustID AND (Remk.DBS = @dbs)
+	                    WHERE (Cust.DBS = Cust.DBC) AND (Corp.Corp_ShortName = @dbs)";
+
+                    //append sql
+                    sql.Append(mainSql);
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (Remk.Data_ID = @DataID)");
+
+                                    sqlParamList.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //客戶
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(Cust.MA001) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(Cust.MA002) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //Sql尾段
+                    sql.AppendLine(") AS TbAll");
+
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                    {
+                        //return err
+                        if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+
+                        return DT;
+                    }
+
+                }
+
+                #endregion
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 訂單備註:取得不分頁的清單
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetOne_OrderRemk(Dictionary<string, string> search, string dbs, out string ErrMsg)
+        {
+            int DataCnt = 0;
+            return Get_OrderRemkList(search, dbs, 0, 0, false, out DataCnt, out ErrMsg);
+        }
+
+        /// <summary>
+        /// [OPCS備註] 訂單備註
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable Get_OrderRemkList(Dictionary<string, string> search, string dbs
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataCnt = 0;    //資料總數
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT COUNT(*) AS TotalCnt
+                    FROM [##dbName##].dbo.COPTC AS Base
+	                    INNER JOIN [##dbName##].dbo.COPMA ON Base.TC004 = COPMA.MA001
+	                    LEFT JOIN [##dbName##].dbo.CMSMV ON Base.TC006 = CMSMV.MV001
+	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                WHERE (Base.TC027 = 'Y')";
+
+                    //append
+                    sql.Append(mainSql);
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (DT.Data_ID = @DataID)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //單號
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(RTRIM(Base.TC001) + RTRIM(Base.TC002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(RTRIM(Base.TC001) +'-'+ RTRIM(Base.TC002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "sDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TC003 >= @sDate)");
+                                    sqlParamList_Cnt.Add(new SqlParameter("@sDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+                                case "eDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TC003 <= @eDate)");
+                                    sqlParamList_Cnt.Add(new SqlParameter("@eDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+
+                                case "IsClose":
+                                    //是否結案
+                                    sql.Append(" AND (Base.TC001+Base.TC002 IN (");
+                                    sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
+                                    sql.Append(" ))");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@IsClose", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //## Replace DB Name ##
+                    sql.Replace("##dbName##", GetDBName(dbs));
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList_Cnt.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+                sql.Clear();
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT TbAll.*
+                    FROM (
+	                    SELECT DT.Data_ID
+	                    , RTRIM(Base.TC001) AS SO_Fid /* 訂單單別 */
+	                    , RTRIM(Base.TC002) AS SO_Sid /* 訂單單號 */
+	                    , Base.TC003 AS SO_Date /* 接單日期 */
+	                    , RTRIM(COPMA.MA002) AS CustName /* 客戶名稱 */
+	                    , RTRIM(COPMA.MA001) AS CustID
+	                    , Base.TC008 AS TradeCurrency /* 交易幣別 */
+	                    , Base.TC009 AS Rate /* 匯率 */
+	                    , Base.TC013 AS TradeTerm /* 價格條件 */
+	                    , Base.TC014 AS PayTerm /* 付款條件 */
+	                    , CMSMV.MV002 AS SalesWho
+	                    , (SELECT TOP 1 TD013 FROM [##dbName##].dbo.COPTD WHERE (TD016 = 'N') AND (TD001 = Base.TC001) AND (TD002 = Base.TC002) ORDER BY TD003) AS PreDate /* 預交日 */
+	                    , ISNULL(DT.Remk_Normal, '') AS Remk_Normal
+	                    , DT.Create_Time, DT.Update_Time
+	                    , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Create_Who)) AS Create_Name
+                        , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Update_Who)) AS Update_Name
+	                    , ROW_NUMBER() OVER (ORDER BY Base.TC001, Base.TC002) AS RowIdx
+	                    FROM [##dbName##].dbo.COPTC AS Base
+	                     INNER JOIN [##dbName##].dbo.COPMA ON Base.TC004 = COPMA.MA001
+	                     LEFT JOIN [##dbName##].dbo.CMSMV ON Base.TC006 = CMSMV.MV001
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                    WHERE (Base.TC027 = 'Y')";
+
+                    //append sql
+                    sql.Append(mainSql);
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (DT.Data_ID = @DataID)");
+
+                                    sqlParamList.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //單號
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(RTRIM(Base.TC001) + RTRIM(Base.TC002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(RTRIM(Base.TC001) +'-'+ RTRIM(Base.TC002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "sDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TC003 >= @sDate)");
+                                    sqlParamList.Add(new SqlParameter("@sDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+                                case "eDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TC003 <= @eDate)");
+                                    sqlParamList.Add(new SqlParameter("@eDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+
+                                case "IsClose":
+                                    //是否結案
+                                    sql.Append(" AND (Base.TC001+Base.TC002 IN (");
+                                    //sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
+                                    sql.Append(" SELECT TD001 + TD002");
+                                    sql.Append(" FROM [##dbName##].dbo.COPTC INNER JOIN [##dbName##].dbo.COPTD");
+                                    sql.Append("  ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002");
+                                    sql.Append(" WHERE(TD016 = @IsClose) AND (COPTC.TC003 = Base.TC003)");
+                                    sql.Append(" GROUP BY TD001+TD002");
+                                    sql.Append(" ))");
+
+                                    sqlParamList.Add(new SqlParameter("@IsClose", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //Sql尾段
+                    sql.AppendLine(") AS TbAll");
+
+                    //## Replace DB Name ##
+                    sql.Replace("##dbName##", GetDBName(dbs));
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                    {
+                        //return err
+                        if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+
+                        return DT;
+                    }
+
+                }
+
+                #endregion
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 取得檔案附件
+        /// </summary>
+        /// <param name="_refID">關聯的編號</param>
+        /// <param name="_type">A=客戶備註/ B=訂單備註</param>
+        /// <returns></returns>
+        public DataTable Get_OpcsRemkFiles(string _refID, string _type, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+                    SELECT Base.AttachID, Base.AttachFile, Base.AttachFile_Org
+                    , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Base.Create_Who)) AS Create_Name
+                    FROM [PKExcel].dbo.OpcsRemk_Attachment Base
+                    WHERE (Base.AttachType = @type) AND (Base.RefID = @RefID)";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("RefID", _refID);
+                cmd.Parameters.AddWithValue("type", _type);
+
+
+                //----- 資料取得 -----
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    return DT;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 取得OPCS表格
+        /// </summary>
+        /// <param name="_SOID"></param>
+        /// <param name="_dbs"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable Get_OpcsRemkForm(string _SOID, string _dbs, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+SELECT
+COPTC.TC039 AS CheckDate /* '核單日期' */
+, COPTC.TC003 AS OrderDate /* '接單日期' */
+, CMSMQ.MQ002 AS OrderTypeName /* '單別名稱' */
+, RTRIM(COPTC.TC001) AS SO_Fid /* '訂單單別' */
+, RTRIM(COPTC.TC002) AS SO_Sid /* '訂單單號' */
+, RTRIM(COPMA.MA002) AS CustName /* '客戶名稱' */
+, COPMA.MA001 AS CustID
+, COPTC.TC012 AS CustPO /* 客戶單號 */
+, COPTD.TD013 AS PreDate /* '預交日' */
+, CMSMV.MV002 AS SalesWho
+, COPTC.TC013 AS TradeTerm /* 交易條件 */
+, COPTC.TC014 AS PayTerm /* 付款方式 */
+, COPTC.TC008 AS TradeCurrency /* 交易幣別 */
+, COPTC.TC054 AS MicTxt1 /* '正嘜' */
+, COPTC.TC055 AS MicTxt2 /* '側嘜' */
+/* 單身資料 */
+, COPTD.TD003 AS OrderSid /* '序號' */
+, COPTD.TD004 AS ModelNo /* '品號' */
+, CAST(COPTD.TD008 AS INT) AS OrderQty /* '訂單數量' */
+, CAST(COPTD.TD024 AS INT) AS GiftQty /* '贈品量' */
+, CAST(INVMC.MC007 AS INT) AS StockQty /* '庫存數量' */
+, INVMC.MC002 AS StockType /* '庫別' */
+, RTRIM(ISNULL(PURMA.MA002, '')) AS SupName /* '主供應商' */
+, INVMC.MC003 AS StockPos /* '儲存位置' */
+, (CAST(COPTD.TD206 AS VARCHAR(4))+CAST(COPTD.TD200 AS VARCHAR(4)) + ' - ' + CAST(COPTD.TD206 AS VARCHAR(4))+CAST(COPTD.TD201 AS VARCHAR(4))) AS BoxNo /* 箱號 */
+, COPTD.TD014 AS CustModelNo /* '客戶品號' */
+, INVMB.MB013 AS Barcode /* '條碼編號' */
+, ISNULL(COPMG.MG200, '') AS ProdRemark /* '產品特別注意事項' */
+/* EF程式 */
+, ISNULL(Remk.Remk_Normal, '') AS OrderRemark
+/* 其他 */
+, RTRIM(INVMB.MB025) AS Prop /* '品號屬性' */
+, (
+	SELECT CAST(ISNULL(SUM(Rel.TD008), 0) AS INT)
+	FROM [SHPK2].dbo.COPTD Rel
+	WHERE (Rel.TD007 = COPTD.TD007) AND (Rel.TD004 = COPTD.TD004) AND (Rel.TD016 = 'N') AND (Rel.TD021 = 'Y')
+) AS unGiveQty /* 已訂未交(TD016結案碼=N, TD021確認碼=Y) */
+, (
+	SELECT CAST(ISNULL(SUM(Rel.TD008), 0) AS INT)
+	FROM [SHPK2].dbo.PURTD Rel
+	WHERE (Rel.TD007 = COPTD.TD007) AND (Rel.TD004 = COPTD.TD004) AND (Rel.TD016 = 'N') AND (Rel.TD018 = 'Y')
+) AS unPurQty /* 採購未進(TD016結案碼=N, TD018確認碼=Y) */
+FROM [##dbName##].dbo.COPTC
+ INNER JOIN [##dbName##].dbo.COPTD ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
+ INNER JOIN [##dbName##].dbo.COPMA ON COPTC.TC004 = COPMA.MA001
+ INNER JOIN [##dbName##].dbo.CMSMQ ON COPTC.TC001 = CMSMQ.MQ001
+ INNER JOIN [##dbName##].dbo.INVMC ON COPTD.TD007 = INVMC.MC002 AND COPTD.TD004 = INVMC.MC001
+ INNER JOIN [##dbName##].dbo.INVMB ON COPTD.TD004 = INVMB.MB001
+ LEFT JOIN [##dbName##].dbo.COPMG ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
+ LEFT JOIN [##dbName##].dbo.PURMA ON INVMB.MB032 = PURMA.MA001
+ LEFT JOIN [##dbName##].dbo.CMSMV ON COPTC.TC006 = CMSMV.MV001
+ LEFT JOIN [PKExcel].dbo.OpcsRemk_Order Remk ON Remk.DBS = @DBS AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = @SOID)
+ORDER BY COPTD.TD003";
+
+                //## Replace DB Name ##
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("SOID", _SOID);
+                cmd.Parameters.AddWithValue("DBS", _dbs);
+
+
+                //----- 資料取得 -----
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    return DT;
+                }
+            }
+        }
+
+
+        #endregion *** OPCS備註 E ***
+
+
+
         #endregion
 
 
@@ -8311,6 +8962,180 @@ FROM (
         #endregion *** 客訴 E ***
 
 
+        #region *** OPCS備註 S ***
+        /// <summary>
+        /// [OPCS備註] 客戶備註:無編號時自動新增,並回傳編號
+        /// </summary>
+        /// <param name="_custID">客代</param>
+        /// <param name="_dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public Int32 Check_CustRemk(string _custID, string _dbs, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                string sql = @"
+                    DECLARE @NewDataID AS INT
+                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Cust WHERE (CustID = @CustID) AND (DBS = @DBS)) > 0
+                     BEGIN
+	                    SET @NewDataID = (
+	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Cust WHERE (CustID = @CustID) AND (DBS = @DBS)
+	                    )
+                     END
+                    ELSE
+                     BEGIN
+
+	                    SET @NewDataID = (
+	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Cust
+	                    )
+	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Cust (
+	                     Data_ID, CustID, DBS, Create_Who, Create_Time
+	                    ) VALUES (
+	                     @NewDataID, @CustID, @DBS, @Who, GETDATE()
+	                    )
+
+                     END
+                    SELECT @NewDataID AS ShowID";
+
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("CustID", _custID);
+                cmd.Parameters.AddWithValue("DBS", _dbs);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    if (DT.Rows.Count == 0)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return Convert.ToInt32(DT.Rows[0]["ShowID"]);
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 訂單備註:無編號時自動新增,並回傳編號
+        /// </summary>
+        /// <param name="_SO_Fid">單別</param>
+        /// <param name="_SO_Sid">單號</param>
+        /// <param name="_dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 單別=2210要抓客戶2210備註
+        /// </remarks>
+        public Int32 Check_OrderRemk(string _SO_Fid, string _SO_Sid, string _dbs, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                string sql = @"
+                    DECLARE @NewDataID AS INT, @currRemk AS NVARCHAR(MAX)
+                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
+                     BEGIN
+	                    SET @NewDataID = (
+	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
+	                    )
+                     END
+                    ELSE
+                     BEGIN
+                        /* 取得客戶備註 */
+                        SET @currRemk = (
+                            SELECT (CASE WHEN Base.TC001 = '2210' THEN Remk.Remk_2210 ELSE Remk.Remk_Normal END) AS CurrRemk
+                            FROM [##dbName##].dbo.COPTC Base
+                             INNER JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Base.TC004 = Remk.CustID COLLATE Chinese_Taiwan_Stroke_BIN 
+                            WHERE (Base.TC001 = @SO_Fid) AND (Base.TC002 = @SO_Sid)
+                        )
+                        /* 取得新編號 */
+	                    SET @NewDataID = (
+	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order
+	                    )
+	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order (
+	                     Data_ID, SO_Fid, SO_Sid, DBS, Remk_Normal, Create_Who, Create_Time
+	                    ) VALUES (
+	                     @NewDataID, @SO_Fid, @SO_Sid, @DBS, @currRemk, @Who, GETDATE()
+	                    )
+
+                     END
+                    SELECT @NewDataID AS ShowID";
+                //## Replace DB Name ##
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("SO_Fid", _SO_Fid);
+                cmd.Parameters.AddWithValue("SO_Sid", _SO_Sid);
+                cmd.Parameters.AddWithValue("DBS", _dbs);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    if (DT.Rows.Count == 0)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return Convert.ToInt32(DT.Rows[0]["ShowID"]);
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 上傳附件
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="_refID"></param>
+        /// <param name="_type">A/B</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Create_OpcsRemkFiles(List<CCPAttachment> instance, string _refID, string _type, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine("DECLARE @NewID AS INT");
+
+                for (int row = 0; row < instance.Count; row++)
+                {
+                    sql.AppendLine(" SET @NewID = (");
+                    sql.AppendLine("  SELECT ISNULL(MAX(AttachID) ,0) + 1 FROM OpcsRemk_Attachment");
+                    sql.AppendLine(" )");
+                    sql.AppendLine(" INSERT INTO OpcsRemk_Attachment(");
+                    sql.AppendLine("  AttachID, RefID, AttachType, AttachFile, AttachFile_Org");
+                    sql.AppendLine("  , Create_Who, Create_Time");
+                    sql.AppendLine(" ) VALUES (");
+                    sql.AppendLine("  @NewID, @RefID, @AttachType, @AttachFile_{0}, @AttachFile_Org_{0}".FormatThis(row));
+                    sql.AppendLine("  , @Create_Who, GETDATE()");
+                    sql.AppendLine(" );");
+
+                    cmd.Parameters.AddWithValue("AttachFile_{0}".FormatThis(row), instance[row].AttachFile);
+                    cmd.Parameters.AddWithValue("AttachFile_Org_{0}".FormatThis(row), instance[row].AttachFile_Org);
+                }
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("RefID", _refID);
+                cmd.Parameters.AddWithValue("AttachType", _type);
+                cmd.Parameters.AddWithValue("Create_Who", instance[0].Create_Who);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+
+        }
+        #endregion *** OPCS備註 E ***
+
 
         #endregion
 
@@ -8725,6 +9550,75 @@ FROM (
         #endregion *** 客訴 E ***
 
 
+        #region *** OPCS備註 S ***
+        /// <summary>
+        /// [OPCS備註] 客戶備註Update
+        /// </summary>
+        /// <param name="_id"></param>
+        /// <param name="_remk1"></param>
+        /// <param name="_remk2"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Update_CustRemk(string _id, string _remk1, string _remk2, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+                UPDATE [PKExcel].dbo.OpcsRemk_Cust
+                SET Remk_Normal = @Remk_Normal, Remk_2210 = @Remk_2210
+                , Update_Who = @Who, Update_Time = GETDATE()
+                WHERE Data_ID = @id";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("Remk_Normal", _remk1);
+                cmd.Parameters.AddWithValue("Remk_2210", _remk2);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+                cmd.Parameters.AddWithValue("id", _id);
+
+                //execute
+                return dbConn.ExecuteSql(cmd, out ErrMsg);
+            }
+
+        }
+
+        /// <summary>
+        /// [OPCS備註] 訂單備註Update
+        /// </summary>
+        /// <param name="_id"></param>
+        /// <param name="_remk1"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Update_OrderRemk(string _id, string _remk1, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+                UPDATE [PKExcel].dbo.OpcsRemk_Order
+                SET Remk_Normal = @Remk_Normal
+                , Update_Who = @Who, Update_Time = GETDATE()
+                WHERE Data_ID = @id";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("Remk_Normal", _remk1);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+                cmd.Parameters.AddWithValue("id", _id);
+
+                //execute
+                return dbConn.ExecuteSql(cmd, out ErrMsg);
+            }
+
+        }
+
+
+        #endregion *** OPCS備註 E ***
+
+
         #endregion
 
 
@@ -8991,6 +9885,83 @@ FROM (
         }
 
         #endregion *** 客訴 E ***
+
+
+        #region *** OPCS備註 S ***
+        /// <summary>
+        /// [OPCS備註]
+        /// </summary>
+        /// <param name="dataID"></param>
+        /// <returns></returns>
+        public bool Delete_CustRemk(string dataID)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" DELETE FROM OpcsRemk_Attachment WHERE (RefID = @Data_ID) AND (AttachType = 'A');");
+                sql.AppendLine(" DELETE FROM OpcsRemk_Cust WHERE (Data_ID = @Data_ID);");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
+
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+        }
+
+        /// <summary>
+        /// [OPCS備註]
+        /// </summary>
+        /// <param name="dataID"></param>
+        /// <returns></returns>
+        public bool Delete_OrderRemk(string dataID)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" DELETE FROM OpcsRemk_Attachment WHERE (RefID = @Data_ID) AND (AttachType = 'B');");
+                sql.AppendLine(" DELETE FROM OpcsRemk_Order WHERE (Data_ID = @Data_ID);");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
+
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+        }
+
+
+        /// <summary>
+        /// [OPCS備註] 刪除附件
+        /// </summary>
+        /// <param name="dataID"></param>
+        /// <returns></returns>
+        public bool Delete_OpcsRemkFile(string dataID)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = " DELETE FROM OpcsRemk_Attachment WHERE (AttachID = @Data_ID)";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", dataID);
+
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKExcel, out ErrMsg);
+            }
+        }
+        #endregion *** OPCS備註 E ***
+
+
 
         #endregion
 
