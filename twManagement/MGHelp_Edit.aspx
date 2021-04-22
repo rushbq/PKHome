@@ -52,20 +52,20 @@
                                     <!-- Left Block -->
                                     <div class="eight wide field">
                                         <div class="two fields">
-                                            <div class="ten wide field">
+                                            <div class="field">
                                                 <label>追蹤編號</label>
                                                 <div class="ui red basic label">
                                                     <asp:Literal ID="lt_TraceID" runat="server">資料建立中</asp:Literal>
                                                 </div>
                                             </div>
-                                            <div class="six wide field">
+                                            <div class="field">
                                                 <label>登記日期</label>
                                                 <div class="ui basic label">
                                                     <asp:Literal ID="lt_CreateDate" runat="server">資料建立中</asp:Literal>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="three fields">
+                                        <div class="two fields">
                                             <div class="required field">
                                                 <label>申請類別</label>
                                                 <asp:DropDownList ID="ddl_ReqClass" runat="server" CssClass="fluid"></asp:DropDownList>
@@ -76,11 +76,6 @@
                                                     <asp:ListItem Value="1" Selected="True">即時通</asp:ListItem>
                                                     <asp:ListItem Value="2">電話</asp:ListItem>
                                                     <asp:ListItem Value="3">面談</asp:ListItem>
-                                                </asp:DropDownList>
-                                            </div>
-                                            <div class="field">
-                                                <label>處理狀態</label>
-                                                <asp:DropDownList ID="ddl_ReqStatus" runat="server" CssClass="fluid" Enabled="false">
                                                 </asp:DropDownList>
                                             </div>
                                         </div>
@@ -119,11 +114,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- 權限主管同意 -->
+                                        <!-- 主管同意 -->
                                         <asp:PlaceHolder ID="ph_Agree" runat="server" Visible="false">
                                             <div class="fields">
                                                 <div class="sixteen wide field">
-                                                    <label>權限申請同意狀態</label>
+                                                    <label>主管同意狀態</label>
                                                     <div class="ui grey large label">
                                                         <asp:Literal ID="lt_AuthAgree" runat="server">未同意</asp:Literal>
                                                     </div>
@@ -289,7 +284,10 @@
                                     <div class="five fields">
                                         <div class="field">
                                             <label>總工時&nbsp;<small>(與結案工時共用)</small></label>
-                                            <asp:TextBox ID="tb_Finish_Hours" runat="server" type="number" step="0.5" min="0"></asp:TextBox>
+                                            <div class="ui right labeled input">
+                                                <asp:TextBox ID="tb_Finish_Hours" runat="server" type="number" step="0.25" min="0"></asp:TextBox>
+                                                <label class="ui label">小時</label>
+                                            </div>
                                         </div>
                                         <div class="field">
                                             <label>預計完成日</label>
@@ -324,6 +322,9 @@
 
                                     <!-- 加入追蹤 -->
                                     <asp:LinkButton ID="lbtn_doTrace" runat="server" CssClass="ui grey small button" ToolTip="加入後會在列表頁置頂(只有本人)" OnClick="lbtn_doTrace_Click"><i class="heart icon"></i>加入追蹤</asp:LinkButton>
+
+                                    <!-- 主管核准 -->
+                                    <asp:LinkButton ID="lbtn_doApprove" runat="server" CssClass="ui orange small button" ToolTip="通知需求部門主管核准" OnClick="lbtn_doApprove_Click" OnClientClick="return confirm('是否通知主管核准?')"><i class="gavel icon"></i>主管核准</asp:LinkButton>
 
                                     <!-- 發通知信 -->
                                     <button id="showInform" type="button" class="ui blue small button" title="開窗後選擇類型"><i class="envelope icon"></i>發通知信</button>

@@ -62,6 +62,9 @@
                                             -
                                             <asp:Literal ID="lt_CustName" runat="server"></asp:Literal>
                                         </div>
+                                        <a href="<%=FuncPath() %>CustEdit.aspx?dbs=<%:Req_DBS %>&Cust=<%:lt_CustID.Text %>" target="_blank">
+                                            查看
+                                        </a>
                                     </div>
                                 </div>
                                 <div class="field">

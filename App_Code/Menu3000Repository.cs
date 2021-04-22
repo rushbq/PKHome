@@ -7181,7 +7181,7 @@ FROM (
                     string mainSql = @"
                     SELECT COUNT(*) AS TotalCnt
                     FROM [PKSYS].dbo.Customer Cust
-	                 INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBC) = UPPER(Corp.Corp_ID)
+	                 INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBS) = UPPER(Corp.Corp_ID)
 	                 LEFT JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Cust.MA001 = Remk.CustID AND (Remk.DBS = @dbs)
 	                WHERE (Cust.DBS = Cust.DBC) AND (Corp.Corp_ShortName = @dbs)";
 
@@ -7270,9 +7270,9 @@ FROM (
                         , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = Remk.Update_Who)) AS Update_Name
 	                    , ROW_NUMBER() OVER (ORDER BY Cust.MA001) AS RowIdx
 	                    FROM [PKSYS].dbo.Customer Cust
-	                     INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBC) = UPPER(Corp.Corp_ID)
+	                     INNER JOIN [PKSYS].dbo.Param_Corp Corp ON UPPER(Cust.DBS) = UPPER(Corp.Corp_ID)
 	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Cust.MA001 = Remk.CustID AND (Remk.DBS = @dbs)
-	                    WHERE (Cust.DBS = Cust.DBC) AND (Corp.Corp_ShortName = @dbs)";
+	                    WHERE (Corp.Corp_ShortName = @dbs)";
 
                     //append sql
                     sql.Append(mainSql);
@@ -7409,9 +7409,9 @@ FROM (
                     //----- SQL 查詢語法 -----
                     string mainSql = @"
                     SELECT COUNT(*) AS TotalCnt
-                    FROM [##dbName##].dbo.COPTC AS Base
-	                    INNER JOIN [##dbName##].dbo.COPMA ON Base.TC004 = COPMA.MA001
-	                    LEFT JOIN [##dbName##].dbo.CMSMV ON Base.TC006 = CMSMV.MV001
+                    FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
+	                    INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
+	                    LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
 	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                WHERE (Base.TC027 = 'Y')";
 
@@ -7466,7 +7466,7 @@ FROM (
                                 case "IsClose":
                                     //是否結案
                                     sql.Append(" AND (Base.TC001+Base.TC002 IN (");
-                                    sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
+                                    sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WITH(NOLOCK) WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
                                     sql.Append(" ))");
 
                                     sqlParamList_Cnt.Add(new SqlParameter("@IsClose", item.Value));
@@ -7528,15 +7528,15 @@ FROM (
 	                    , Base.TC013 AS TradeTerm /* 價格條件 */
 	                    , Base.TC014 AS PayTerm /* 付款條件 */
 	                    , CMSMV.MV002 AS SalesWho
-	                    , (SELECT TOP 1 TD013 FROM [##dbName##].dbo.COPTD WHERE (TD016 = 'N') AND (TD001 = Base.TC001) AND (TD002 = Base.TC002) ORDER BY TD003) AS PreDate /* 預交日 */
+	                    , (SELECT TOP 1 TD013 FROM [##dbName##].dbo.COPTD WITH(NOLOCK) WHERE (TD016 = 'N') AND (TD001 = Base.TC001) AND (TD002 = Base.TC002) ORDER BY TD003) AS PreDate /* 預交日 */
 	                    , ISNULL(DT.Remk_Normal, '') AS Remk_Normal
 	                    , DT.Create_Time, DT.Update_Time
 	                    , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Create_Who)) AS Create_Name
                         , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Update_Who)) AS Update_Name
 	                    , ROW_NUMBER() OVER (ORDER BY Base.TC001, Base.TC002) AS RowIdx
-	                    FROM [##dbName##].dbo.COPTC AS Base
-	                     INNER JOIN [##dbName##].dbo.COPMA ON Base.TC004 = COPMA.MA001
-	                     LEFT JOIN [##dbName##].dbo.CMSMV ON Base.TC006 = CMSMV.MV001
+	                    FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
+	                     INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
+	                     LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
 	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                    WHERE (Base.TC027 = 'Y')";
 
@@ -7592,7 +7592,7 @@ FROM (
                                     sql.Append(" AND (Base.TC001+Base.TC002 IN (");
                                     //sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
                                     sql.Append(" SELECT TD001 + TD002");
-                                    sql.Append(" FROM [##dbName##].dbo.COPTC INNER JOIN [##dbName##].dbo.COPTD");
+                                    sql.Append(" FROM [##dbName##].dbo.COPTC WITH(NOLOCK) INNER JOIN [##dbName##].dbo.COPTD WITH(NOLOCK)");
                                     sql.Append("  ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002");
                                     sql.Append(" WHERE(TD016 = @IsClose) AND (COPTC.TC003 = Base.TC003)");
                                     sql.Append(" GROUP BY TD001+TD002");
@@ -7737,23 +7737,23 @@ COPTC.TC039 AS CheckDate /* '核單日期' */
 , RTRIM(INVMB.MB025) AS Prop /* '品號屬性' */
 , (
 	SELECT CAST(ISNULL(SUM(Rel.TD008), 0) AS INT)
-	FROM [SHPK2].dbo.COPTD Rel
+	FROM [##dbName##].dbo.COPTD Rel WITH(NOLOCK)
 	WHERE (Rel.TD007 = COPTD.TD007) AND (Rel.TD004 = COPTD.TD004) AND (Rel.TD016 = 'N') AND (Rel.TD021 = 'Y')
 ) AS unGiveQty /* 已訂未交(TD016結案碼=N, TD021確認碼=Y) */
 , (
 	SELECT CAST(ISNULL(SUM(Rel.TD008), 0) AS INT)
-	FROM [SHPK2].dbo.PURTD Rel
+	FROM [##dbName##].dbo.PURTD Rel
 	WHERE (Rel.TD007 = COPTD.TD007) AND (Rel.TD004 = COPTD.TD004) AND (Rel.TD016 = 'N') AND (Rel.TD018 = 'Y')
 ) AS unPurQty /* 採購未進(TD016結案碼=N, TD018確認碼=Y) */
-FROM [##dbName##].dbo.COPTC
- INNER JOIN [##dbName##].dbo.COPTD ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
- INNER JOIN [##dbName##].dbo.COPMA ON COPTC.TC004 = COPMA.MA001
- INNER JOIN [##dbName##].dbo.CMSMQ ON COPTC.TC001 = CMSMQ.MQ001
- INNER JOIN [##dbName##].dbo.INVMC ON COPTD.TD007 = INVMC.MC002 AND COPTD.TD004 = INVMC.MC001
- INNER JOIN [##dbName##].dbo.INVMB ON COPTD.TD004 = INVMB.MB001
- LEFT JOIN [##dbName##].dbo.COPMG ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
- LEFT JOIN [##dbName##].dbo.PURMA ON INVMB.MB032 = PURMA.MA001
- LEFT JOIN [##dbName##].dbo.CMSMV ON COPTC.TC006 = CMSMV.MV001
+FROM [##dbName##].dbo.COPTC WITH(NOLOCK)
+ INNER JOIN [##dbName##].dbo.COPTD WITH(NOLOCK) ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
+ INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON COPTC.TC004 = COPMA.MA001
+ INNER JOIN [##dbName##].dbo.CMSMQ WITH(NOLOCK) ON COPTC.TC001 = CMSMQ.MQ001
+ INNER JOIN [##dbName##].dbo.INVMC WITH(NOLOCK) ON COPTD.TD007 = INVMC.MC002 AND COPTD.TD004 = INVMC.MC001
+ INNER JOIN [##dbName##].dbo.INVMB WITH(NOLOCK) ON COPTD.TD004 = INVMB.MB001
+ LEFT JOIN [##dbName##].dbo.COPMG WITH(NOLOCK) ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
+ LEFT JOIN [##dbName##].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001
+ LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON COPTC.TC006 = CMSMV.MV001
  LEFT JOIN [PKExcel].dbo.OpcsRemk_Order Remk ON Remk.DBS = @DBS AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = @SOID)
 ORDER BY COPTD.TD003";
@@ -9046,9 +9046,9 @@ ORDER BY COPTD.TD003";
                      BEGIN
                         /* 取得客戶備註 */
                         SET @currRemk = (
-                            SELECT (CASE WHEN Base.TC001 = '2210' THEN Remk.Remk_2210 ELSE Remk.Remk_Normal END) AS CurrRemk
+                            SELECT TOP 1 (CASE WHEN Base.TC001 = '2210' THEN Remk.Remk_2210 ELSE Remk.Remk_Normal END) AS CurrRemk
                             FROM [##dbName##].dbo.COPTC Base
-                             INNER JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Base.TC004 = Remk.CustID COLLATE Chinese_Taiwan_Stroke_BIN 
+                             INNER JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Remk.DBS = @DBS AND Base.TC004 = Remk.CustID COLLATE Chinese_Taiwan_Stroke_BIN 
                             WHERE (Base.TC001 = @SO_Fid) AND (Base.TC002 = @SO_Sid)
                         )
                         /* 取得新編號 */

@@ -104,13 +104,15 @@ public partial class MGHelp_View : SecurityCheck
             //需求者
             lb_Emp.Text = query.Req_WhoName + " (" + query.Req_NickName + ") #" + query.Req_TelExt;
 
-            ////主管同意, 權限申請(需求類別=12時顯示)
-            //lt_AuthAgree.Text = query.IsAgree.Equals("N") ? "未同意"
-            //    : "{0} 於 {1} 同意申請".FormatThis(
-            //        query.Agree_WhoName
-            //        , query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
-            //    );
-            //ph_Agree.Visible = _currReqCls.Equals("12");
+            //主管同意按鈕
+            ph_AgreeArea.Visible = (query.IsDeptManager > 0) && query.IsAgree.Equals("N");
+            //主管同意狀態
+            ph_Agree.Visible = !query.IsAgree.Equals("E");
+            lt_AuthAgree.Text = query.IsAgree.Equals("N") ? "未同意&nbsp;" + query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
+                : "{0} 於 {1} 同意".FormatThis(
+                    query.Agree_WhoName
+                    , query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
+                );
 
             #endregion
 
@@ -387,7 +389,6 @@ public partial class MGHelp_View : SecurityCheck
 
 
 
-
     #region -- 資料編輯:驗收意見 --
     protected void btn_doSaveRate_Click(object sender, EventArgs e)
     {
@@ -452,7 +453,59 @@ public partial class MGHelp_View : SecurityCheck
 
         //導向本頁
         Response.Redirect(thisPage + "#section3");
+    }
 
+    #endregion
+
+
+
+    #region -- 資料編輯:主管核准 --
+
+    protected void lbtn_No_Click(object sender, EventArgs e)
+    {
+        doApproveJob("N");
+    }
+
+    protected void lbtn_Yes_Click(object sender, EventArgs e)
+    {
+        doApproveJob("Y");
+    }
+
+
+    private void doApproveJob(string _job)
+    {
+        //取得欄位資料
+        string _id = Req_DataID;
+
+        #region ** 資料處理 **
+        //----- 宣告:資料參數 -----
+        MGMTRepository _data = new MGMTRepository();
+
+        try
+        {
+            if (!_data.Update_MGHelpDoApprove(_id, _job, out ErrMsg))
+            {
+                this.ph_ErrMessage.Visible = true;
+                this.lt_ShowMsg.Text = "<b>資料處理儲存失敗</b><p>{0}</p><p>{1}</p>".FormatThis("遇到無法排除的錯誤，請聯絡系統管理員。", ErrMsg);
+
+                CustomExtension.AlertMsg("資料處理失敗", "");
+                return;
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
+        #endregion
+
+
+        CustomExtension.AlertMsg("核准完成", thisPage);
+        return;
     }
 
     #endregion

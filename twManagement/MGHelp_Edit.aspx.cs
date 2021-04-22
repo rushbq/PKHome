@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using PKLib_Data.Controllers;
 using PKLib_Method.Methods;
 using twMGMTData.Controllers;
 using twMGMTData.Models;
@@ -42,7 +43,6 @@ public partial class MGHelp_Edit : SecurityCheck
             if (!IsPostBack)
             {
                 //Get Class(A:處理狀態, B:需求類別, C:處理記錄類別)
-                Get_ClassList("A", ddl_ReqStatus, "", "110"); //處理狀態
                 Get_ClassList("B", ddl_ReqClass, "請選擇", "99"); //需求類別
                 Get_ClassList("C", ddl_ProcClass, "請選擇", ""); //處理類別
 
@@ -139,9 +139,6 @@ public partial class MGHelp_Edit : SecurityCheck
             tb_ReqContent.Text = query.Help_Content;
             tb_Help_Benefit.Text = query.Help_Benefit;
             lt_ReqClass.Text = query.Req_ClassName; //需求類別
-            //處理狀態
-            ddl_ReqStatus.SelectedValue = _currStatus;
-            ddl_ReqStatus.Enabled = _ReplyAuth;
 
             //報修方式
             rbl_Help_Way.SelectedValue = query.Help_Way.ToString();
@@ -152,14 +149,14 @@ public partial class MGHelp_Edit : SecurityCheck
             lb_Emp.Text = query.Req_WhoName + " (" + query.Req_NickName + ") #" + query.Req_TelExt;
             val_Emp.Text = query.Req_Who;
 
-            ////主管同意, 權限申請(需求類別=12時顯示)
-            //lt_AuthAgree.Text = query.IsAgree.Equals("N") ? "未同意"
-            //    : "{0} 於 {1} 同意申請".FormatThis(
-            //        query.Agree_WhoName
-            //        , query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
-            //    );
-            //ph_Agree.Visible = _currReqCls.Equals("12");
-
+            //主管同意狀態
+            ph_Agree.Visible = !query.IsAgree.Equals("E");
+            lt_AuthAgree.Text = query.IsAgree.Equals("N") ? "未同意&nbsp;" + query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
+                : "{0} 於 {1} 同意".FormatThis(
+                    query.Agree_WhoName
+                    , query.Agree_Time.ToString().ToDateString("yyyy/MM/dd HH:mm")
+                );
+            lbtn_doApprove.Visible = query.IsAgree.Equals("E");
             #endregion
 
 
@@ -887,7 +884,6 @@ public partial class MGHelp_Edit : SecurityCheck
             DataID = new Guid(guid),
             Help_Way = Convert.ToInt16(rbl_Help_Way.SelectedValue),
             Req_Who = val_Emp.Text,
-            Help_Status = Convert.ToInt16(ddl_ReqStatus.SelectedValue),
             Help_Subject = tb_ReqSubject.Text.Left(50),
             Help_Content = tb_ReqContent.Text.Left(5000),
             Help_Benefit = tb_Help_Benefit.Text.Left(5000)
@@ -1603,6 +1599,87 @@ public partial class MGHelp_Edit : SecurityCheck
         //導向本頁
         Response.Redirect(thisPage + "#section1");
     }
+
+
+    /// <summary>
+    /// 主管核准
+    /// </summary>
+    protected void lbtn_doApprove_Click(object sender, EventArgs e)
+    {
+        string errTxt = "";
+
+        //[檢查] 有權限者才能編輯
+        if (!_ReplyAuth)
+        {
+            CustomExtension.AlertMsg("無法執行。\\n頁面將轉回列表頁..", Page_SearchUrl);
+            return;
+        }
+
+        //取得欄位資料
+        string _id = hf_DataID.Value;
+
+        #region ** 欄位判斷 **
+        if (string.IsNullOrWhiteSpace(_id))
+        {
+            errTxt += "「資料編號空白」\\n";
+        }
+
+        #endregion
+
+        //顯示不符規則的警告
+        if (!string.IsNullOrEmpty(errTxt))
+        {
+            CustomExtension.AlertMsg(errTxt, "");
+            return;
+        }
+
+
+        #region ** 資料處理 **
+        //----- 宣告:資料參數 -----
+        MGMTRepository _data = new MGMTRepository();
+
+        try
+        {
+            //----- 方法:修改資料 -----
+            if (!_data.Update_MGHelpSetApprove(_id, out ErrMsg))
+            {
+                this.ph_ErrMessage.Visible = true;
+                this.lt_ShowMsg.Text = "<b>狀態修改失敗,設定「主管同意」</b><p>{0}</p><p>{1}</p>".FormatThis("被你用壞掉啦~~ 快求救!!!", ErrMsg);
+
+                CustomExtension.AlertMsg("狀態修改失敗", "");
+                return;
+            }
+
+
+            #region ### 通知信發送 ###
+
+            /* [寄通知信]:核准申請 */
+            if (!doSendInformMail("E", _id, out ErrMsg))
+            {
+                CustomExtension.AlertMsg("核准申請通知信發送失敗.", "");
+                return;
+            }
+
+            #endregion
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
+
+        #endregion
+
+
+        //導向本頁
+        CustomExtension.AlertMsg("已通知主管", thisPage + "#section1");
+        return;
+    }
+
     #endregion
 
 
@@ -1689,7 +1766,7 @@ public partial class MGHelp_Edit : SecurityCheck
 
         query = null;
     }
-    
+
     #endregion
 
 
@@ -1702,7 +1779,7 @@ public partial class MGHelp_Edit : SecurityCheck
     /// <summary>
     /// 發通知信
     /// </summary>
-    /// <param name="_sendType">A:新需求/B:轉寄通知/C:自訂通知/D:結案/E:權限申請</param>
+    /// <param name="_sendType">A:新需求/B:轉寄通知/C:自訂通知/D:結案/E:主管核准</param>
     /// <param name="_guid">資料編號</param>
     /// <param name="_customInfo">自訂通知內文(type=C時使用)</param>
     /// <param name="ErrMsg"></param>
@@ -1737,8 +1814,8 @@ public partial class MGHelp_Edit : SecurityCheck
                 break;
 
             case "E":
-                //權限申請
-                mailSubject = "[管理工作需求][權限核准]";
+                //需求核准
+                mailSubject = "[管理工作需求][需求核准]";
                 break;
 
             default:
@@ -1884,13 +1961,16 @@ public partial class MGHelp_Edit : SecurityCheck
                 break;
 
             case "E":
-                ////權限申請通知信:部門主管Email
-                //var dataE = fn_CustomUI.emailReceiver_Supervisor(reqDeptID);
-                //foreach (var item in dataE)
-                //{
-                //    mailList.Add(item);
-                //}
-                //dataE = null;
+                //主管核准通知信:部門主管Email
+                UsersRepository _datalist = new UsersRepository();
+                var dataE = _datalist.GetDeptSupervisor(reqDeptID);
+                foreach (var item in dataE)
+                {
+                    mailList.Add(item.Email);
+                }
+                dataE = null;
+                _datalist = null;
+
                 break;
         }
 
@@ -1949,10 +2029,10 @@ public partial class MGHelp_Edit : SecurityCheck
                 pageUrl = viewUrl + "#section3";
                 break;
 
-            //case "E":
-            //    msg = "目前有登記一筆權限申請，需要您的同意，請點下方按鈕前往處理。";
-            //    pageUrl = "{0}Recording/Req_Process.aspx?dataID={1}".FormatThis(fn_Param.WebUrl, guid);
-            //    break;
+            case "E":
+                msg = "本件需求需要主管核准，請點下方按鈕「前往查看更多」進行處理。";
+                pageUrl = viewUrl;
+                break;
 
             default:
                 msg = "";

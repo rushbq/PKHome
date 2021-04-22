@@ -129,12 +129,12 @@ namespace twMGMTData.Controllers
 
                                 case "sDate":
                                     sql.Append(" AND ({0} >= @sDate)".FormatThis(filterDateType));
-                                    sqlParamList.Add(new SqlParameter("@sDate", item.Value + " 00:00:00"));
+                                    sqlParamList_Cnt.Add(new SqlParameter("@sDate", item.Value + " 00:00:00"));
 
                                     break;
                                 case "eDate":
                                     sql.Append(" AND ({0} <= @eDate)".FormatThis(filterDateType));
-                                    sqlParamList.Add(new SqlParameter("@eDate", item.Value + " 23:59:59"));
+                                    sqlParamList_Cnt.Add(new SqlParameter("@eDate", item.Value + " 23:59:59"));
 
                                     break;
 
@@ -235,7 +235,7 @@ namespace twMGMTData.Controllers
 
                       /* 權限申請 */
                       , Base.IsAgree, Base.Agree_Time
-                      , ISNULL((SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Agree_Who)), '') AS Agree_WhoName
+                      , ISNULL((SELECT Display_Name FROM PKSYS.dbo.User_Profile WHERE (Guid = Base.Agree_Who)), '') AS Agree_WhoName
   
                       /* 需求單位 */
                       , Base.Req_Who, Base.Req_Dept, Prof.Email AS Req_Email, ISNULL(Prof.Tel_Ext, '') AS Req_TelExt
@@ -262,6 +262,7 @@ namespace twMGMTData.Controllers
                       , ISNULL((SELECT Account_Name + ' (' + Display_Name + ')' FROM [PKSYS].dbo.User_Profile WHERE (Guid = Base.Create_Who)), '') AS Create_Name
                       , ISNULL((SELECT Account_Name + ' (' + Display_Name + ')' FROM [PKSYS].dbo.User_Profile WHERE (Guid = Base.Update_Who)), '') AS Update_Name
                       , ROW_NUMBER() OVER (ORDER BY (CASE WHEN Base.onTopWho = @currUser THEN Base.onTop ELSE 'N' END) DESC, HelpStatus.Sort ASC, Base.Create_Time DESC) AS RowIdx
+                      , (SELECT COUNT(*) FROM [PKSYS].dbo.User_Dept_Supervisor WHERE DeptID = Base.Req_Dept AND Account_Name = @currUserAcct) AS IsDeptManager
                     FROM twMG_Help Base
                       INNER JOIN twMG_Help_ParamClass ReqClass ON Base.Req_Class = ReqClass.Class_ID
                       INNER JOIN twMG_Help_ParamClass HelpStatus ON Base.Help_Status = HelpStatus.Class_ID
@@ -408,6 +409,8 @@ namespace twMGMTData.Controllers
 
                     //----- SQL 固定參數 -----
                     sqlParamList.Add(new SqlParameter("@currUser", fn_Param.CurrentUser)); //用來判斷onTop參數
+                    sqlParamList.Add(new SqlParameter("@currUserAcct", fn_Param.CurrentUserAccount)); //用來判斷主管簽核用
+
 
                     //----- SQL 參數陣列 -----
                     cmd.Parameters.AddRange(sqlParamList.ToArray());
@@ -462,7 +465,8 @@ namespace twMGMTData.Controllers
                                 Update_Name = item.Field<string>("Update_Name"),
                                 Agree_Time = item.Field<DateTime?>("Agree_Time").ToString().ToDateString("yyyy/MM/dd HH:mm:ss"),
                                 Agree_WhoName = item.Field<string>("Agree_WhoName"),
-                                IsAgree = item.Field<string>("IsAgree")
+                                IsAgree = item.Field<string>("IsAgree"),
+                                IsDeptManager = item.Field<Int32>("IsDeptManager")
                             };
 
 
@@ -1099,7 +1103,7 @@ namespace twMGMTData.Controllers
                     SET @DeptID = (SELECT DeptID FROM [PKSYS].dbo.User_Profile WHERE (Account_Name = @Req_Who))
                     UPDATE twMG_Help
                     SET Req_Who = @Req_Who, Req_Dept = @DeptID
-                    , Help_Way = @Help_Way, Help_Status = @Help_Status
+                    , Help_Way = @Help_Way
                     , Help_Subject = @Help_Subject, Help_Content = @Help_Content, Help_Benefit = @Help_Benefit
                     , Update_Who = @WhoGuid, Update_Time = GETDATE()
                     WHERE (DataID = @DataID)";
@@ -1110,7 +1114,6 @@ namespace twMGMTData.Controllers
                 cmd.Parameters.AddWithValue("DataID", instance.DataID);
                 cmd.Parameters.AddWithValue("Req_Who", instance.Req_Who);
                 cmd.Parameters.AddWithValue("Help_Way", instance.Help_Way);
-                cmd.Parameters.AddWithValue("Help_Status", instance.Help_Status);
                 cmd.Parameters.AddWithValue("Help_Subject", instance.Help_Subject);
                 cmd.Parameters.AddWithValue("Help_Content", instance.Help_Content);
                 cmd.Parameters.AddWithValue("Help_Benefit", instance.Help_Benefit);
@@ -1215,6 +1218,7 @@ namespace twMGMTData.Controllers
 
         }
 
+
         /// <summary>
         /// [管理工作需求] 更新資料-結案(140)
         /// </summary>
@@ -1252,6 +1256,58 @@ namespace twMGMTData.Controllers
 
         }
 
+
+        /// <summary>
+        /// [管理工作需求] 設定核准狀態
+        /// </summary>
+        /// <param name="_id"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Update_MGHelpSetApprove(string _id, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"UPDATE twMG_Help SET IsAgree = 'N' WHERE (DataID = @DataID)";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("DataID", _id);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
+            }
+
+        }
+
+
+        /// <summary>
+        /// [管理工作需求] 是否同意
+        /// </summary>
+        /// <param name="_id"></param>
+        /// <param name="_job">Y/N</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Update_MGHelpDoApprove(string _id, string _job, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"UPDATE twMG_Help SET IsAgree = @IsAgree, Agree_Who = @Who, Agree_Time = GETDATE() WHERE (DataID = @DataID)";
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("DataID", _id);
+                cmd.Parameters.AddWithValue("IsAgree", _job);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
+            }
+
+        }
 
         ///// <summary>
         ///// [管理工作需求] 更新資料-處理狀態
