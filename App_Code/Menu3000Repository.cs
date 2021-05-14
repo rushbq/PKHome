@@ -7412,8 +7412,8 @@ FROM (
                     FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
 	                    INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
 	                    LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
-	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
-	                WHERE (Base.TC027 = 'Y')";
+	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                WHERE (1=1)";
 
                     //append
                     sql.Append(mainSql);
@@ -7465,8 +7465,15 @@ FROM (
 
                                 case "IsClose":
                                     //是否結案
+                                    //sql.Append(" AND (Base.TC001+Base.TC002 IN (");
+                                    //sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WITH(NOLOCK) WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
+                                    //sql.Append(" ))");
                                     sql.Append(" AND (Base.TC001+Base.TC002 IN (");
-                                    sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WITH(NOLOCK) WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
+                                    sql.Append(" SELECT TD001 + TD002");
+                                    sql.Append(" FROM [##dbName##].dbo.COPTC WITH(NOLOCK) INNER JOIN [##dbName##].dbo.COPTD WITH(NOLOCK)");
+                                    sql.Append("  ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002");
+                                    sql.Append(" WHERE(TD016 = @IsClose) AND (COPTC.TC003 = Base.TC003)");
+                                    sql.Append(" GROUP BY TD001+TD002");
                                     sql.Append(" ))");
 
                                     sqlParamList_Cnt.Add(new SqlParameter("@IsClose", item.Value));
@@ -7478,7 +7485,9 @@ FROM (
                     #endregion
 
                     //## Replace DB Name ##
-                    sql.Replace("##dbName##", GetDBName(dbs));
+                    //sql.Replace("##dbName##", GetDBName(dbs));
+                    //**** onTest ****
+                    sql.Replace("##dbName##", GetDBName_Test(dbs));
 
                     //----- SQL 執行 -----
                     cmdCnt.CommandText = sql.ToString();
@@ -7527,18 +7536,21 @@ FROM (
 	                    , Base.TC009 AS Rate /* 匯率 */
 	                    , Base.TC013 AS TradeTerm /* 價格條件 */
 	                    , Base.TC014 AS PayTerm /* 付款條件 */
+                        , Base.TC027 AS CfmCode /* 確認碼 Y:已確認、N:未確認、V:作廢 */
+                        , Base.TC048 AS FlowStatus /* 簽核狀態碼 0.待處理、1.簽核中、2.退件、3.已核准、4.取消確認中、5.作廢中、6.取消作廢中、N.不執行電子簽核*/
 	                    , CMSMV.MV002 AS SalesWho
 	                    , (SELECT TOP 1 TD013 FROM [##dbName##].dbo.COPTD WITH(NOLOCK) WHERE (TD016 = 'N') AND (TD001 = Base.TC001) AND (TD002 = Base.TC002) ORDER BY TD003) AS PreDate /* 預交日 */
 	                    , ISNULL(DT.Remk_Normal, '') AS Remk_Normal
 	                    , DT.Create_Time, DT.Update_Time
 	                    , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Create_Who)) AS Create_Name
                         , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Update_Who)) AS Update_Name
-	                    , ROW_NUMBER() OVER (ORDER BY Base.TC001, Base.TC002) AS RowIdx
+                        , (SELECT COUNT(*) FROM [##dbName##].dbo.COPTE WHERE (RTRIM(TE001) + RTRIM(TE002) = RTRIM(Base.TC001) + RTRIM(Base.TC002))) AS UpdFormCnt
+	                    , ROW_NUMBER() OVER (ORDER BY Base.TC003 DESC, Base.TC001, Base.TC002) AS RowIdx
 	                    FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
 	                     INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
 	                     LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
-	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
-	                    WHERE (Base.TC027 = 'Y')";
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                    WHERE (1=1)";
 
                     //append sql
                     sql.Append(mainSql);
@@ -7590,7 +7602,6 @@ FROM (
                                 case "IsClose":
                                     //是否結案
                                     sql.Append(" AND (Base.TC001+Base.TC002 IN (");
-                                    //sql.Append("   SELECT TD001 + TD002 FROM [##dbName##].dbo.COPTD WHERE (TD016 = @IsClose) GROUP BY TD001+TD002");
                                     sql.Append(" SELECT TD001 + TD002");
                                     sql.Append(" FROM [##dbName##].dbo.COPTC WITH(NOLOCK) INNER JOIN [##dbName##].dbo.COPTD WITH(NOLOCK)");
                                     sql.Append("  ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002");
@@ -7610,7 +7621,9 @@ FROM (
                     sql.AppendLine(") AS TbAll");
 
                     //## Replace DB Name ##
-                    sql.Replace("##dbName##", GetDBName(dbs));
+                    //sql.Replace("##dbName##", GetDBName(dbs));
+                    //**** onTest ****
+                    sql.Replace("##dbName##", GetDBName_Test(dbs));
 
                     //是否分頁
                     if (doPaging)
@@ -7754,12 +7767,14 @@ FROM [##dbName##].dbo.COPTC WITH(NOLOCK)
  LEFT JOIN [##dbName##].dbo.COPMG WITH(NOLOCK) ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
  LEFT JOIN [##dbName##].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001
  LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON COPTC.TC006 = CMSMV.MV001
- LEFT JOIN [PKExcel].dbo.OpcsRemk_Order Remk ON Remk.DBS = @DBS AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+ LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test Remk ON Remk.DBS = @DBS AND Remk.SO_Ver = '0' AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = @SOID)
 ORDER BY COPTD.TD003";
 
                 //## Replace DB Name ##
-                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                //**** onTest ****
+                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -7776,8 +7791,465 @@ ORDER BY COPTD.TD003";
         }
 
 
+        /// <summary>
+        /// [OPCS備註] 取得變更單表格
+        /// </summary>
+        /// <param name="_ErpID">單別+單號+版次</param>
+        /// <param name="_dbs"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable Get_OpcsUpdForm(string _ErpID, string _dbs, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                string sql = @"
+;WITH TblBase AS (
+SELECT
+/* 表頭 */
+TE001, TE002
+, TE003 /* 變更版次 */
+, TE004 /* 變更日期 */
+, TE005 /* 整張結案 */
+, TE029 /* 確認碼 */
+, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+, CMSMQ.MQ002 AS TE001Name
+, TE007, COPMA.MA002 AS TE007Name /* 客戶代號 */
+, TE010, CMSMB.MB002 AS TE010Name /* 新出貨廠別 */
+, TE006 /* 變更原因 */
+, TE011, TE111 /* 交易幣別 */
+, TE012, TE112 /* 匯率 */
+, TE017, TE117 /* 付款條件 */
+
+, TE015, TE115 /* 客戶單號 */
+, TE016, TE116 /* 新價格條件 */
+, TE018, TE118 /* 課稅別 */
+, TE008, TE108, CMSME1.ME002 AS TE008Name, CMSME2.ME002 AS TE108Name /* 部門代號 */
+, TE009, TE109, CMSMV1.MV002 AS TE009Name, CMSMV2.MV002 AS TE109Name /* 業務人員 */
+, TE040, TE136 /* 營業稅率 */
+, TE049, TE143 /* 材積單位 */
+, TE013, TE014 /* 新送貨地址1_2 */
+, TE113, TE114 /* 原送貨地址1_2 */
+
+/* 表身-New */
+, (CASE WHEN TF105 = '' THEN '新增' ELSE '變更後' END) AS StatMark /* 文字標記 */
+, TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
+, TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
+, TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
+, TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
+, TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
+, INVMC1.MC003 AS NewStkPos /* 儲位 */
+
+/* 表身-Old */
+, '(變更前)' AS OldStatMark
+, TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
+, TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
+, TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
+, TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
+, TF122, TF117 /* 原:專案代號,指定結案 */
+, INVMC2.MC003 AS OldStkPos /* 原:儲位 */
+
+/* 表尾 */
+, TE047, TE048 /* 正側嘜 */
+, TE141, TE142 /* 原:正側嘜 */
+
+FROM [##dbName##]..COPTE
+	LEFT JOIN [##dbName##]..CMSMQ ON TE001 = MQ001
+	LEFT JOIN [##dbName##]..COPMA ON TE007 = MA001
+	LEFT JOIN [##dbName##]..CMSMB ON TE010 = CMSMB.MB001
+	LEFT JOIN [##dbName##]..CMSME AS CMSME1 ON TE008 = CMSME1.ME001 --部門名
+	LEFT JOIN [##dbName##]..CMSME AS CMSME2 ON TE108 = CMSME2.ME001
+	LEFT JOIN [##dbName##]..CMSMV AS CMSMV1 ON TE009 = CMSMV1.MV001 --人員名
+	LEFT JOIN [##dbName##]..CMSMV AS CMSMV2 ON TE109 = CMSMV2.MV001
+	LEFT JOIN [##dbName##]..COPTF ON TE001 = TF001 AND TE002 = TF002 AND TE003 = TF003
+	LEFT JOIN [##dbName##]..INVMC AS INVMC1 ON INVMC1.MC001 = TF005 AND INVMC1.MC002 = TF008
+	LEFT JOIN [##dbName##]..INVMC AS INVMC2 ON INVMC2.MC001 = TF105 AND INVMC2.MC002 = TF108
+WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = @ErpID)
+)
+, TblCTE AS (
+ SELECT 1 AS Lv
+	, StatMark, TF004 AS lineOrder
+	, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+	, TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
+	, TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
+	, TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
+	, TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
+	, TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
+	, NewStkPos /* 儲位 */
+
+ FROM TblBase
+
+ UNION ALL
+
+ SELECT 2 AS Lv
+	, OldStatMark, TF004 AS lineOrder
+	, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+	, TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
+	, TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
+	, TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
+	, TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
+	, TF122, TF117, '' /* 原:專案代號,指定結案 */
+	, OldStkPos /* 原:儲位 */
+ FROM TblBase
+)
+SELECT TblCTE.*
+/* 表頭 */
+, TE001Name
+, TE001, TE002
+, TE003 /* 變更版次 */
+, TE004 /* 變更日期 */
+, TE005 /* 整張結案 */
+, TE029 /* 確認碼 */
+
+, TE007, TE007Name /* 客戶代號 */
+, TE010, TE010Name /* 新出貨廠別 */
+, TE006 /* 變更原因 */
+, TE011, TE111 /* 交易幣別 */
+, TE012, TE112 /* 匯率 */
+, TE017, TE117 /* 付款條件 */
+
+, TE015, TE115 /* 客戶單號 */
+, TE016, TE116 /* 新價格條件 */
+, TE018, TE118 /* 課稅別 */
+, TE008, TE108, TE008Name, TE108Name /* 部門代號 */
+, TE009, TE109, TE009Name, TE109Name /* 業務人員 */
+, TE040, TE136 /* 營業稅率 */
+, TE049, TE143 /* 材積單位 */
+, TE013, TE014 /* 新送貨地址1_2 */
+, TE113, TE114 /* 原送貨地址1_2 */
+/* 表尾 */
+, TE047, TE048 /* 正側嘜 */
+, TE141, TE142 /* 原:正側嘜 */
+FROM TblBase
+ LEFT JOIN TblCTE ON TblBase.ErpID = TblCTE.ErpID AND TblBase.TF004 = TblCTE.lineOrder
+ORDER BY TblCTE.lineOrder, TblCTE.Lv";
+
+                //## Replace DB Name ##
+                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                //**** onTest ****
+                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("ErpID", _ErpID);
+                //cmd.Parameters.AddWithValue("DBS", _dbs);
+
+
+                //----- 資料取得 -----
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    return DT;
+                }
+            }
+        }
+
         #endregion *** OPCS備註 E ***
 
+
+        #region *** OPCS變更單備註(需求錯誤，不使用) S ***
+
+        /// <summary>
+        /// [OPCS備註] 訂單變更單備註:取得不分頁的清單
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public DataTable GetOne_ChangeOrderRemk(Dictionary<string, string> search, string dbs, out string ErrMsg)
+        {
+            int DataCnt = 0;
+            return Get_ChangeOrderRemkList(search, dbs, 0, 0, false, out DataCnt, out ErrMsg);
+        }
+
+        /// <summary>
+        /// [OPCS備註] 訂單變更單備註
+        /// </summary>
+        /// <param name="search">search集合</param>
+        /// <param name="dbs">TW/SH</param>
+        /// <param name="startRow">StartRow(從0開始)</param>
+        /// <param name="endRow">RecordsPerPage</param>
+        /// <param name="doPaging">是否分頁</param>
+        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns>DataTable</returns>
+        public DataTable Get_ChangeOrderRemkList(Dictionary<string, string> search, string dbs
+            , int startRow, int endRow, bool doPaging
+            , out int DataCnt, out string ErrMsg)
+        {
+            ErrMsg = "";
+            string AllErrMsg = "";
+
+            try
+            {
+                /* 開始/結束筆數計算 */
+                int cntStartRow = startRow + 1;
+                int cntEndRow = startRow + endRow;
+
+                //----- 宣告 -----
+                StringBuilder sql = new StringBuilder(); //SQL語法容器
+                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器
+                DataCnt = 0;    //資料總數
+
+                #region >> 資料筆數SQL查詢 <<
+                using (SqlCommand cmdCnt = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT COUNT(*) AS TotalCnt
+                    FROM [##dbName##].dbo.COPTE AS Base WITH(NOLOCK)
+	                    INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TE007 = COPMA.MA001
+	                    LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TE009 = CMSMV.MV001
+	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                WHERE (Base.TE029 = 'Y')";
+
+                    //append
+                    sql.Append(mainSql);
+
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (DT.Data_ID = @DataID)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //單號
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(RTRIM(Base.TE001) + RTRIM(Base.TE002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(RTRIM(Base.TE001) +'-'+ RTRIM(Base.TE002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "sDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TE004 >= @sDate)");
+                                    sqlParamList_Cnt.Add(new SqlParameter("@sDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+                                case "eDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TE004 <= @eDate)");
+                                    sqlParamList_Cnt.Add(new SqlParameter("@eDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+
+                                case "IsClose":
+                                    //是否結案
+                                    sql.Append(" AND (Base.TE001+Base.TE002+Base.TE003 IN (");
+                                    sql.Append(" SELECT TF001 + TF002 + TF003");
+                                    sql.Append(" FROM [##dbName##].dbo.COPTE WITH(NOLOCK) INNER JOIN [##dbName##].dbo.COPTF WITH(NOLOCK)");
+                                    sql.Append("  ON COPTE.TE001 = COPTF.TF001 AND COPTE.TE002 = COPTF.TF002 AND COPTE.TE003 = COPTF.TF003");
+                                    sql.Append(" WHERE (TF017 = @IsClose) AND (COPTE.TE004 = Base.TE004)");
+                                    sql.Append(" GROUP BY TF001 + TF002 + TF003");
+                                    sql.Append(" ))");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@IsClose", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //## Replace DB Name ##
+                    sql.Replace("##dbName##", GetDBName(dbs));
+
+                    //----- SQL 執行 -----
+                    cmdCnt.CommandText = sql.ToString();
+                    cmdCnt.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList_Cnt.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+                    //Execute
+                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+                    {
+                        //資料總筆數
+                        if (DTCnt.Rows.Count > 0)
+                        {
+                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+                        }
+                    }
+                    AllErrMsg += ErrMsg;
+
+                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+                    cmdCnt.Parameters.Clear();
+                }
+                #endregion
+
+
+                #region >> 主要資料SQL查詢 <<
+                sql.Clear();
+
+                //----- 資料取得 -----
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    //----- SQL 查詢語法 -----
+                    string mainSql = @"
+                    SELECT TbAll.*
+                    FROM (
+                        SELECT DT.Data_ID
+	                     , RTRIM(Base.TE001) AS SO_Fid /* 訂單單別 */
+	                     , RTRIM(Base.TE002) AS SO_Sid /* 訂單單號 */
+	                     , RTRIM(Base.TE003) AS SO_Ver /* 變更版次 */
+	                     , Base.TE004 AS SO_Date /* 變更日期 */
+	                     , RTRIM(Base.TE006) AS SO_Reason /* 變更原因 */
+	                     , RTRIM(COPMA.MA002) AS CustName /* 客戶名稱 */
+	                     , RTRIM(COPMA.MA001) AS CustID
+	                     , Base.TE011 AS TradeCurrency /* 交易幣別 */
+	                     , Base.TE012 AS Rate /* 匯率 */
+	                     , Base.TE016 AS TradeTerm /* 價格條件 */
+	                     , Base.TE017 AS PayTerm /* 付款條件 */
+	                     , CMSMV.MV002 AS SalesWho
+	                     , (SELECT TOP 1 TF015 FROM [##dbName##].dbo.COPTF WITH(NOLOCK) WHERE (TF017 = 'N') AND (TF001 = Base.TE001) AND (TF002 = Base.TE002) AND (TF003 = Base.TE003) ORDER BY TF004) AS PreDate /* 預交日 */
+	                     , ISNULL(DT.Remk_Normal, '') AS Remk_Normal
+	                     , DT.Create_Time, DT.Update_Time
+	                     , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Create_Who)) AS Create_Name
+                         , (SELECT Account_Name + ' (' + Display_Name + ')' FROM PKSYS.dbo.User_Profile WITH(NOLOCK) WHERE ([Guid] = DT.Update_Who)) AS Update_Name
+	                     , RANK() OVER (ORDER BY Base.TE001, Base.TE002, Base.TE003) AS RowIdx
+	                    FROM [##dbName##].dbo.COPTE AS Base WITH(NOLOCK)
+	                     INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TE007 = COPMA.MA001
+	                     LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TE009 = CMSMV.MV001
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                    WHERE (Base.TE029 = 'Y')";
+
+                    //append sql
+                    sql.Append(mainSql);
+
+                    #region >> 條件組合 <<
+
+                    if (search != null)
+                    {
+                        //過濾空值
+                        var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+                        //查詢內容
+                        foreach (var item in thisSearch)
+                        {
+                            switch (item.Key)
+                            {
+                                case "DataID":
+                                    //指定資料編號
+                                    sql.Append(" AND (DT.Data_ID = @DataID)");
+
+                                    sqlParamList.Add(new SqlParameter("@DataID", item.Value));
+
+                                    break;
+
+                                case "Keyword":
+                                    //單號
+                                    sql.Append(" AND (");
+                                    sql.Append("   (UPPER(RTRIM(Base.TE001) + RTRIM(Base.TE002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append("   OR (UPPER(RTRIM(Base.TE001) +'-'+ RTRIM(Base.TE002)) LIKE '%' + UPPER(@Keyword) + '%')");
+                                    sql.Append(" )");
+
+                                    sqlParamList.Add(new SqlParameter("@Keyword", item.Value));
+
+                                    break;
+
+                                case "sDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TE004 >= @sDate)");
+                                    sqlParamList.Add(new SqlParameter("@sDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+                                case "eDate":
+                                    //yyyyMMdd
+                                    sql.Append(" AND (Base.TE004 <= @eDate)");
+                                    sqlParamList.Add(new SqlParameter("@eDate", item.Value.ToDateString("yyyyMMdd")));
+
+                                    break;
+
+                                case "IsClose":
+                                    //是否結案
+                                    sql.Append(" AND (Base.TE001+Base.TE002+Base.TE003 IN (");
+                                    sql.Append(" SELECT TF001 + TF002 + TF003");
+                                    sql.Append(" FROM [##dbName##].dbo.COPTE WITH(NOLOCK) INNER JOIN [##dbName##].dbo.COPTF WITH(NOLOCK)");
+                                    sql.Append("  ON COPTE.TE001 = COPTF.TF001 AND COPTE.TE002 = COPTF.TF002 AND COPTE.TE003 = COPTF.TF003");
+                                    sql.Append(" WHERE (TF017 = @IsClose) AND (COPTE.TE004 = Base.TE004)");
+                                    sql.Append(" GROUP BY TF001 + TF002 + TF003");
+                                    sql.Append(" ))");
+
+                                    sqlParamList.Add(new SqlParameter("@IsClose", item.Value));
+
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    //Sql尾段
+                    sql.AppendLine(") AS TbAll");
+
+                    //## Replace DB Name ##
+                    sql.Replace("##dbName##", GetDBName(dbs));
+
+                    //是否分頁
+                    if (doPaging)
+                    {
+                        sql.AppendLine(" WHERE (TbAll.RowIdx >= @startRow) AND (TbAll.RowIdx <= @endRow)");
+
+                        sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+                        sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+                    }
+                    sql.AppendLine(" ORDER BY TbAll.RowIdx");
+
+
+                    //----- SQL 執行 -----
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.Clear();
+
+                    //----- SQL 固定參數 -----
+                    sqlParamList.Add(new SqlParameter("@dbs", dbs));
+
+                    //----- SQL 參數陣列 -----
+                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+                    //Execute
+                    using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                    {
+                        //return err
+                        if (!string.IsNullOrWhiteSpace(AllErrMsg)) ErrMsg = AllErrMsg;
+
+                        return DT;
+                    }
+
+                }
+
+                #endregion
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+            }
+        }
+
+
+        #endregion *** OPCS變更單備註 E ***
 
 
         #endregion
@@ -9034,12 +9506,13 @@ ORDER BY COPTD.TD003";
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
+                //OpcsRemk_Order -> OpcsRemk_Order_Test
                 string sql = @"
                     DECLARE @NewDataID AS INT, @currRemk AS NVARCHAR(MAX)
-                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
+                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order_Test WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
                      BEGIN
 	                    SET @NewDataID = (
-	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
+	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order_Test WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
 	                    )
                      END
                     ELSE
@@ -9053,9 +9526,9 @@ ORDER BY COPTD.TD003";
                         )
                         /* 取得新編號 */
 	                    SET @NewDataID = (
-	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order
+	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order_Test
 	                    )
-	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order (
+	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order_Test (
 	                     Data_ID, SO_Fid, SO_Sid, DBS, Remk_Normal, Create_Who, Create_Time
 	                    ) VALUES (
 	                     @NewDataID, @SO_Fid, @SO_Sid, @DBS, @currRemk, @Who, GETDATE()
@@ -9064,12 +9537,14 @@ ORDER BY COPTD.TD003";
                      END
                     SELECT @NewDataID AS ShowID";
                 //## Replace DB Name ##
-                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                //**** onTest ****
+                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
 
                 cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("SO_Fid", _SO_Fid);
                 cmd.Parameters.AddWithValue("SO_Sid", _SO_Sid);
-                cmd.Parameters.AddWithValue("DBS", _dbs);
+                cmd.Parameters.AddWithValue("DBS", _dbs.ToUpper());
                 cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
 
                 using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
@@ -9135,6 +9610,80 @@ ORDER BY COPTD.TD003";
 
         }
         #endregion *** OPCS備註 E ***
+
+        
+        #region *** OPCS變更單備註(需求錯誤，不使用) S ***
+        /// <summary>
+        /// [OPCS備註] 訂單變更單備註:無編號時自動新增,並回傳編號
+        /// </summary>
+        /// <param name="_SO_Fid">單別</param>
+        /// <param name="_SO_Sid">單號</param>
+        /// <param name="_SO_Ver">版次</param>
+        /// <param name="_dbs">TW/SH</param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 單別=2210要抓客戶2210備註
+        /// </remarks>
+        public Int32 Check_ChangeOrderRemk(string _SO_Fid, string _SO_Sid, string _SO_Ver, string _dbs, out string ErrMsg)
+        {
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                string sql = @"
+                    DECLARE @NewDataID AS INT, @currRemk AS NVARCHAR(MAX)
+                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Ver = @SO_Ver) AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
+                     BEGIN
+	                    SET @NewDataID = (
+	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Ver = @SO_Ver) AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
+	                    )
+                     END
+                    ELSE
+                     BEGIN
+                        /* 取得客戶備註 */
+                        SET @currRemk = (
+                            SELECT TOP 1 (CASE WHEN Base.TE001 = '2210' THEN Remk.Remk_2210 ELSE Remk.Remk_Normal END) AS CurrRemk
+                            FROM [##dbName##].dbo.COPTE Base
+                             INNER JOIN [PKExcel].dbo.OpcsRemk_Cust Remk ON Remk.DBS = @DBS AND Base.TE007 = Remk.CustID COLLATE Chinese_Taiwan_Stroke_BIN 
+                            WHERE (Base.TE001 = @SO_Fid) AND (Base.TE002 = @SO_Sid)
+                        )
+                        /* 取得新編號 */
+	                    SET @NewDataID = (
+	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order
+	                    )
+	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order (
+	                     Data_ID, SO_Fid, SO_Sid, SO_Ver, DBS, Remk_Normal, Create_Who, Create_Time
+	                    ) VALUES (
+	                     @NewDataID, @SO_Fid, @SO_Sid, @SO_Ver, @DBS, @currRemk, @Who, GETDATE()
+	                    )
+
+                     END
+                    SELECT @NewDataID AS ShowID";
+                //## Replace DB Name ##
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("SO_Fid", _SO_Fid);
+                cmd.Parameters.AddWithValue("SO_Sid", _SO_Sid);
+                cmd.Parameters.AddWithValue("SO_Ver", _SO_Ver);
+                cmd.Parameters.AddWithValue("DBS", _dbs);
+                cmd.Parameters.AddWithValue("Who", fn_Param.CurrentUser);
+
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
+                {
+                    if (DT.Rows.Count == 0)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return Convert.ToInt32(DT.Rows[0]["ShowID"]);
+                    }
+                }
+            }
+        }
+
+        #endregion *** OPCS變更單備註 E ***
 
 
         #endregion
@@ -9598,7 +10147,7 @@ ORDER BY COPTD.TD003";
             {
                 //----- SQL 查詢語法 -----
                 string sql = @"
-                UPDATE [PKExcel].dbo.OpcsRemk_Order
+                UPDATE [PKExcel].dbo.OpcsRemk_Order_Test
                 SET Remk_Normal = @Remk_Normal
                 , Update_Who = @Who, Update_Time = GETDATE()
                 WHERE Data_ID = @id";
@@ -9985,6 +10534,24 @@ ORDER BY COPTD.TD003";
 
                 default:
                     return "prokit2";
+            }
+        }
+
+
+        /// <summary>
+        /// 測試用DBName
+        /// </summary>
+        /// <param name="dbs"></param>
+        /// <returns></returns>
+        private string GetDBName_Test(string dbs)
+        {
+            switch (dbs.ToUpper())
+            {
+                case "SH":
+                    return "SHPK2TEST";
+
+                default:
+                    return "ERP_GPTEST";
             }
         }
 

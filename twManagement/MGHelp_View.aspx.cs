@@ -20,7 +20,7 @@ public partial class MGHelp_View : SecurityCheck
         try
         {
             //[權限判斷]
-            bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "2412");
+            bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "2407");
             if (!isPass)
             {
                 Response.Redirect("{0}Error/您無使用權限".FormatThis(fn_Param.WebUrl));
@@ -28,7 +28,7 @@ public partial class MGHelp_View : SecurityCheck
             }
 
             //取得回覆權限
-            _ReplyAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2413");
+            _ReplyAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2408");
 
             if (!IsPostBack)
             {

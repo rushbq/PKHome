@@ -184,4 +184,40 @@ public class fn_Menu
                 return "其他";
         }
     }
+
+
+    /// <summary>
+    /// 簽核狀態碼 0.待處理、1.簽核中、2.退件、3.已核准、4.取消確認中、5.作廢中、6.取消作廢中、N.不執行電子簽核
+    /// </summary>
+    /// <param name="typeID"></param>
+    /// <returns></returns>
+    public static string GetERP_FlowStatus(string typeID)
+    {
+        switch (typeID)
+        {
+            case "0":
+                return "待處理";
+
+            case "1":
+                return "簽核中";
+
+            case "2":
+                return "退件";
+
+            case "3":
+                return "已核准";
+
+            case "4":
+                return "取消確認中";
+
+            case "5":
+                return "作廢中";
+
+            case "6":
+                return "取消作廢中";
+
+            default:
+                return "不執行電子簽核";
+        }
+    }
 }

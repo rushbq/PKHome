@@ -26,12 +26,12 @@ public partial class myOpcsRemark_SalesOrderEdit : SecurityCheck
             {
                 case "SH":
                     //SH
-                    isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3316");
+                    isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3324");
                     break;
 
                 default:
                     //TW
-                    isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3319");
+                    isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3326");
                     break;
             }
 
@@ -223,7 +223,7 @@ public partial class myOpcsRemark_SalesOrderEdit : SecurityCheck
     #region -- 資料顯示:檔案附件 --
 
     /// <summary>
-    /// 顯示檔案附件
+    /// 顯示檔案附件(Type=B)
     /// </summary>
     private void LookupData_Files()
     {
@@ -293,7 +293,7 @@ public partial class myOpcsRemark_SalesOrderEdit : SecurityCheck
     #region -- 按鈕事件 --
 
     /// <summary>
-    /// 上傳附件
+    /// 上傳附件(Type=B)
     /// </summary>
     protected void btn_SaveDetail_Click(object sender, EventArgs e)
     {

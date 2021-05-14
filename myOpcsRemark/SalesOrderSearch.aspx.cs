@@ -13,6 +13,8 @@ using PKLib_Method.Methods;
 
 public partial class SalesOrderSearch : SecurityCheck
 {
+    //編輯權限
+    public bool _EditAuth = false;
     public string ErrMsg;
 
     protected void Page_Load(object sender, EventArgs e)
@@ -36,11 +38,15 @@ public partial class SalesOrderSearch : SecurityCheck
                     case "SH":
                         //SH
                         isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3316");
+                        //取得編輯權限
+                        _EditAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "3324");
                         break;
 
                     default:
                         //TW
                         isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "3319");
+                        //取得編輯權限
+                        _EditAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "3326");
                         break;
                 }
 
@@ -49,6 +55,7 @@ public partial class SalesOrderSearch : SecurityCheck
                     Response.Redirect("{0}Error/您無使用權限".FormatThis(fn_Param.WebUrl));
                     return;
                 }
+
 
                 //[權限判斷] End
                 #endregion
@@ -198,40 +205,8 @@ public partial class SalesOrderSearch : SecurityCheck
     protected void lvDataList_ItemCommand(object sender, ListViewCommandEventArgs e)
     {
         //取得Key值
-        string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
+        //string Get_DataID = ((HiddenField)e.Item.FindControl("hf_DataID")).Value;
 
-        ////----- 宣告:資料參數 -----
-        //MGMTRepository _data = new MGMTRepository();
-        //try
-        //{
-        //    //----- 方法:刪除資料 -----
-        //    if (false == _data.Delete_MGHelp(Get_DataID))
-        //    {
-        //        CustomExtension.AlertMsg("刪除失敗", ErrMsg);
-        //        return;
-        //    }
-        //    else
-        //    {
-        //        //刪除檔案
-        //        string ftpFolder = "{0}MG_Help/{1}".FormatThis(
-        //            System.Web.Configuration.WebConfigurationManager.AppSettings["File_Folder"]
-        //            , Get_TraceID);
-        //        _ftp.FTP_DelFolder(ftpFolder);
-
-
-        //        //導向本頁(帶參數)
-        //        Response.Redirect(filterUrl());
-        //    }
-        //}
-        //catch (Exception)
-        //{
-
-        //    throw;
-        //}
-        //finally
-        //{
-        //    _data = null;
-        //}
 
     }
 
@@ -248,16 +223,29 @@ public partial class SalesOrderSearch : SecurityCheck
                 //Get Data
                 string _Remk_Normal = DataBinder.Eval(dataItem.DataItem, "Remk_Normal").ToString();
                 string _ID = DataBinder.Eval(dataItem.DataItem, "Data_ID").ToString();
+                int _pdfCnt = Convert.ToInt32(DataBinder.Eval(dataItem.DataItem, "UpdFormCnt"));
 
                 //Remark controller
                 PlaceHolder ph_Modal_r1 = (PlaceHolder)e.Item.FindControl("ph_Modal_r1");
                 ph_Modal_r1.Visible = !string.IsNullOrWhiteSpace(_Remk_Normal);
                 Label lb_showMark = (Label)e.Item.FindControl("lb_showMark");
                 lb_showMark.Visible = !string.IsNullOrWhiteSpace(_Remk_Normal);
+                PlaceHolder ph_RemarkSection = (PlaceHolder)e.Item.FindControl("ph_RemarkSection");
+                ph_RemarkSection.Visible = !string.IsNullOrWhiteSpace(_Remk_Normal);
 
                 //Download Excel
                 PlaceHolder ph_Excel = (PlaceHolder)e.Item.FindControl("ph_Excel");
                 ph_Excel.Visible = !string.IsNullOrWhiteSpace(_ID);
+
+
+                //變更單PDF
+                PlaceHolder ph_PDF = (PlaceHolder)e.Item.FindControl("ph_PDF");
+                ph_PDF.Visible = _pdfCnt > 0;
+
+
+                //編輯權限
+                PlaceHolder ph_Edit = (PlaceHolder)e.Item.FindControl("ph_Edit");
+                ph_Edit.Visible = _EditAuth;
 
             }
         }
@@ -389,7 +377,7 @@ public partial class SalesOrderSearch : SecurityCheck
         get
         {
             String _data = Request.QueryString["sDate"];
-            string dt = DateTime.Now.AddDays(-180).ToString().ToDateString("yyyy/MM/dd");
+            string dt = DateTime.Now.AddDays(-90).ToString().ToDateString("yyyy/MM/dd");
             return (CustomExtension.String_資料長度Byte(_data, "1", "10", out ErrMsg)) ? _data.Trim() : dt;
         }
         set

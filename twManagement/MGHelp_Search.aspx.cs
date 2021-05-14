@@ -29,14 +29,14 @@ public partial class MGHelp_Search : SecurityCheck
             if (!IsPostBack)
             {
                 //[權限判斷]
-                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "2412");
+                bool isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "2407");
                 if (!isPass)
                 {
                     Response.Redirect("{0}Error/您無使用權限".FormatThis(fn_Param.WebUrl));
                     return;
                 }
                 //取得回覆權限
-                _ReplyAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2413");
+                _ReplyAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2408");
 
                 //Get Class(A:處理狀態, B:需求類別, C:處理記錄類別)
                 Get_ClassList("A", filter_ReqStatus, "所有資料", Req_Status); //處理狀態

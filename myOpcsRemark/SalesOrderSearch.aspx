@@ -17,6 +17,9 @@
                     </h5>
                 </div>
             </div>
+            <div class="item">
+                <h5 class="red-text">**** 目前為測試資料庫 ****</h5>
+            </div>
             <div class="right menu">
             </div>
         </div>
@@ -87,7 +90,7 @@
                         <table class="ui celled selectable compact small table">
                             <thead>
                                 <tr>
-                                    <th class="grey-bg lighten-3"></th>
+                                    <th class="grey-bg lighten-3">&nbsp;</th>
                                     <th class="grey-bg lighten-3 center aligned">單別</th>
                                     <th class="grey-bg lighten-3 center aligned">單號</th>
                                     <th class="grey-bg lighten-3 center aligned">訂單日</th>
@@ -98,7 +101,8 @@
                                     <th class="grey-bg lighten-3">價格條件</th>
                                     <th class="grey-bg lighten-3">付款條件</th>
                                     <th class="grey-bg lighten-3 center aligned">業務</th>
-                                    <th class="grey-bg lighten-3 center aligned collapsing">備註</th>
+                                    <th class="grey-bg lighten-3 center aligned">確認碼</th>
+                                    <th class="grey-bg lighten-3 center aligned">簽核狀態碼</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,14 +119,43 @@
                 </LayoutTemplate>
                 <ItemTemplate>
                     <tr>
-                        <td class="center aligned collapsing">
-                            <a class="ui small teal basic icon button" href="<%=FuncPath() %>SalesOrderEdit.aspx?dbs=<%=Req_DBS %>&id=<%#Eval("Data_ID") %>&Fid=<%#Eval("SO_Fid") %>&Sid=<%#Eval("SO_Sid") %>" title="編輯">
-                                <i class="pencil icon"></i>
-                            </a>
-                            <%--<asp:LinkButton ID="lbtn_Excel" runat="server" CssClass="ui small green basic icon button"><i class="file excel icon"></i></asp:LinkButton>--%>
+                        <td class="left aligned collapsing">
+                            <!-- edit -->
+                            <asp:PlaceHolder ID="ph_Edit" runat="server">
+                                <a class="ui small teal basic icon button" href="<%=FuncPath() %>SalesOrderEdit.aspx?dbs=<%=Req_DBS %>&id=<%#Eval("Data_ID") %>&Fid=<%#Eval("SO_Fid") %>&Sid=<%#Eval("SO_Sid") %>" title="編輯">
+                                    <i class="pencil icon"></i>
+                                </a>
+                            </asp:PlaceHolder>
+
+                            <!-- excel -->
                             <asp:PlaceHolder ID="ph_Excel" runat="server">
-                                <a class="ui small green basic icon button" href="<%=FuncPath() %>OPCS_form.aspx?dbs=<%=Req_DBS %>&id=<%#Eval("SO_Fid") %><%#Eval("SO_Sid") %>" target="_blank" title="Excel">
+                                <a class="ui small green basic icon button" href="<%=FuncPath() %>OPCS_form.aspx?dbs=<%=Req_DBS %>&id=<%#Eval("SO_Fid") %><%#Eval("SO_Sid") %>" target="_blank" title="一般訂單">
                                     <i class="file excel icon"></i>
+                                </a>
+                            </asp:PlaceHolder>
+                            <!-- view remark -->
+                            <asp:PlaceHolder ID="ph_RemarkSection" runat="server">
+                                <a class="showPopup" title="點擊放大看備註" data-id="remk1_<%#Eval("Data_ID") %>">
+                                    <asp:Label ID="lb_showMark" runat="server" CssClass="ui small grey basic icon button"><i class="file alternate icon"></i></asp:Label>
+                                </a>
+
+                                <asp:PlaceHolder ID="ph_Modal_r1" runat="server">
+                                    <!-- Modal Start -->
+                                    <div id="remk1_<%#Eval("Data_ID") %>" class="ui modal">
+                                        <div class="header"><%#Eval("SO_FID") %>-<%#Eval("SO_SID") %>&nbsp;訂單備註</div>
+                                        <div class="scrolling content"><%# Eval("Remk_Normal").ToString().Replace("\n","<br>") %></div>
+                                        <div class="actions">
+                                            <div class="ui black deny button">
+                                                Close
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--  Modal End -->
+                                </asp:PlaceHolder>
+                            </asp:PlaceHolder>
+                            <asp:PlaceHolder ID="ph_PDF" runat="server">
+                                <a class="ui small red basic icon button btn-OpenDetail" data-id="<%#Eval("SO_FID") %><%#Eval("SO_SID") %>" data-title="<%#Eval("SO_FID") %>-<%#Eval("SO_SID") %>" title="變更單">
+                                    <i class="file pdf outline icon"></i>
                                 </a>
                             </asp:PlaceHolder>
                         </td>
@@ -145,7 +178,7 @@
                             <%#Eval("TradeCurrency") %>
                         </td>
                         <td class="center aligned">
-                            <%# Math.Round(Convert.ToDecimal(Eval("Rate")), 2) %>
+                            <%#Math.Round(Convert.ToDecimal(Eval("Rate")), 2) %>
                         </td>
                         <td>
                             <%#Eval("TradeTerm") %>
@@ -156,22 +189,11 @@
                         <td class="center aligned collapsing">
                             <%#Eval("SalesWho") %>
                         </td>
-                        <td class="showPopup center aligned" data-id="remk1_<%#Eval("Data_ID") %>" title="點擊放大" style="cursor: pointer;">
-                            <asp:Label ID="lb_showMark" runat="server" CssClass="ui small grey basic icon button"><i class="file alternate icon"></i></asp:Label>
-
-                            <asp:PlaceHolder ID="ph_Modal_r1" runat="server">
-                                <!-- Modal Start -->
-                                <div id="remk1_<%#Eval("Data_ID") %>" class="ui modal">
-                                    <div class="header"><%#Eval("SO_FID") %>-<%#Eval("SO_SID") %>&nbsp;訂單備註</div>
-                                    <div class="scrolling content"><%# Eval("Remk_Normal").ToString().Replace("\n","<br>") %></div>
-                                    <div class="actions">
-                                        <div class="ui black deny button">
-                                            Close
-                                        </div>
-                                    </div>
-                                </div>
-                                <!--  Modal End -->
-                            </asp:PlaceHolder>
+                        <td class="center aligned">
+                            <strong><%#Eval("CfmCode") %></strong>
+                        </td>
+                        <td class="center aligned collapsing">
+                            <%#fn_Menu.GetERP_FlowStatus(Eval("FlowStatus").ToString()) %>
                         </td>
                     </tr>
                 </ItemTemplate>
@@ -181,6 +203,30 @@
 
     </div>
     <!-- 內容 End -->
+    <!-- Opcs Modal Start -->
+    <div id="opcsDT" class="ui small modal">
+        <div class="header">
+            OPCS變更單&nbsp;<small>(訂單單號:<span class="grey-text text-darken-1" id="titleSoID"></span>)</small>
+        </div>
+        <div class="scrolling content">
+            <table class="ui striped celled table">
+                <thead>
+                    <tr>
+                        <th class="center aligned">單別-單號</th>
+                        <th class="center aligned">版次</th>
+                        <th class="center aligned">PDF</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="actions">
+            <div class="ui close button">
+                Close
+            </div>
+        </div>
+    </div>
+    <!-- Opcs Modal End -->
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="BottomContent" runat="Server">
 </asp:Content>
@@ -221,6 +267,37 @@
 
         });
     </script>
+    <%-- Modal-載入Opcs單號 --%>
+    <script>
+        $(function () {
+            $(".btn-OpenDetail").on("click", function () {
+                var id = $(this).attr("data-id");
+                var dbs = '<%=Req_DBS%>';
+                var title = $(this).attr("data-title");
+
+                console.log(id);
+
+                $("#titleSoID").text(title);
+
+                //load html
+                var url = '<%=fn_Param.WebUrl%>' + "myOpcsRemark/Ashx_GetOpcsUpdData.ashx?DBS=" + dbs + "&SoID=" + id;
+                var datablock = $("#opcsDT .content tbody");
+                datablock.empty();
+                datablock.load(url);
+
+                //show modal
+                $('#opcsDT')
+                    .modal({
+                        selector: {
+                            close: '.close, .actions .button'
+                        }
+                    })
+                    .modal('show');
+            });
+
+        });
+    </script>
+
     <%-- 日期選擇器 Start --%>
     <link href="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/calendar.min.css" rel="stylesheet" />
     <script src="<%=fn_Param.CDNUrl %>plugin/Semantic-UI-Calendar0.0.8/calendar.min.js"></script>

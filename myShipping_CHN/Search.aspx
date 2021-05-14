@@ -208,7 +208,7 @@
                                 <strong><%#Eval("TotalPrice").ToString().ToMoneyString() %></strong>
                             </td>
                             <td>
-                                <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" placeholder="最多 50 字"></asp:TextBox>
+                                <asp:TextBox ID="tb_Remark" runat="server" Width="100px" Text='<%#Eval("Remark") %>' MaxLength="100" TextMode="MultiLine" placeholder="最多 50 字"></asp:TextBox>
                             </td>
                             <td class="center aligned">
                                 <!-- 貨運公司 -->
