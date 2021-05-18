@@ -7412,7 +7412,7 @@ FROM (
                     FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
 	                    INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
 	                    LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
-	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                WHERE (1=1)";
 
                     //append
@@ -7485,9 +7485,7 @@ FROM (
                     #endregion
 
                     //## Replace DB Name ##
-                    //sql.Replace("##dbName##", GetDBName(dbs));
-                    //**** onTest ****
-                    sql.Replace("##dbName##", GetDBName_Test(dbs));
+                    sql.Replace("##dbName##", GetDBName(dbs));
 
                     //----- SQL 執行 -----
                     cmdCnt.CommandText = sql.ToString();
@@ -7549,7 +7547,7 @@ FROM (
 	                    FROM [##dbName##].dbo.COPTC AS Base WITH(NOLOCK)
 	                     INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TC004 = COPMA.MA001
 	                     LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TC006 = CMSMV.MV001
-	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND DT.SO_Ver = '0' AND Base.TC001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TC002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                    WHERE (1=1)";
 
                     //append sql
@@ -7621,9 +7619,7 @@ FROM (
                     sql.AppendLine(") AS TbAll");
 
                     //## Replace DB Name ##
-                    //sql.Replace("##dbName##", GetDBName(dbs));
-                    //**** onTest ****
-                    sql.Replace("##dbName##", GetDBName_Test(dbs));
+                    sql.Replace("##dbName##", GetDBName(dbs));
 
                     //是否分頁
                     if (doPaging)
@@ -7767,14 +7763,13 @@ FROM [##dbName##].dbo.COPTC WITH(NOLOCK)
  LEFT JOIN [##dbName##].dbo.COPMG WITH(NOLOCK) ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
  LEFT JOIN [##dbName##].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001
  LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON COPTC.TC006 = CMSMV.MV001
- LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test Remk ON Remk.DBS = @DBS AND Remk.SO_Ver = '0' AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+ LEFT JOIN [PKExcel].dbo.OpcsRemk_Order Remk ON Remk.DBS = @DBS AND Remk.SO_Ver = '0' AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = @SOID)
 ORDER BY COPTD.TD003";
 
                 //## Replace DB Name ##
-                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
-                //**** onTest ****
-                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
+                
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -7926,9 +7921,7 @@ FROM TblBase
 ORDER BY TblCTE.lineOrder, TblCTE.Lv";
 
                 //## Replace DB Name ##
-                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
-                //**** onTest ****
-                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -8001,7 +7994,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
                     FROM [##dbName##].dbo.COPTE AS Base WITH(NOLOCK)
 	                    INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TE007 = COPMA.MA001
 	                    LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TE009 = CMSMV.MV001
-	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                    LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                WHERE (Base.TE029 = 'Y')";
 
                     //append
@@ -8132,7 +8125,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
 	                    FROM [##dbName##].dbo.COPTE AS Base WITH(NOLOCK)
 	                     INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON Base.TE007 = COPMA.MA001
 	                     LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON Base.TE009 = CMSMV.MV001
-	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order_Test DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
+	                     LEFT JOIN [PKExcel].dbo.OpcsRemk_Order DT ON DT.DBS = @dbs AND Base.TE003 = DT.SO_Ver COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE001 = DT.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND Base.TE002 = DT.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
 	                    WHERE (Base.TE029 = 'Y')";
 
                     //append sql
@@ -9506,13 +9499,13 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
-                //OpcsRemk_Order -> OpcsRemk_Order_Test
+                //OpcsRemk_Order -> OpcsRemk_Order
                 string sql = @"
                     DECLARE @NewDataID AS INT, @currRemk AS NVARCHAR(MAX)
-                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order_Test WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
+                    IF (SELECT COUNT(*) FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)) > 0
                      BEGIN
 	                    SET @NewDataID = (
-	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order_Test WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
+	                     SELECT Data_ID FROM [PKExcel].dbo.OpcsRemk_Order WHERE (SO_Ver = '0') AND (SO_Fid = @SO_Fid) AND (SO_Sid = @SO_Sid) AND (DBS = @DBS)
 	                    )
                      END
                     ELSE
@@ -9526,9 +9519,9 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
                         )
                         /* 取得新編號 */
 	                    SET @NewDataID = (
-	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order_Test
+	                     SELECT ISNULL(MAX(Data_ID), 0) + 1 FROM [PKExcel].dbo.OpcsRemk_Order
 	                    )
-	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order_Test (
+	                    INSERT INTO [PKExcel].dbo.OpcsRemk_Order (
 	                     Data_ID, SO_Fid, SO_Sid, DBS, Remk_Normal, Create_Who, Create_Time
 	                    ) VALUES (
 	                     @NewDataID, @SO_Fid, @SO_Sid, @DBS, @currRemk, @Who, GETDATE()
@@ -9537,9 +9530,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
                      END
                     SELECT @NewDataID AS ShowID";
                 //## Replace DB Name ##
-                //sql = sql.Replace("##dbName##", GetDBName(_dbs));
-                //**** onTest ****
-                sql = sql.Replace("##dbName##", GetDBName_Test(_dbs));
+                sql = sql.Replace("##dbName##", GetDBName(_dbs));
 
                 cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("SO_Fid", _SO_Fid);
@@ -10147,7 +10138,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
             {
                 //----- SQL 查詢語法 -----
                 string sql = @"
-                UPDATE [PKExcel].dbo.OpcsRemk_Order_Test
+                UPDATE [PKExcel].dbo.OpcsRemk_Order
                 SET Remk_Normal = @Remk_Normal
                 , Update_Who = @Who, Update_Time = GETDATE()
                 WHERE Data_ID = @id";

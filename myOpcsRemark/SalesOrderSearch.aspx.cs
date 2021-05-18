@@ -317,6 +317,23 @@ public partial class SalesOrderSearch : SecurityCheck
         return url.ToString();
     }
 
+
+    /// <summary>
+    /// 舊版網址
+    /// </summary>
+    /// <param name="_dbs"></param>
+    /// <returns></returns>
+    public string GetHistoryUrl(string _dbs)
+    {
+        if (_dbs.Equals("TW"))
+        {
+            return "http://ef.prokits.com.tw/employee/COPTCGrid_TW.asp";
+        }
+        else
+        {
+            return "http://ef.prokits.com.tw/employee/COPTCGRID.asp";
+        }
+    }
     #endregion
 
 

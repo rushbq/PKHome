@@ -44,13 +44,13 @@ public class Ashx_GetOpcsUpdData : IHttpHandler
                 switch (_DBS.ToUpper())
                 {
                     case "TW":
-                        //dbName = "prokit2";
-                        dbName = "ERP_GPTEST";
+                        dbName = "prokit2";
+                        //dbName = "ERP_GPTEST";
                         break;
 
                     case "SH":
-                        //dbName = "SHPK2";
-                        dbName = "SHPK2TEST";
+                        dbName = "SHPK2";
+                        //dbName = "SHPK2TEST";
                         break;
                 }
 

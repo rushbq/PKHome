@@ -10,7 +10,7 @@ using Menu4000Data.Models;
 using PKLib_Method.Methods;
 
 /*
-  [到貨狀況]-OpcsStatus:會JOIN舊版OPCS備註，故連線要連至PKANALYZER
+  [到貨狀況]-OpcsStatus
   [延遲分析]-DelayShipStat:需要關聯至EFGP
   [外廠包材庫存盤點]-SupInvCheck
   [訂貨計劃]-PurPlan
@@ -236,10 +236,10 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("    LEFT JOIN [#dbname#].dbo.INVMC WITH(NOLOCK) ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 = @StockType");
                 //COPTH 銷貨單單身檔
                 sql.AppendLine("    LEFT JOIN [#dbname#].dbo.COPTH WITH(NOLOCK) ON COPTD.TD001 = COPTH.TH014 AND COPTD.TD002 = COPTH.TH015 AND COPTD.TD003 = COPTH.TH016");
-                //PKSYS資材理貨
-                sql.AppendLine("    LEFT JOIN OpcsStatus_Rel_Stock Stock ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Stock.ErpID");
-                //PKSYS包裝資料
-                sql.AppendLine("    LEFT JOIN OpcsStatus_Rel_Box Box ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Box.ErpID");
+                //資材理貨
+                sql.AppendLine("    LEFT JOIN [PKExcel].dbo.OpcsStatus_Rel_Stock Stock ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Stock.ErpID");
+                //包裝資料
+                sql.AppendLine("    LEFT JOIN [PKExcel].dbo.OpcsStatus_Rel_Box Box ON (RTRIM(COPTD.TD001) + RTRIM(COPTD.TD002) + RTRIM(COPTD.TD003)) COLLATE Chinese_Taiwan_Stroke_BIN = Box.ErpID");
                 //--Base 基本條件
                 sql.AppendLine(" WHERE (COPTC.TC027 = 'Y') AND (COPTD.TD013 >= CONVERT(VARCHAR(10), GETDATE() - 60, 112))");
                 sql.AppendLine(" )");
@@ -310,7 +310,7 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("     SELECT TOP 1 MG200 FROM [{0}].dbo.COPMG WITH(NOLOCK)".FormatThis(dbName));
                 sql.AppendLine("     WHERE (MG001 = TblBase.CustID) AND (MG002 = TblBase.ModelNo)");
                 sql.AppendLine("  ) AS ProdRemark"); //產品特別注意事項
-                sql.AppendLine("  , ISNULL(CopRemk.REMK, ISNULL(ORDERRemk.REMK, '')) AS OrderRemark"); //客戶注意事項
+                sql.AppendLine("  , ISNULL(CopRemk.Remk_Normal, ISNULL(CustRemk.Remk_Normal, '')) AS OrderRemark");
                 sql.AppendLine("  , CAST(ISNULL(MOCTG.TG011, 0) AS INT) AS MakeStockQty"); //入庫數量
 
                 sql.AppendLine(" , CAST(ISNULL(TblStock.StkQty_01, 0) AS INT) AS StkQty01");    //庫存(01)
@@ -368,9 +368,9 @@ namespace Menu4000Data.Controllers
                 sql.AppendLine("  LEFT JOIN TblMake ON TblBase.Order_FID = TblMake.Ref_FID AND TblBase.Order_SID = TblMake.Ref_SID AND TblBase.OrderSno = TblMake.Ref_OrderSno AND TblBase.ModelNo = TblMake.ModelNo");
                 //客戶
                 sql.AppendLine("  LEFT JOIN [#dbname#].dbo.COPMA WITH (NOLOCK) ON TblBase.CustID = COPMA.MA001");
-                //EF 訂單備註(DB = PKANALYZER)
-                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.CopRemk ON CopRemk.TC001 = TblBase.Order_FID AND CopRemk.TC002 = TblBase.Order_SID");
-                sql.AppendLine("  LEFT JOIN [#dbname#].dbo.ORDERRemk ON ORDERRemk.MA001 = TblBase.CustID");
+                //EF 訂單備註
+                sql.AppendLine("  LEFT JOIN [PKExcel].dbo.OpcsRemk_Order AS CopRemk ON CopRemk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN = TblBase.Order_FID AND CopRemk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN = TblBase.Order_SID AND CopRemk.DBS = @dbs");
+                sql.AppendLine("  LEFT JOIN [PKExcel].dbo.OpcsRemk_Cust AS CustRemk ON CustRemk.CustID COLLATE Chinese_Taiwan_Stroke_BIN = TblBase.CustID AND CustRemk.DBS = @dbs");
                 //MOCTG 生產入庫單身檔(筆數過多,放在最外層JOIN)
                 sql.AppendLine("  LEFT JOIN [#dbname#].dbo.MOCTG WITH (NOLOCK) ON TblBase.ModelNo = MOCTG.TG004 AND TblMake.Make_FID = MOCTG.TG014 AND TblMake.Make_SID = MOCTG.TG015 AND TblBase.StockType = MOCTG.TG010");
 
@@ -682,8 +682,9 @@ namespace Menu4000Data.Controllers
                 cmd.CommandText = sql.ToString();
                 cmd.CommandTimeout = 360;   //單位:秒
                 cmd.Parameters.AddWithValue("StockType", GetStockType(CompID));
+                cmd.Parameters.AddWithValue("dbs", CompID);
 
-                using (DataTable DT = dbConn.LookupDT(cmd, dbConn.DBS.PKSYSinANA, out ErrMsg))
+                using (DataTable DT = dbConn.LookupDT(cmd, out ErrMsg))
                 {
                     return DT;
                 }
@@ -4716,7 +4717,6 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     /*
                      採購核價
                      DB:prokit2
-                      - 幣別:NTD
                     */
                     WITH TblChkPrice AS (
 	                    SELECT ChkPrice.ModelNo, ChkPrice.Price, ChkPrice.SupID, ChkPrice.Currency, ChkPrice.CfmCode
@@ -4740,7 +4740,6 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     /*
                      採購核價
                      DB:SHPK2
-                      - 幣別:RMB
                     */
                     WITH TblChkPrice AS (
 	                    SELECT ChkPrice.ModelNo, ChkPrice.Price, ChkPrice.SupID, ChkPrice.Currency, ChkPrice.CfmCode
@@ -5401,7 +5400,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 檢查庫別檔是否有資料[prokit2]
+        /// [外廠包材庫存盤點] 檢查庫別檔是否有資料[prokit2]
         /// </summary>
         /// <param name="supID"></param>
         /// <param name="ErrMsg"></param>
@@ -5433,7 +5432,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 加入供應商清單, 設定頁
+        /// [外廠包材庫存盤點] 加入供應商清單, 設定頁
         /// </summary>
         /// <param name="supID">供應商ID</param>
         /// <param name="dataID">主檔編號</param>
@@ -5640,7 +5639,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 cmd.Parameters.AddWithValue("id", id);
                 cmd.Parameters.AddWithValue("act", act);
 
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKSYSinANA, out ErrMsg);
+                return dbConn.ExecuteSql(cmd, out ErrMsg);
             }
         }
 
@@ -5692,7 +5691,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 cmd.Parameters.AddWithValue("id", id);
                 cmd.Parameters.AddWithValue("val", val);
 
-                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKSYSinANA, out ErrMsg);
+                return dbConn.ExecuteSql(cmd, out ErrMsg);
             }
         }
 

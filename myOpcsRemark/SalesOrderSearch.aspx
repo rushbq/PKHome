@@ -17,10 +17,11 @@
                     </h5>
                 </div>
             </div>
-            <div class="item">
-                <h5 class="red-text">**** 目前為測試資料庫 ****</h5>
-            </div>
             <div class="right menu">
+                <a class="item" href="<%=GetHistoryUrl(Req_DBS) %>" target="_blank">
+                    <i class="list icon"></i>
+                    <span class="mobile hidden">歷史記錄</span>
+                </a>
             </div>
         </div>
     </div>
@@ -219,6 +220,7 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            <div class="red-text text-darken-1" style="text-align: right;"><b>PDF產生需要一點時間，請不要重複按下載。</b></div>
         </div>
         <div class="actions">
             <div class="ui close button">
