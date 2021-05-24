@@ -13,15 +13,18 @@
                             <div class="header">
                                 <%:resPublic.error_oops %>
                             </div>
-                            <strong>參數傳遞錯誤，請確認來源路徑是否正確。</strong>
+                            <strong>
+                                <asp:Literal ID="lt_ShowMsg" runat="server">參數傳遞錯誤，請確認來源路徑是否正確。</asp:Literal></strong>
                         </div>
                     </asp:PlaceHolder>
-                    <div class="ui placeholder segment">
-                        <div class="ui icon header">
-                            <i class="notched circle loading icon"></i>
-                            PDF下載中，請稍候...
+                    <asp:PlaceHolder ID="ph_Loading" runat="server">
+                        <div class="ui placeholder segment">
+                            <div class="ui icon header">
+                                <i class="notched circle loading icon"></i>
+                                PDF下載中，請稍候...
+                            </div>
                         </div>
-                    </div>
+                    </asp:PlaceHolder>
                 </div>
 
             </div>

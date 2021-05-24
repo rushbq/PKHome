@@ -7479,6 +7479,15 @@ FROM (
                                     sqlParamList_Cnt.Add(new SqlParameter("@IsClose", item.Value));
 
                                     break;
+
+                                case "CfmCode":
+                                    //確認碼
+                                    sql.Append(" AND (Base.TC027 = @CfmCode)");
+
+                                    sqlParamList_Cnt.Add(new SqlParameter("@CfmCode", item.Value));
+
+                                    break;
+
                             }
                         }
                     }
@@ -7610,6 +7619,14 @@ FROM (
                                     sqlParamList.Add(new SqlParameter("@IsClose", item.Value));
 
                                     break;
+
+                                case "CfmCode":
+                                    //確認碼(Y:已確認、N:未確認、V:作廢)
+                                    sql.Append(" AND (Base.TC027 = @CfmCode)");
+
+                                    sqlParamList.Add(new SqlParameter("@CfmCode", item.Value));
+
+                                    break;
                             }
                         }
                     }
@@ -7718,22 +7735,31 @@ COPTC.TC039 AS CheckDate /* '核單日期' */
 , RTRIM(COPTC.TC001) AS SO_Fid /* '訂單單別' */
 , RTRIM(COPTC.TC002) AS SO_Sid /* '訂單單號' */
 , RTRIM(COPMA.MA002) AS CustName /* '客戶名稱' */
-, COPMA.MA001 AS CustID
+, RTRIM(COPMA.MA001) AS CustID
 , COPTC.TC012 AS CustPO /* 客戶單號 */
 , COPTD.TD013 AS PreDate /* '預交日' */
-, CMSMV.MV002 AS SalesWho
+, RTRIM(CMSMV.MV002) AS SalesWho
 , COPTC.TC013 AS TradeTerm /* 交易條件 */
 , COPTC.TC014 AS PayTerm /* 付款方式 */
 , COPTC.TC008 AS TradeCurrency /* 交易幣別 */
-, COPTC.TC054 AS MicTxt1 /* '正嘜' */
-, COPTC.TC055 AS MicTxt2 /* '側嘜' */
+, RTRIM(Cfm.MA002) AS CfmWho /* 確認者 */
+, COPTC.TC054 AS MicTxt1 /* 正嘜文字 */
+, COPTC.TC055 AS MicTxt2 /* 側嘜文字 */
+, (CASE
+  WHEN COPTD.TD013 <> '' THEN ISNULL(COPTC.TC004 + COPTC.TC034, '')
+  --單別=3304 & 客戶代號 3 開頭, 'Z988'+單別
+  WHEN COPTC.TC001 = '3301' AND LEFT(COPTC.TC004, 1) = '3' THEN 'Z9883304'
+  --其他單別='Z999'+單別
+  ELSE 'Z999' + COPTC.TC001
+ END) AS MarkPic  --'嘜頭圖示前置檔名+正(1)/側(2)+(於程式中加附檔名)=xxxx1.jpg'
+
 /* 單身資料 */
 , COPTD.TD003 AS OrderSid /* '序號' */
 , COPTD.TD004 AS ModelNo /* '品號' */
 , CAST(COPTD.TD008 AS INT) AS OrderQty /* '訂單數量' */
 , CAST(COPTD.TD024 AS INT) AS GiftQty /* '贈品量' */
 , CAST(INVMC.MC007 AS INT) AS StockQty /* '庫存數量' */
-, INVMC.MC002 AS StockType /* '庫別' */
+, COPTD.TD007 AS StockType /* '庫別' */
 , RTRIM(ISNULL(PURMA.MA002, '')) AS SupName /* '主供應商' */
 , INVMC.MC003 AS StockPos /* '儲存位置' */
 , (CAST(COPTD.TD206 AS VARCHAR(4))+CAST(COPTD.TD200 AS VARCHAR(4)) + ' - ' + CAST(COPTD.TD206 AS VARCHAR(4))+CAST(COPTD.TD201 AS VARCHAR(4))) AS BoxNo /* 箱號 */
@@ -7758,13 +7784,14 @@ FROM [##dbName##].dbo.COPTC WITH(NOLOCK)
  INNER JOIN [##dbName##].dbo.COPTD WITH(NOLOCK) ON COPTC.TC001 = COPTD.TD001 AND COPTC.TC002 = COPTD.TD002
  INNER JOIN [##dbName##].dbo.COPMA WITH(NOLOCK) ON COPTC.TC004 = COPMA.MA001
  INNER JOIN [##dbName##].dbo.CMSMQ WITH(NOLOCK) ON COPTC.TC001 = CMSMQ.MQ001
- INNER JOIN [##dbName##].dbo.INVMC WITH(NOLOCK) ON COPTD.TD007 = INVMC.MC002 AND COPTD.TD004 = INVMC.MC001
  INNER JOIN [##dbName##].dbo.INVMB WITH(NOLOCK) ON COPTD.TD004 = INVMB.MB001
+ LEFT JOIN [##dbName##].dbo.INVMC WITH(NOLOCK) ON COPTD.TD007 = INVMC.MC002 AND COPTD.TD004 = INVMC.MC001
  LEFT JOIN [##dbName##].dbo.COPMG WITH(NOLOCK) ON COPTC.TC004 = COPMG.MG001 AND COPTD.TD004 = COPMG.MG002 AND COPTD.TD014 = COPMG.MG003
  LEFT JOIN [##dbName##].dbo.PURMA WITH(NOLOCK) ON INVMB.MB032 = PURMA.MA001
  LEFT JOIN [##dbName##].dbo.CMSMV WITH(NOLOCK) ON COPTC.TC006 = CMSMV.MV001
+ LEFT JOIN [DSCSYS].dbo.DSCMA Cfm ON COPTC.TC040 = Cfm.MA001
  LEFT JOIN [PKExcel].dbo.OpcsRemk_Order Remk ON Remk.DBS = @DBS AND Remk.SO_Ver = '0' AND COPTC.TC001 = Remk.SO_Fid COLLATE Chinese_Taiwan_Stroke_BIN AND COPTC.TC002 = Remk.SO_Sid COLLATE Chinese_Taiwan_Stroke_BIN
-WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = @SOID)
+WHERE (RTRIM(COPTC.TC001)+RTRIM(COPTC.TC002) = UPPER(@SOID))
 ORDER BY COPTD.TD003";
 
                 //## Replace DB Name ##
@@ -7810,6 +7837,7 @@ TE001, TE002
 , TE029 /* 確認碼 */
 , RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
 , CMSMQ.MQ002 AS TE001Name
+, TE039
 , TE007, COPMA.MA002 AS TE007Name /* 客戶代號 */
 , TE010, CMSMB.MB002 AS TE010Name /* 新出貨廠別 */
 , TE006 /* 變更原因 */
@@ -7843,6 +7871,7 @@ TE001, TE002
 , TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
 , TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
 , TF122, TF117 /* 原:專案代號,指定結案 */
+, TF123 /* 原已交數量 */
 , INVMC2.MC003 AS OldStkPos /* 原:儲位 */
 
 /* 表尾 */
@@ -7860,7 +7889,7 @@ FROM [##dbName##]..COPTE
 	LEFT JOIN [##dbName##]..COPTF ON TE001 = TF001 AND TE002 = TF002 AND TE003 = TF003
 	LEFT JOIN [##dbName##]..INVMC AS INVMC1 ON INVMC1.MC001 = TF005 AND INVMC1.MC002 = TF008
 	LEFT JOIN [##dbName##]..INVMC AS INVMC2 ON INVMC2.MC001 = TF105 AND INVMC2.MC002 = TF108
-WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = @ErpID)
+WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = UPPER(@ErpID))
 )
 , TblCTE AS (
  SELECT 1 AS Lv
@@ -7872,6 +7901,7 @@ WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = @ErpID)
 	, TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
 	, TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
 	, NewStkPos /* 儲位 */
+	, TF123
 
  FROM TblBase
 
@@ -7886,6 +7916,7 @@ WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = @ErpID)
 	, TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
 	, TF122, TF117, '' /* 原:專案代號,指定結案 */
 	, OldStkPos /* 原:儲位 */
+	, TF123
  FROM TblBase
 )
 SELECT TblCTE.*
@@ -7896,6 +7927,7 @@ SELECT TblCTE.*
 , TE004 /* 變更日期 */
 , TE005 /* 整張結案 */
 , TE029 /* 確認碼 */
+, (SELECT TOP 1 MA002 FROM [DSCSYS].dbo.DSCMA WHERE MA001 = TE039) AS CfmWho
 
 , TE007, TE007Name /* 客戶代號 */
 , TE010, TE010Name /* 新出貨廠別 */

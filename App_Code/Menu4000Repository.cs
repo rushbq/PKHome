@@ -4775,7 +4775,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     SELECT TbAll.*
                     FROM (
 	                    SELECT @dbs AS DBS
-	                    , @curr AS Currency
+	                    , ISNULL(ModelPrice.Currency, Sup.MA021) AS Currency
 	                    , RTRIM(Prod.MB001) AS ModelNo, ISNULL(Rel.PackItemNo, '') PackItemNo, ISNULL(Rel.PackQty, 0) PackQty, Prod.MB028 AS Pub_Notes
 	                    , RTRIM(Prod.MB032) AS SupID, RTRIM(Sup.MA002) AS SupName
 	                    , CONVERT(numeric(10,2), ISNULL(ModelPrice.Price, 0)) AS PurPrice
@@ -4873,7 +4873,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
                     //----- SQL 固定參數 -----
                     sqlParamList.Add(new SqlParameter("@dbs", dbs.ToUpper()));
-                    sqlParamList.Add(new SqlParameter("@curr", dbs.ToUpper().Equals("TW") ? "NTD" : "RMB"));
+                    //sqlParamList.Add(new SqlParameter("@curr", dbs.ToUpper().Equals("TW") ? "NTD" : "RMB"));
 
 
                     ////----- SQL 參數陣列 -----
@@ -5369,23 +5369,21 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public bool CreateSupInvBase(SupInvList instance, out string ErrMsg)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" INSERT INTO SupInvCheck_List( ");
-                sql.AppendLine("  Data_ID, Subject, TaskTime, IsOnTask");
-                sql.AppendLine("  , Create_Who, Create_Time");
-                sql.AppendLine(" ) VALUES (");
-                sql.AppendLine("  @Data_ID, @Subject, @TaskTime, @IsOnTask");
-                sql.AppendLine("  , @Create_Who, GETDATE()");
-                sql.AppendLine(" );");
+                string sql = @"
+                 INSERT INTO SupInvCheck_List( 
+                  Data_ID, Subject, TaskTime, IsOnTask
+                  , Create_Who, Create_Time
+                 ) VALUES (
+                  @Data_ID, @Subject, @TaskTime, @IsOnTask
+                  , @Create_Who, GETDATE()
+                 )";
 
                 //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
+                cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("Data_ID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("Subject", instance.Subject);
                 cmd.Parameters.AddWithValue("TaskTime", instance.TaskTime);
@@ -5407,16 +5405,14 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public Int32 CheckSupplierModel(string supID, out string ErrMsg)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" SELECT COUNT(*) AS Cnt");
-                sql.AppendLine(" FROM [prokit2].dbo.INVMC");
-                sql.AppendLine(" WHERE (MC002 = '04') AND (LEFT(MC003, 6) = @SupID)");
+                string sql = @"
+                    SELECT COUNT(*) AS Cnt
+                    FROM [prokit2].dbo.INVMC
+                    WHERE (MC002 = '04') AND (LEFT(MC003, 6) = @SupID)";
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -5453,59 +5449,56 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
             }
             else
             {
-                //取資料後,新增至SupInvCheck_Supplier, SupInvCheck_Model
-                //----- 宣告 -----
-                StringBuilder sql = new StringBuilder();
-
+                //產生token, 用以驗證供應商
                 string _token = Cryptograph.MD5("{0}{1}".FormatThis(dataItem.SupID, Cryptograph.GetCurrentTime().ToString()));
 
+                //取資料後,新增至SupInvCheck_Supplier, SupInvCheck_Model
                 //----- 資料查詢 -----
                 using (SqlCommand cmd = new SqlCommand())
                 {
                     //----- SQL 查詢語法 -----
-                    //--供應商
-                    sql.AppendLine("DECLARE @NewID AS INT");
-                    sql.AppendLine(" SET @NewID = (");
-                    sql.AppendLine("  SELECT ISNULL(MAX(Data_ID) ,0) + 1 FROM SupInvCheck_Supplier WHERE (Parent_ID = @Parent_ID)");
-                    sql.AppendLine(" )");
-                    sql.AppendLine(" INSERT INTO SupInvCheck_Supplier( ");
-                    sql.AppendLine("  Data_ID, Parent_ID");
-                    sql.AppendLine("  , SupID, SupName, SupMails");
-                    sql.AppendLine("  , PurWhoID, PurWhoName, PurWhoEmail");
-                    sql.AppendLine("  , Token, StockShow");
-                    sql.AppendLine(" ) VALUES (");
-                    sql.AppendLine("  @NewID, @Parent_ID");
-                    sql.AppendLine("  , @SupID, @SupName, @SupMails");
-                    sql.AppendLine("  , @PurWhoID, @PurWhoName, @PurWhoEmail");
-                    sql.AppendLine("  , @Token, @StockShow");
-                    sql.AppendLine(" );");
+                    string sql = @"
+                        /* 供應商 */
+                        DECLARE @NewID AS INT
+                         SET @NewID = (
+                          SELECT ISNULL(MAX(Data_ID) ,0) + 1 FROM SupInvCheck_Supplier WHERE (Parent_ID = @Parent_ID)
+                         )
+                         INSERT INTO SupInvCheck_Supplier( 
+                          Data_ID, Parent_ID
+                          , SupID, SupName, SupMails
+                          , PurWhoID, PurWhoName, PurWhoEmail
+                          , Token, StockShow
+                         ) VALUES (
+                          @NewID, @Parent_ID
+                          , @SupID, @SupName, @SupMails
+                          , @PurWhoID, @PurWhoName, @PurWhoEmail
+                          , @Token, @StockShow
+                         );
 
-                    //--品號清單
-                    sql.AppendLine(" DECLARE @ItemMaxID AS INT");
-                    sql.AppendLine("  SET @ItemMaxID = (");
-                    sql.AppendLine("   SELECT ISNULL(MAX(Data_ID) ,0) FROM SupInvCheck_Model WHERE (Parent_ID = @Parent_ID)");
-                    sql.AppendLine("  )");
-                    sql.AppendLine(" INSERT INTO SupInvCheck_Model");
-                    sql.AppendLine(" (Parent_ID, Data_ID, SupID, ModelNo)");
-                    sql.AppendLine(" SELECT");
-                    sql.AppendLine("  @Parent_ID AS ParentID");
-                    sql.AppendLine("  , ROW_NUMBER() OVER(ORDER BY MC001) + @ItemMaxID AS RowIdx");
-                    sql.AppendLine("  , @SupID AS SupID");
-                    sql.AppendLine("  , RTRIM(MC001) AS ModelNo");
-                    sql.AppendLine(" FROM [prokit2].dbo.INVMC");
-                    sql.AppendLine("  INNER JOIN [prokit2].dbo.INVMB ON INVMC.MC001 = INVMB.MB001");
-                    sql.AppendLine(" WHERE (INVMC.MC002 = '04') AND (NOT (INVMB.MB032 = '122002' AND INVMC.MC007 = 0))");
-                    sql.AppendLine("  AND (LEFT(MC003, 6) = @SupID)");
-                    sql.AppendLine(" ORDER BY LEFT(MC003, 6), MC001");
-                    sql.AppendLine(" ;");
+                        /* 品號清單 */
+                         DECLARE @ItemMaxID AS INT
+                          SET @ItemMaxID = (
+                           SELECT ISNULL(MAX(Data_ID) ,0) FROM SupInvCheck_Model WHERE (Parent_ID = @Parent_ID)
+                          )
+                         INSERT INTO SupInvCheck_Model
+                         (Parent_ID, Data_ID, SupID, ModelNo)
+                         SELECT
+                          @Parent_ID AS ParentID
+                          , ROW_NUMBER() OVER(ORDER BY MC001) + @ItemMaxID AS RowIdx
+                          , @SupID AS SupID
+                          , RTRIM(MC001) AS ModelNo
+                         FROM [prokit2].dbo.INVMC
+                          INNER JOIN [prokit2].dbo.INVMB ON INVMC.MC001 = INVMB.MB001
+                         WHERE (INVMC.MC002 = '04') AND (NOT (INVMB.MB032 = '122002' AND INVMC.MC007 = 0))
+                          AND (LEFT(MC003, 6) = @SupID)
+                         ORDER BY LEFT(MC003, 6), MC001 ;
 
-                    //--主檔
-                    sql.AppendLine(" UPDATE SupInvCheck_List SET Update_Who = @Update_Who, Update_Time = GETDATE() WHERE (Data_ID = @Parent_ID);");
-
-                    //SupInvCheck_Model
+                        /* 主檔 Update */
+                         UPDATE SupInvCheck_List SET Update_Who = @Update_Who, Update_Time = GETDATE() WHERE (Data_ID = @Parent_ID);
+                        ";
 
                     //----- SQL 執行 -----
-                    cmd.CommandText = sql.ToString();
+                    cmd.CommandText = sql;
                     cmd.Parameters.AddWithValue("Parent_ID", dataID);
                     cmd.Parameters.AddWithValue("SupID", dataItem.SupID);
                     cmd.Parameters.AddWithValue("SupName", dataItem.SupName);
@@ -5601,41 +5594,34 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public bool Update_StockArea(string id, string act, out string ErrMsg)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料取得 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
+                string sql = @"
+                 IF (SELECT COUNT(*) FROM OpcsStatus_Rel_Stock WHERE (ErpID = @id)) > 0
+                     BEGIN
+                         UPDATE OpcsStatus_Rel_Stock
+                         SET StockValue = @act, Update_Time = GETDATE()
+                         WHERE (ErpID = @id);
+                     END
+                 ELSE
+                     BEGIN
+                         DECLARE @NewID AS BIGINT
+                         SET @NewID = (
+                          SELECT ISNULL(MAX(UID), 0) + 1
+                          FROM OpcsStatus_Rel_Stock
+                         );
 
-                sql.AppendLine(" IF (SELECT COUNT(*) FROM OpcsStatus_Rel_Stock WHERE (ErpID = @id)) > 0");
-                sql.AppendLine(" BEGIN");
-
-                sql.AppendLine(" UPDATE OpcsStatus_Rel_Stock");
-                sql.AppendLine(" SET StockValue = @act, Update_Time = GETDATE()");
-                sql.AppendLine(" WHERE (ErpID = @id);");
-
-                sql.AppendLine(" END");
-                sql.AppendLine(" ELSE");
-                sql.AppendLine(" BEGIN");
-
-                sql.AppendLine(" DECLARE @NewID AS BIGINT");
-                sql.AppendLine(" SET @NewID = (");
-                sql.AppendLine("  SELECT ISNULL(MAX(UID), 0) + 1");
-                sql.AppendLine("  FROM OpcsStatus_Rel_Stock");
-                sql.AppendLine(" );");
-
-                sql.AppendLine(" INSERT INTO OpcsStatus_Rel_Stock (");
-                sql.AppendLine("  UID, ErpID, StockValue, Create_Time");
-                sql.AppendLine("  ) VALUES (");
-                sql.AppendLine("  @NewID, @id, @act, GETDATE()");
-                sql.AppendLine(" );");
-
-                sql.AppendLine(" END");
+                         INSERT INTO OpcsStatus_Rel_Stock (
+                          UID, ErpID, StockValue, Create_Time
+                          ) VALUES (
+                          @NewID, @id, @act, GETDATE()
+                         );
+                     END";
 
                 //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
+                cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("id", id);
                 cmd.Parameters.AddWithValue("act", act);
 
@@ -5653,41 +5639,33 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public bool Update_BoxData(string id, string val, out string ErrMsg)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料取得 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-
-                sql.AppendLine(" IF (SELECT COUNT(*) FROM OpcsStatus_Rel_Box WHERE (ErpID = @id)) > 0");
-                sql.AppendLine(" BEGIN");
-
-                sql.AppendLine(" UPDATE OpcsStatus_Rel_Box");
-                sql.AppendLine(" SET BoxValue = @val, Update_Time = GETDATE()");
-                sql.AppendLine(" WHERE (ErpID = @id);");
-
-                sql.AppendLine(" END");
-                sql.AppendLine(" ELSE");
-                sql.AppendLine(" BEGIN");
-
-                sql.AppendLine(" DECLARE @NewID AS BIGINT");
-                sql.AppendLine(" SET @NewID = (");
-                sql.AppendLine("  SELECT ISNULL(MAX(UID), 0) + 1");
-                sql.AppendLine("  FROM OpcsStatus_Rel_Box");
-                sql.AppendLine(" );");
-
-                sql.AppendLine(" INSERT INTO OpcsStatus_Rel_Box (");
-                sql.AppendLine("  UID, ErpID, BoxValue, Create_Time");
-                sql.AppendLine("  ) VALUES (");
-                sql.AppendLine("  @NewID, @id, @val, GETDATE()");
-                sql.AppendLine(" );");
-
-                sql.AppendLine(" END");
+                string sql = @"
+                 IF (SELECT COUNT(*) FROM OpcsStatus_Rel_Box WHERE (ErpID = @id)) > 0
+	                 BEGIN
+		                 UPDATE OpcsStatus_Rel_Box
+		                 SET BoxValue = @val, Update_Time = GETDATE()
+		                 WHERE (ErpID = @id);
+	                 END
+                 ELSE
+	                 BEGIN
+		                 DECLARE @NewID AS BIGINT
+		                 SET @NewID = (
+		                  SELECT ISNULL(MAX(UID), 0) + 1
+		                  FROM OpcsStatus_Rel_Box
+		                 );
+		                 INSERT INTO OpcsStatus_Rel_Box (
+		                  UID, ErpID, BoxValue, Create_Time
+		                  ) VALUES (
+		                  @NewID, @id, @val, GETDATE()
+		                 );
+	                 END";
 
                 //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
+                cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("id", id);
                 cmd.Parameters.AddWithValue("val", val);
 
@@ -5708,18 +5686,17 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public bool UpdateSupInvBase(SupInvList instance, out string ErrMsg)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 執行 -----
-                sql.AppendLine(" UPDATE SupInvCheck_List");
-                sql.AppendLine(" SET Subject = @Subject, TaskTime = @TaskTime, IsOnTask = @IsOnTask");
-                sql.AppendLine(" , Update_Who = @Update_Who, Update_Time = GETDATE()");
-                sql.AppendLine(" WHERE (Data_ID = @DataID);");
-                cmd.CommandText = sql.ToString();
+                string sql = @"
+                 UPDATE SupInvCheck_List
+                 SET Subject = @Subject, TaskTime = @TaskTime, IsOnTask = @IsOnTask
+                 , Update_Who = @Update_Who, Update_Time = GETDATE()
+                 WHERE (Data_ID = @DataID)";
+
+                cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("DataID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("Subject", instance.Subject);
                 cmd.Parameters.AddWithValue("TaskTime", instance.TaskTime);
@@ -5748,16 +5725,14 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         /// <returns></returns>
         public bool Delete_SupInvSend(string dataID)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" DELETE FROM SupInvCheck_Model WHERE (Parent_ID = @Data_ID);");
-                sql.AppendLine(" DELETE FROM SupInvCheck_Supplier WHERE (Parent_ID = @Data_ID);");
-                sql.AppendLine(" DELETE FROM SupInvCheck_List WHERE (Data_ID = @Data_ID);");
+                string sql = @"
+                 DELETE FROM SupInvCheck_Model WHERE (Parent_ID = @Data_ID);
+                 DELETE FROM SupInvCheck_Supplier WHERE (Parent_ID = @Data_ID);
+                 DELETE FROM SupInvCheck_List WHERE (Data_ID = @Data_ID);";
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -5769,16 +5744,14 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
         public bool Delete_SupplierItem(string parentID, string supID)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" DELETE FROM SupInvCheck_Model WHERE (Parent_ID = @Parent_ID) AND (SupID = @SupID);");
-                sql.AppendLine(" DELETE FROM SupInvCheck_Supplier WHERE (Parent_ID = @Parent_ID) AND (SupID = @SupID);");
-                sql.AppendLine(" UPDATE SupInvCheck_List SET Update_Who = @Update_Who, Update_Time = GETDATE() WHERE (Data_ID = @Parent_ID);");
+                string sql = @"
+                 DELETE FROM SupInvCheck_Model WHERE (Parent_ID = @Parent_ID) AND (SupID = @SupID);
+                 DELETE FROM SupInvCheck_Supplier WHERE (Parent_ID = @Parent_ID) AND (SupID = @SupID);
+                 UPDATE SupInvCheck_List SET Update_Who = @Update_Who, Update_Time = GETDATE() WHERE (Data_ID = @Parent_ID);";
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
@@ -5796,17 +5769,14 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         #region ** 標準成本 **
         public bool Delete_PackItem(string dataID)
         {
-            //----- 宣告 -----
-            StringBuilder sql = new StringBuilder();
-
             //----- 資料查詢 -----
             using (SqlCommand cmd = new SqlCommand())
             {
                 //----- SQL 查詢語法 -----
-                sql.AppendLine(" DELETE FROM Prod_Rel_Package WHERE (UID = @Data_ID)");
+                string sql = @"DELETE FROM Prod_Rel_Package WHERE (UID = @Data_ID)";
 
                 //----- SQL 執行 -----
-                cmd.CommandText = sql.ToString();
+                cmd.CommandText = sql;
                 cmd.Parameters.AddWithValue("Data_ID", dataID);
 
                 return dbConn.ExecuteSql(cmd, dbConn.DBS.Product, out ErrMsg);
@@ -5843,7 +5813,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 回傳對應公司別的主要倉別
+        /// [到貨狀況] 回傳對應公司別的主要倉別
         /// </summary>
         /// <param name="dbs">TW/SH/SZ</param>
         /// <returns></returns>
@@ -5862,7 +5832,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 供應商開頭第一碼
+        /// [到貨狀況] 供應商開頭第一碼
         /// </summary>
         /// <param name="dbs">TW/SH/SZ</param>
         /// <returns></returns>
@@ -5883,7 +5853,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// BPM FLOW Table Name
+        /// [到貨狀況] BPM FLOW Table Name
         /// </summary>
         /// <param name="dbs">TW/SH/SZ</param>
         /// <returns></returns>
@@ -5904,7 +5874,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 到貨狀況 - 設定所有表頭欄位
+        /// [到貨狀況] 設定所有表頭欄位
         /// </summary>
         /// <returns></returns>
         public List<OpcsColumn> SetOpcsTableHeader()
@@ -5949,7 +5919,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 
         /// <summary>
-        /// 到貨狀況 - 設定指定部門關聯的顯示欄位
+        /// [到貨狀況] 設定指定部門關聯的顯示欄位
         /// </summary>
         /// <param name="deptID">部門代號</param>
         /// <returns></returns>

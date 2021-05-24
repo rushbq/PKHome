@@ -99,6 +99,7 @@ public partial class SalesOrderSearch : SecurityCheck
             #region >> 條件篩選 <<
             //Params
             string _isClose = Req_IsClose;
+            string _cfmCode = Req_CfmCode;
             string _sDate = Req_sDate;
             string _eDate = Req_eDate;
             string _Keyword = Req_Keyword;
@@ -114,6 +115,14 @@ public partial class SalesOrderSearch : SecurityCheck
                 search.Add("IsClose", _isClose);
                 PageParam.Add("IsClose=" + Server.UrlEncode(_isClose));
                 filter_IsClose.Text = _isClose;
+            }
+
+            //[查詢條件] - CfmCode
+            if (!string.IsNullOrWhiteSpace(_cfmCode))
+            {
+                search.Add("CfmCode", _cfmCode);
+                PageParam.Add("CfmCode=" + Server.UrlEncode(_cfmCode));
+                filter_CfmCode.Text = _cfmCode;
             }
 
             //[查詢條件] - 日期(Start)
@@ -282,6 +291,7 @@ public partial class SalesOrderSearch : SecurityCheck
     {
         //Params
         string _IsClose = filter_IsClose.SelectedValue;
+        string _CfmCode = filter_CfmCode.SelectedValue;
         string _sDate = this.filter_sDate.Text;
         string _eDate = this.filter_eDate.Text;
         string _Keyword = this.filter_Keyword.Text;
@@ -296,6 +306,12 @@ public partial class SalesOrderSearch : SecurityCheck
         if (!string.IsNullOrWhiteSpace(_IsClose))
         {
             url.Append("&IsClose=" + Server.UrlEncode(_IsClose));
+        }
+
+        //[查詢條件] - CfmCode
+        if (!string.IsNullOrWhiteSpace(_CfmCode))
+        {
+            url.Append("&CfmCode=" + Server.UrlEncode(_CfmCode));
         }
 
         //[查詢條件] - Date between
@@ -438,6 +454,22 @@ public partial class SalesOrderSearch : SecurityCheck
     }
     private string _Req_IsClose;
 
+    /// <summary>
+    /// 取得傳遞參數 - 確認碼
+    /// </summary>
+    public string Req_CfmCode
+    {
+        get
+        {
+            String _data = Request.QueryString["CfmCode"];
+            return (CustomExtension.String_資料長度Byte(_data, "1", "1", out ErrMsg)) ? _data.Trim() : "";
+        }
+        set
+        {
+            this._Req_CfmCode = value;
+        }
+    }
+    private string _Req_CfmCode;
 
     /// <summary>
     /// 取得傳遞參數 - DBS

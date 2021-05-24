@@ -110,6 +110,7 @@ public partial class myOpcsRemark_PDF_Html_TW : System.Web.UI.Page
             TE108Name.Text = query.Rows[0]["TE108Name"].ToString(); /* 部門代號 */
             TE009Name.Text = query.Rows[0]["TE009Name"].ToString();
             TE109Name.Text = query.Rows[0]["TE109Name"].ToString(); /* 業務人員 */
+            lt_CfmWho.Text = query.Rows[0]["CfmWho"].ToString(); /* 確認者 */
             TE040.Text = (Math.Round(Convert.ToDecimal(query.Rows[0]["TE040"]) * 100, 0)).ToString();
             TE136.Text = (Math.Round(Convert.ToDecimal(query.Rows[0]["TE136"]) * 100, 0)).ToString(); /* 營業稅率 */
             TE049.Text = Get_TypeName("BOX", query.Rows[0]["TE049"].ToString());

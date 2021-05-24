@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using PKLib_Method.Methods;
 using SelectPdf;
 
 public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
 {
     public string ErrMsg;
+
+    //設定FTP連線參數
+    private FtpMethod _ftp = new FtpMethod(
+        fn_Param.ftp_Username, fn_Param.ftp_Password, fn_Param.ftp_ServerUrl);
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -20,23 +19,83 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
             return;
         }
 
-        /* PDF download */
-        //[Step1] 取得要做成PDF的頁面(使用元件轉換,內部站台不能用api)
+        /* PDF download
         string url = "{0}myOpcsRemark/PDF_Html_TW.aspx?dbs={1}&id={2}".FormatThis(fn_Param.WebUrl, Req_DBS, Req_DataID);
 
-        //[Step2] 產生PDF轉成byte
-        byte[] pdfByte = convertPDF(url);
+        //20210524:轉pdf太慢，先用html顯示
+        Response.Redirect(url);
+         */
+        /* PDF download */
+        string _dwUrl = Upload_Pdf(out ErrMsg);
+        if (string.IsNullOrWhiteSpace(_dwUrl))
+        {
+            ph_Loading.Visible = false;
+            ph_ErrMessage.Visible = true;
+            lt_ShowMsg.Text = "產生PDF失敗...<br>" + ErrMsg;
+        }
+        else
+        {
+            //檔案下載
+            string ftpFolder = UploadFolder() + Req_DBS;
 
-        //將檔案輸出至瀏覽器
-        Response.Clear();
-        Response.AddHeader("Content-Disposition", "attachment;filename={0}.pdf".FormatThis(Req_DataID));
-        Response.ContentType = "application/octet-stream";
-        Response.OutputStream.Write(pdfByte, 0, pdfByte.Length);
-        Response.OutputStream.Flush();
-        Response.OutputStream.Close();
-        Response.Flush();
-        Response.End();
+            _ftp.FTP_doDownload(ftpFolder, _dwUrl, _dwUrl);
+            //Response.Redirect(_dwUrl);
+        }
     }
+
+    #region *** PDF產生 ***
+
+    /// <summary>
+    /// 產生&上傳PDF
+    /// </summary>
+    /// <param name="ErrMsg"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// 取得Html -> 產生PDF -> 上傳至FTP -> User下載
+    /// </remarks>
+    private string Upload_Pdf(out string ErrMsg)
+    {
+        try
+        {
+            ErrMsg = "";
+
+            //[Step1] 取得要做成PDF的頁面(使用元件轉換,內部站台不能用api)
+            string url = "{0}myOpcsRemark/PDF_Html_TW.aspx?dbs={1}&id={2}".FormatThis(fn_Param.WebUrl, Req_DBS, Req_DataID);
+
+            //[Step2] 產生PDF轉成byte
+            byte[] pdfByte = convertPDF(url);
+
+            //[Step3] 使用byte方式上傳至FTP
+            string ftpFolder = UploadFolder() + Req_DBS;
+
+            //判斷資料夾, 不存在則建立
+            _ftp.FTP_CheckFolder(ftpFolder);
+
+            //執行上傳
+            string _fileName = Req_DataID + ".pdf";
+            bool isOK = _ftp.FTP_doUploadWithByte(pdfByte, ftpFolder, _fileName);
+            if (isOK)
+            {
+                //string _dwUrl = "{0}{1}{2}/{3}".FormatThis(fn_Param.RefUrl, UploadFolder(), Req_DBS, _fileName);
+                //return _dwUrl;
+
+                return _fileName;
+            }
+            else
+            {
+                return "";
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            ErrMsg = ex.Message.ToString();
+            return "";
+        }
+
+    }
+
 
 
     /// <summary>
@@ -62,7 +121,9 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
         //-Web page options
         //converter.Options.WebPageWidth = 800;  //預設1024
         //converter.Options.WebPageHeight = 0;  //預設auto
-        //
+
+        //set timeout(預設60秒)
+        converter.Options.MaxPageLoadTime = 180;
 
 
         //-Page margins
@@ -88,8 +149,9 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
         #endregion
 
         //ConvertHtml
-        //string urlContent = html;
-        //PdfDocument doc = converter.ConvertHtmlString(urlContent);
+        //string urlContent = CustomExtension.WebRequest_GET(url, true);
+        //PdfDocument doc = converter.ConvertHtmlString(urlContent, url);
+
         //取得Url並轉換PDF
         PdfDocument doc = converter.ConvertUrl(url);
 
@@ -103,6 +165,21 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
 
         return byteDoc;
     }
+
+
+    /// <summary>
+    /// 上傳目錄
+    /// </summary>
+    /// <param name="traceID"></param>
+    /// <returns></returns>
+    private string UploadFolder()
+    {
+        return "{0}OpcsRemk/PDF/".FormatThis(System.Web.Configuration.WebConfigurationManager.AppSettings["File_Folder"]);
+    }
+
+
+    #endregion
+
 
 
     #region -- 傳遞參數 --

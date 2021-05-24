@@ -50,11 +50,20 @@
                             </div>
                         </div>
                     </div>
-                    <div class="three wide field">
+                    <div class="two wide field">
                         <label>單身結案碼</label>
                         <asp:DropDownList ID="filter_IsClose" runat="server" CssClass="fluid">
                             <asp:ListItem Value="N" Selected="True">未結案</asp:ListItem>
                             <asp:ListItem Value="Y">已結案</asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="two wide field">
+                        <label>確認碼</label>
+                        <asp:DropDownList ID="filter_CfmCode" runat="server" CssClass="fluid">
+                            <asp:ListItem Value="">- 不限 -</asp:ListItem>
+                            <asp:ListItem Value="N">N:未確認</asp:ListItem>
+                            <asp:ListItem Value="Y">Y:已確認</asp:ListItem>
+                            <asp:ListItem Value="V">V:作廢</asp:ListItem>
                         </asp:DropDownList>
                     </div>
                     <div class="four wide field">

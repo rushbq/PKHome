@@ -141,10 +141,14 @@
                                 <asp:Literal ID="TE029" runat="server"></asp:Literal>
                             </td>
                             <td style="width: 90px; text-align: right;">付款條件：</td>
-                            <td colspan="4">
+                            <td colspan="2">
                                 <asp:Literal ID="TE017" runat="server"></asp:Literal>
                                 &nbsp;=>&nbsp;
                                 <asp:Literal ID="TE117" runat="server"></asp:Literal>
+                            </td>
+                            <td style="width: 90px; text-align: right;">確認者：</td>
+                            <td>
+                                <asp:Literal ID="lt_CfmWho" runat="server"></asp:Literal>
                             </td>
                         </tr>
                         <tr>
@@ -191,22 +195,23 @@
                             <table class="ui large celled very compact table">
                                 <thead>
                                     <tr>
-                                        <th class="center aligned" style="width: 10%;">
+                                        <th class="center aligned" style="width: 9%;">
                                             <div>變更序號</div>
                                             <div>訂單序號</div>
                                         </th>
-                                        <th style="width: 20%;">
+                                        <th style="width: 30%;">
                                             <div>品號</div>
                                             <div>品名</div>
                                             <div>規格</div>
                                             <div>客戶品號</div>
                                         </th>
-                                        <th class="right aligned" style="width: 10%;">
+                                        <th class="right aligned" style="width: 8%;">
                                             <div>訂購數量</div>
                                             <div>贈品量</div>
                                             <div>單位</div>
                                             <div>小單位</div>
                                         </th>
+                                        <th style="width: 5%;">已出<br />數量</th>
                                         <th style="width: 10%;">
                                             <div class="right aligned">訂單單價</div>
                                             <div class="right aligned">折扣率</div>
@@ -219,8 +224,8 @@
                                             <div class="right aligned">毛重(Kg)</div>
                                             <div class="right aligned">材積</div>
                                         </th>
-                                        <th class="center aligned" style="width: 10%;">儲位</th>
-                                        <th style="width: 30%;">
+                                        <th class="center aligned" style="width: 8%;">儲位</th>
+                                        <th style="width: 20%;">
                                             <div>專案代號</div>
                                             <div>指定結案</div>
                                             <div>變更原因</div>
@@ -251,6 +256,10 @@
                                     <div><%#Math.Round(Convert.ToDecimal(Eval("TF020")), 0) %></div>
                                     <div><%#Eval("TF010") %></div>
                                     <div><%#Eval("TF012") %></div>
+                                </td>
+                                <td style="text-align: center; <%#Get_StyleLine(Eval("Lv").ToString())%>">
+                                    <!--已出數量-->
+                                    <%#Math.Round(Convert.ToDecimal(Eval("TF123")), 0) %>
                                 </td>
                                 <td style="text-align: right; <%#Get_StyleLine(Eval("Lv").ToString())%>">
                                     <!--訂單單價-->

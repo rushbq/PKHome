@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>OPCS表格下載</title>
+    <title>OPCS訂單</title>
 </head>
 <body>
     <form id="form1" runat="server">
@@ -25,11 +25,11 @@
                 <!-- 表頭 -->
                 <thead>
                     <tr>
-                        <td width="240" height="40" colspan="4">核單日期：
-                            <asp:Literal ID="lt_CheckDate" runat="server"></asp:Literal>
-                        </td>
-                        <td width="380" colspan="7">接單日期：
+                        <td width="240" height="40" colspan="4">接單日期：
                             <asp:Literal ID="lt_OrderDate" runat="server"></asp:Literal>
+                        </td>
+                        <td width="380" colspan="7">核單日期：
+                            <asp:Literal ID="lt_CheckDate" runat="server"></asp:Literal>
                         </td>
                         <td width="278" colspan="3">訂單編號：
                             <asp:Literal ID="lt_SO_FID" runat="server"></asp:Literal>-<asp:Literal ID="lt_SO_SID" runat="server"></asp:Literal>
@@ -63,11 +63,12 @@
                         <td colspan="4" height="40">交易條件：
                             <asp:Literal ID="lt_TradeTerm" runat="server"></asp:Literal>
                         </td>
-                        <td colspan="7">付款方式：
-                            <asp:Literal ID="lt_PayTerm" runat="server"></asp:Literal>
-                        </td>
-                        <td colspan="3">幣別：
+                        <td colspan="7" style="font-size: 9pt;">付款方式/幣別：
+                            <asp:Literal ID="lt_PayTerm" runat="server"></asp:Literal>&nbsp;/&nbsp;                            
                             <asp:Literal ID="lt_TradeCurrency" runat="server"></asp:Literal>
+                        </td>
+                        <td colspan="3">確認者：
+                            <asp:Literal ID="lt_CfmWho" runat="server"></asp:Literal>
                         </td>
                     </tr>
                 </thead>
@@ -264,9 +265,16 @@
                     <tr>
                         <td width="50%" colspan="7">
                             <asp:Literal ID="lt_MicTxt1" runat="server"></asp:Literal>
+                            <div style="text-align: center">
+                                <asp:Literal ID="lt_MicPic1" runat="server"></asp:Literal>
+                            </div>
                         </td>
-                        <td width="50%" colspan="7">
+                        <td width="5%">&nbsp;</td>
+                        <td width="45%" colspan="6">
                             <asp:Literal ID="lt_MicTxt2" runat="server"></asp:Literal>
+                            <div style="text-align: center">
+                                <asp:Literal ID="lt_MicPic2" runat="server"></asp:Literal>
+                            </div>
                         </td>
                     </tr>
                 </table>
