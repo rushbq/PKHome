@@ -211,7 +211,8 @@
                                             <div>單位</div>
                                             <div>小單位</div>
                                         </th>
-                                        <th style="width: 5%;">已出<br />數量</th>
+                                        <th style="width: 5%;">已出<br />
+                                            數量</th>
                                         <th style="width: 10%;">
                                             <div class="right aligned">訂單單價</div>
                                             <div class="right aligned">折扣率</div>
@@ -263,9 +264,10 @@
                                 </td>
                                 <td style="text-align: right; <%#Get_StyleLine(Eval("Lv").ToString())%>">
                                     <!--訂單單價-->
-                                    <div><%#Math.Round(Convert.ToDecimal(Eval("TF013")), 1) %></div>
+                                    <div><%#Math.Round(Convert.ToDecimal(Eval("TF013")), 2) %></div>
                                     <div><%#Math.Round(Convert.ToDecimal(Eval("TF021"))*100, 0) %>%</div>
-                                    <div><%#Math.Round(Convert.ToDecimal(Eval("TF014")), 1) %></div>
+                                    <!--訂單金額-->
+                                    <div><%#Math.Round(Convert.ToDecimal(Eval("TF014")), 2) %></div>
                                     <div><%#Eval("TF023") %></div>
                                 </td>
                                 <td style="<%#Get_StyleLine(Eval("Lv").ToString())%>">

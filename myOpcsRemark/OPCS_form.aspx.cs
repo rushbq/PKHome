@@ -71,35 +71,44 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
         //** 嘜頭資料 **
         string _MarkPic = query.Rows[0]["MarkPic"].ToString();
-        string _MicTxt1 = query.Rows[0]["MicTxt1"].ToString();
-        string _MicTxt2 = query.Rows[0]["MicTxt2"].ToString();
+        string _MicTxt1 = query.Rows[0]["MicTxt1"].ToString(); //訂單嘜頭文字
+        string _MicTxt2 = query.Rows[0]["MicTxt2"].ToString(); //訂單嘜頭文字
 
-        //嘜頭圖路徑
+        //[嘜頭圖取得] 嘜頭圖路徑
         string _url = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/{0}/EPS/"
             .FormatThis(Req_DBS.Equals("TW") ? "prokit(II)" : "SHPK2");
-        //正嘜圖
+        //[嘜頭圖取得] 正嘜圖
         string _filename1 = _MarkPic + "1.jpg";
-        //側嘜圖
+        //[嘜頭圖取得] 側嘜圖
         string _filename2 = _MarkPic + "2.jpg";
 
-        //判斷圖檔是否存在, 不存在抓預設圖
+        //[嘜頭圖取得] 判斷圖檔是否存在, 不存在抓預設圖
         string _chkFile1 = checkFileExists(_url, _filename1);
         string _chkMicFile1 = checkStandardImg(Req_DBS, _chkFile1, _custID, "101", _MicTxt1);
 
         string _chkFile2 = checkFileExists(_url, _filename2);
         string _chkMicFile2 = checkStandardImg(Req_DBS, _chkFile2, _custID, "102", _MicTxt2);
 
+
         //輸出正嘜
         lt_MicTxt1.Text = _MicTxt1.Replace("\n", "<br>");
-        lt_MicPic1.Text = !string.IsNullOrWhiteSpace(_chkMicFile1)
-            ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile1)
-            : "";
+        /* 指定客戶,有嘜頭文字,不帶嘜頭圖 */
+        if (checkTargetCust(_MicTxt1, _custID))
+        {
+            lt_MicPic1.Text = !string.IsNullOrWhiteSpace(_chkMicFile1)
+                ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile1)
+                : "";
+        }
 
         //輸出側嘜
         lt_MicTxt2.Text = _MicTxt2.Replace("\n", "<br>");
-        lt_MicPic2.Text = !string.IsNullOrWhiteSpace(_chkMicFile2)
-            ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile2)
-            : "";
+        /* 指定客戶,有嘜頭文字,不帶嘜頭圖 */
+        if (checkTargetCust(_MicTxt2, _custID))
+        {
+            lt_MicPic2.Text = !string.IsNullOrWhiteSpace(_chkMicFile2)
+                ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile2)
+                : "";
+        }
 
 
         //----- 資料整理:繫結 ----- 
@@ -122,6 +131,35 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
     }
 
+    /// <summary>
+    /// 指定客戶判斷
+    /// **有嘜頭文字,不顯示指定嘜頭圖**
+    /// </summary>
+    /// <param name="_micTxt">嘜頭文字</param>
+    /// <param name="_custID">客戶代號</param>
+    /// <returns></returns>
+    bool checkTargetCust(string _micTxt, string _custID)
+    {
+        //指定客戶:Steren, Teco 
+        switch (_custID)
+        {
+            case "1525501":
+            case "2002054001":
+                if (string.IsNullOrWhiteSpace(_micTxt))
+                {
+                    return true;
+                }
+                else
+                {
+                    //有字就不show圖
+                    return false;
+                }
+
+            default:
+                //其他
+                return true;
+        }
+    }
 
 
     /// <summary>

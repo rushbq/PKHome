@@ -9841,7 +9841,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
                     cmd.Parameters.AddWithValue("ERP_eDate", instance.erpEDate);
                     cmd.Parameters.AddWithValue("Creater", instance.Update_Who);
                     cmd.Parameters.AddWithValue("CompanyID", compID);
-                    cmd.CommandTimeout = 120;
+                    cmd.CommandTimeout = 180;
 
                     //取得回傳值, 輸出參數
                     SqlParameter Msg = cmd.Parameters.Add("@Msg", SqlDbType.NVarChar, 200);
@@ -9896,6 +9896,7 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
 
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
+                cmd.CommandTimeout = 180;
                 cmd.Parameters.AddWithValue("DataID", instance.Data_ID);
                 cmd.Parameters.AddWithValue("Who", instance.Update_Who);
 

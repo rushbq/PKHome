@@ -294,7 +294,7 @@ public partial class SalesOrderSearch : SecurityCheck
         string _CfmCode = filter_CfmCode.SelectedValue;
         string _sDate = this.filter_sDate.Text;
         string _eDate = this.filter_eDate.Text;
-        string _Keyword = this.filter_Keyword.Text;
+        string _Keyword = this.filter_Keyword.Text.Trim();
 
         //url string
         StringBuilder url = new StringBuilder();

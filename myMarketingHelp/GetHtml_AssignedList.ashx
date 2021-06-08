@@ -10,7 +10,7 @@ using Menu2000Data.Controllers;
 using PKLib_Method.Methods;
 
 /// <summary>
-/// 取得OPCS所有資料
+/// 取得指定人員
 /// </summary>
 public class Ashx_GetData : IHttpHandler
 {

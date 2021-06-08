@@ -18,13 +18,7 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
             ph_ErrMessage.Visible = true;
             return;
         }
-
-        /* PDF download
-        string url = "{0}myOpcsRemark/PDF_Html_TW.aspx?dbs={1}&id={2}".FormatThis(fn_Param.WebUrl, Req_DBS, Req_DataID);
-
-        //20210524:轉pdf太慢，先用html顯示
-        Response.Redirect(url);
-         */
+        
         /* PDF download */
         string _dwUrl = Upload_Pdf(out ErrMsg);
         if (string.IsNullOrWhiteSpace(_dwUrl))
@@ -39,7 +33,6 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
             string ftpFolder = UploadFolder() + Req_DBS;
 
             _ftp.FTP_doDownload(ftpFolder, _dwUrl, _dwUrl);
-            //Response.Redirect(_dwUrl);
         }
     }
 
@@ -49,7 +42,7 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
     /// 產生&上傳PDF
     /// </summary>
     /// <param name="ErrMsg"></param>
-    /// <returns></returns>
+    /// <returns>filename</returns>
     /// <remarks>
     /// 取得Html -> 產生PDF -> 上傳至FTP -> User下載
     /// </remarks>
@@ -76,9 +69,6 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
             bool isOK = _ftp.FTP_doUploadWithByte(pdfByte, ftpFolder, _fileName);
             if (isOK)
             {
-                //string _dwUrl = "{0}{1}{2}/{3}".FormatThis(fn_Param.RefUrl, UploadFolder(), Req_DBS, _fileName);
-                //return _dwUrl;
-
                 return _fileName;
             }
             else
@@ -123,6 +113,7 @@ public partial class myOpcsRemark_OPCS_PdfDW : System.Web.UI.Page
         //converter.Options.WebPageHeight = 0;  //預設auto
 
         //set timeout(預設60秒)
+        //(200筆的單身約花2分鐘)
         converter.Options.MaxPageLoadTime = 180;
 
 

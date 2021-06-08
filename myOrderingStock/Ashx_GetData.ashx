@@ -19,7 +19,7 @@ public class Ashx_GetData : IHttpHandler
 {
     public void ProcessRequest(HttpContext context)
     {
-        string ErrMsg;
+        string ErrMsg = "";
 
         //System.Threading.Thread.Sleep(2000);
 
@@ -102,7 +102,7 @@ public class Ashx_GetData : IHttpHandler
         }
         catch (Exception ex)
         {
-            context.Response.Write("#fail#<h5>資料查詢時發生錯誤!!若持續看到此訊息,請聯絡系統管理人員.</h5>" + ex.Message.ToString());
+            context.Response.Write("#fail#<h5>資料查詢時發生錯誤!!若持續看到此訊息,請聯絡系統管理人員.</h5>" + ex.Message.ToString() + ErrMsg);
         }
 
     }

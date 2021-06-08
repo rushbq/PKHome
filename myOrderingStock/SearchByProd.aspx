@@ -1,6 +1,13 @@
 ﻿<%@ Page Title="產品庫存狀況" Language="C#" MasterPageFile="~/Site_S_UI.master" AutoEventWireup="true" CodeFile="SearchByProd.aspx.cs" Inherits="myOrderingStock_SearchByProd" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="CssContent" runat="Server">
+    <style>
+        /* datatable processing 文字顯示 */
+        .dataTables_processing {
+            top: 200px !important;
+            z-index: 11000 !important;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="Server">
     <!-- 工具列 Start -->
@@ -80,6 +87,7 @@
                             <th class="green-bg lighten-3 center aligned" colspan="5">台灣-20倉</th>
                             <th class="green-bg lighten-3 center aligned" colspan="5">台灣-21倉</th>
                             <th class="green-bg lighten-3 center aligned" colspan="5">台灣-22倉</th>
+                            <th class="green-bg lighten-3 center aligned" colspan="5">台灣-23倉</th>
                             <th class="blue-bg lighten-3 center aligned" colspan="5">上海-12倉</th>
                             <th class="blue-bg lighten-3 center aligned" colspan="5">上海-128倉</th>
                             <th class="blue-bg lighten-3 center aligned" colspan="5">上海-A01倉</th>
@@ -102,6 +110,11 @@
                             <th class="grey-bg lighten-3 right aligned numFmt">預計生</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計領</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">22庫存</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計銷</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計進</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計生</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">預計領</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">23庫存</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計銷</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計進</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">預計生</th>
@@ -335,6 +348,13 @@
                          { data: "PreIN_22", className: "right aligned" },
                          { data: "PreSet_22", className: "right aligned" },
                          { data: "PreGet_22", className: "right aligned" },
+
+                         { data: "StockQty_23", className: "right aligned warning" },
+                         { data: "PreSell_23", className: "right aligned" },
+                         { data: "PreIN_23", className: "right aligned" },
+                         { data: "PreSet_23", className: "right aligned" },
+                         { data: "PreGet_23", className: "right aligned" },
+
                          { data: "StockQty_12", className: "right aligned warning" },
                          { data: "PreSell_12", className: "right aligned" },
                          { data: "PreIN_12", className: "right aligned" },
@@ -363,13 +383,15 @@
                                 //呼叫格式化function
                                 return formatNumber(data);
                             },
-                            "targets": 'numFmt' //指定class
+                            "targets": 'numFmt' //指定class(只能指定一次)
                         },
                      ],
                      "pageLength": 20,   //顯示筆數預設值
                      "language": {
                          //自訂頁數資訊
-                         "info": '共 <b>_TOTAL_</b> 筆 ,目前頁次 <b>_PAGE_</b> / _PAGES_, 每頁 20 筆.'
+                         "info": '共 <b>_TOTAL_</b> 筆 ,目前頁次 <b>_PAGE_</b> / _PAGES_, 每頁 20 筆.',
+                         //自訂processing文字(要覆寫z-index才會顯示)
+                         "processing": "<h2 class='red-text text-darken-2'>資料擷取中,請稍候...</h2>"
                      },
                      //捲軸設定
                      "scrollY": '60vh',
@@ -382,23 +404,23 @@
                  });
 
                 /* table 重新後寫入觸發 */
-                table.on('draw', function () {
-                    //*** UI載入完成後觸發 *** Message Modal
-                    $(".doShowMsg").on("click", function () {
-                        //取資料
-                        var id = $(this).attr("data-id"); //model no
-                        var msgTW = $("#TWmsgDetail_" + id).val(); //get hidden field value
-                        var msgSH = $("#SHmsgDetail_" + id).val(); //get hidden field value
+                 table.on('draw', function () {
+                     //*** UI載入完成後觸發 *** Message Modal
+                     $(".doShowMsg").on("click", function () {
+                         //取資料
+                         var id = $(this).attr("data-id"); //model no
+                         var msgTW = $("#TWmsgDetail_" + id).val(); //get hidden field value
+                         var msgSH = $("#SHmsgDetail_" + id).val(); //get hidden field value
 
-                        //填入值
-                        $("#itemID").text(id);
-                        $("#twMsg").text(msgTW);
-                        $("#shMsg").text(msgSH);
+                         //填入值
+                         $("#itemID").text(id);
+                         $("#twMsg").text(msgTW);
+                         $("#shMsg").text(msgSH);
 
-                        //顯示modal
-                        $('#msgPage').modal('show');
-                    });
-                });
+                         //顯示modal
+                         $('#msgPage').modal('show');
+                     });
+                 });
 
                 //數字格式化(為0設為灰字)
                  function formatNumber(val) {
