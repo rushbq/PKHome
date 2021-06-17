@@ -41,9 +41,16 @@
         <div class="ui orange attached segment">
             <div class="ui small form">
                 <div class="fields">
-                    <div class="five wide field">
+                    <div class="three wide field">
                         <label><%:GetLocalResourceObject("sh_關鍵字查詢")%></label>
                         <asp:TextBox ID="filter_Keyword" runat="server"></asp:TextBox>
+                    </div>
+                    <div class="two wide field">
+                        <label>日期區間</label>
+                        <asp:DropDownList ID="filter_dateType" runat="server" CssClass="fluid">
+                            <asp:ListItem Value="A">登記日</asp:ListItem>
+                            <asp:ListItem Value="B">結案日</asp:ListItem>
+                        </asp:DropDownList>
                     </div>
                     <div class="five wide field">
                         <label><%:GetLocalResourceObject("sh_登記日期")%></label>

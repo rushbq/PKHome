@@ -44,7 +44,7 @@ public partial class myMarketingHelp_Search : SecurityCheck
                     //    break;
 
                     case "2":
-                        //深圳寶工
+                        //SZ
                         isPass = fn_CheckAuth.Check(fn_Param.CurrentUser, "2452");
                         masterAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2458");
                         replyAuth = fn_CheckAuth.Check(fn_Param.CurrentUser, "2457");
@@ -120,6 +120,7 @@ public partial class myMarketingHelp_Search : SecurityCheck
         Dictionary<string, string> sort = new Dictionary<string, string>();
 
         #region >> 條件篩選 <<
+        string _DateType = Req_DateType;
 
         //[查詢條件] - Keyword
         if (!string.IsNullOrWhiteSpace(Req_Keyword))
@@ -127,6 +128,14 @@ public partial class myMarketingHelp_Search : SecurityCheck
             search.Add("Keyword", Req_Keyword);
             PageParam.Add("k=" + Server.UrlEncode(Req_Keyword));
             filter_Keyword.Text = Req_Keyword;
+        }
+
+        //[查詢條件] - 日期選項(放在日期參數前)
+        if (!string.IsNullOrWhiteSpace(_DateType))
+        {
+            search.Add("DateType", _DateType);
+            PageParam.Add("DateType=" + Server.UrlEncode(_DateType));
+            filter_dateType.Text = _DateType;
         }
         //[查詢條件] - sDate
         if (!string.IsNullOrWhiteSpace(Req_sDate))
@@ -342,6 +351,7 @@ public partial class myMarketingHelp_Search : SecurityCheck
                     switch (_status)
                     {
                         case "D":
+                        case "E":
                             //已結案
                             ph_Edit.Visible = false;
                             ph_Del.Visible = false;
@@ -436,12 +446,20 @@ public partial class myMarketingHelp_Search : SecurityCheck
 
         //----- 原始資料:條件篩選 -----
         #region >> 條件篩選 <<
+        string _DateType = Req_DateType;
 
         //[查詢條件] - Keyword
         if (!string.IsNullOrWhiteSpace(Req_Keyword))
         {
             search.Add("Keyword", Req_Keyword);
         }
+
+        //[查詢條件] - 日期選項(放在日期參數前)
+        if (!string.IsNullOrWhiteSpace(_DateType))
+        {
+            search.Add("DateType", _DateType);
+        }
+
         //[查詢條件] - sDate
         if (!string.IsNullOrWhiteSpace(Req_sDate))
         {
@@ -648,6 +666,7 @@ public partial class myMarketingHelp_Search : SecurityCheck
     {
         //Params
         string _Keyword = this.filter_Keyword.Text;
+        string _DateType = filter_dateType.SelectedValue;
         string _sDate = this.filter_sDate.Text;
         string _eDate = this.filter_eDate.Text;
         string _st = this.filter_ReqStatus.SelectedValue;
@@ -671,6 +690,13 @@ public partial class myMarketingHelp_Search : SecurityCheck
         {
             url.Append("&k=" + Server.UrlEncode(_Keyword));
         }
+
+        //[查詢條件] - 日期選項(放在日期參數前)
+        if (!string.IsNullOrWhiteSpace(_DateType))
+        {
+            url.Append("&DateType=" + Server.UrlEncode(_DateType));
+        }
+
         //[查詢條件] - sDate
         if (!string.IsNullOrWhiteSpace(_sDate))
         {
@@ -839,6 +865,24 @@ public partial class myMarketingHelp_Search : SecurityCheck
         }
     }
     private string _Req_Keyword;
+
+
+    /// <summary>
+    /// 取得傳遞參數 - DateType
+    /// </summary>
+    private string _Req_DateType;
+    public string Req_DateType
+    {
+        get
+        {
+            String data = Request.QueryString["DateType"];
+            return string.IsNullOrEmpty(data) ? "A" : data.ToString();
+        }
+        set
+        {
+            this._Req_DateType = value;
+        }
+    }
 
     public string Req_sDate
     {

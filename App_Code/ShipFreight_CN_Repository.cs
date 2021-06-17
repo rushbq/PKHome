@@ -1275,8 +1275,8 @@ WHERE (setYear = @paramYear) AND (setMonth = @paramMonth)
                         html.Append("<td>{0}</td>".FormatThis(val[4]));
                         html.Append("<td>{0}</td>".FormatThis(val[6]));
                         html.Append("<td>{0}</td>".FormatThis(val[20]));
-                        html.Append("<td>{0}</td>".FormatThis(val[35]));
-                        html.Append("<td>{0}</td>".FormatThis(val[40]));
+                        html.Append("<td>{0}</td>".FormatThis(val[34]));
+                        html.Append("<td>{0}</td>".FormatThis(val[39]));
                         html.Append("</tr>");
                     }
                 }

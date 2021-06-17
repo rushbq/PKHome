@@ -262,13 +262,22 @@
                                         <asp:TextBox ID="val_Proc" runat="server" Style="display: none"></asp:TextBox>
                                         <asp:Button ID="btn_Assign" runat="server" OnClick="btn_Assign_Click" Style="display: none;" />
                                     </asp:PlaceHolder>
+
                                     <asp:PlaceHolder ID="ph_FinishCase" runat="server" Visible="false">
                                         <button id="showFinish" type="button" class="ui red small button" title="結案,通知所有人"><i class="archive icon"></i><%:GetLocalResourceObject("txt_結案")%></button>
 
                                         <asp:TextBox ID="val_FinishHours" runat="server" Style="display: none"></asp:TextBox>
                                         <asp:TextBox ID="val_FinishDate" runat="server" Style="display: none"></asp:TextBox>
-                                        <asp:Button ID="btn_Finish" runat="server" Text="Button" OnClick="btn_Finish_Click" Style="display: none;" />
+                                        <asp:Button ID="btn_Finish" runat="server" Text="結案" OnClick="btn_Finish_Click" Style="display: none;" />
                                     </asp:PlaceHolder>
+
+
+                                    <asp:PlaceHolder ID="ph_Inform" runat="server" Visible="false">
+                                        <button id="showInform" type="button" class="ui orange small button" title="退件,通知需求者"><i class="recycle icon"></i>退件</button>
+                                        <asp:TextBox ID="val_MailCont" runat="server" TextMode="MultiLine" Style="display: none" ToolTip="內文"></asp:TextBox>
+                                        <asp:Button ID="btn_Inform" runat="server" Text="Button" OnClick="btn_Inform_Click" Style="display: none;" />
+                                    </asp:PlaceHolder>
+
                                 </div>
                                 <div class="four wide column right aligned">
                                     <button id="doSave" type="button" class="ui green small button"><i class="save icon"></i><%:GetLocalResourceObject("txt_存檔")%></button>
@@ -465,6 +474,31 @@
         </div>
         <!-- 結案 End -->
 
+        <!-- 退件 Modal Start -->
+        <div id="informPage" class="ui modal">
+            <div class="header">
+                退件
+            </div>
+            <div class="content">
+                <div class="ui form">
+                    <div class="fields">
+                        <div class="sixteen wide required field">
+                            <label>內文說明</label>
+                            <textarea id="dia-mailCont" rows="3" maxlength="300" placeholder="最多 200 字"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <div class="ui cancel button">
+                    稍候處理，關閉視窗
+                </div>
+                <button id="doInform" type="button" class="ui blue small button"><i class="envelope icon"></i>確認退件，發送通知</button>
+            </div>
+        </div>
+        <!-- 退件 Modal End -->
+
+
         <!-- Tips Start -->
         <div id="tipPage" class="ui modal">
             <div class="header">
@@ -612,6 +646,29 @@
 
                 //觸發按鈕
                 $("#MainContent_btn_Finish").trigger("click");
+
+            });
+
+
+            /* --- 退件 --- */
+            //通知視窗(Modal)
+            $("#showInform").click(function () {
+                $('#informPage').modal('show');
+            });
+
+            //通知確認鈕
+            $("#doInform").click(function () {
+                var _type = $("#dia-InformType").val();
+                var _dt = $("#dia-mailCont").val();
+
+                //填入隱藏欄位(傳遞時使用)
+                $("#MainContent_val_InformType").val(_type);
+                $("#MainContent_val_MailCont").val(_dt);
+                //loading
+                $(this).addClass("loading");
+
+                //觸發按鈕
+                $("#MainContent_btn_Inform").trigger("click");
 
             });
         });

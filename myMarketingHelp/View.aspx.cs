@@ -107,7 +107,7 @@ public partial class myMarketingHelp_View : SecurityCheck
         lt_ReqStatus.Text = query.StName;
         lt_CreateDate.Text = query.Create_Time.ToDateString("yyyy/MM/dd");
         lt_ReqSubject.Text = query.Req_Subject;
-        lt_ReqContent.Text = query.Req_Content.Replace("\r","<br/>");
+        lt_ReqContent.Text = query.Req_Content.Replace("\r", "<br/>");
         lt_EmgStatus.Text = query.EmgName;
         lt_WishDate.Text = query.Wish_Date;
         lt_EstDate.Text = query.Est_Date;
@@ -123,8 +123,8 @@ public partial class myMarketingHelp_View : SecurityCheck
         //-需求者
         lt_ReqWho.Text = query.Req_Name;
 
-        ph_doJob.Visible = !query.StDisp.Equals("D");
-        
+        ph_doJob.Visible = !query.StDisp.Equals("D") && !query.StDisp.Equals("E");
+
         #endregion
 
 

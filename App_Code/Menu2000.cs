@@ -10,7 +10,7 @@ namespace Menu2000Data.Models
     /// 製物工單:基本資料
     /// </summary>
     public class MKHelpItem
-    {        
+    {
         public Guid Data_ID { get; set; }
         public string TraceID { get; set; }
         public string CompID { get; set; }
@@ -36,7 +36,7 @@ namespace Menu2000Data.Models
         public string Est_Date { get; set; }
         public string Finish_Date { get; set; }
         public double? Finish_Hours { get; set; }
-
+        public string Reback_Desc { get; set; }
         public string Create_Who { get; set; }
         public string Create_Time { get; set; }
         public string Update_Time { get; set; }
@@ -159,6 +159,6 @@ namespace Menu2000Data.Models
         public string Update_Who { get; set; }
         public string Update_Name { get; set; }
     }
- 
+
     #endregion
 }

@@ -77,6 +77,7 @@ namespace Menu2000Data.Controllers
                 {
                     //過濾空值
                     var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+                    string filterDateType = "Base.Create_Time";
 
                     //查詢內容
                     foreach (var item in thisSearch)
@@ -101,21 +102,36 @@ namespace Menu2000Data.Controllers
 
                                 break;
 
-                            case "sDate":
-                                //登記日期-Start
-                                sql.Append(" AND (Base.Create_Time >= @sDate)");
+                            case "DateType":
+                                //** 放在日期之前 **
+                                switch (item.Value)
+                                {
+                                    case "A":
+                                        filterDateType = "Base.Create_Time";
+                                        break;
 
+                                    case "B":
+                                        filterDateType = "Base.Finish_Date";
+                                        break;
+
+                                    default:
+                                        filterDateType = "Base.Create_Time";
+                                        break;
+                                }
+
+                                break;
+
+                            case "sDate":
+                                sql.Append(" AND ({0} >= @sDate)".FormatThis(filterDateType));
                                 cmd.Parameters.AddWithValue("sDate", item.Value + " 00:00");
 
                                 break;
-
                             case "eDate":
-                                //登記日期-End
-                                sql.Append(" AND (Base.Create_Time <= @eDate)");
-
+                                sql.Append(" AND ({0} <= @eDate)".FormatThis(filterDateType));
                                 cmd.Parameters.AddWithValue("eDate", item.Value + " 23:59");
 
                                 break;
+                                
 
                             case "reqStat":
                                 //處理狀態
@@ -1691,6 +1707,39 @@ namespace Menu2000Data.Controllers
 
 
         /// <summary>
+        /// [製物工單] 退件
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="ErrMsg"></param>
+        /// <returns></returns>
+        public bool Update_MKHelpReBack(MKHelpItem instance, out string ErrMsg)
+        {
+            //----- 宣告 -----
+            StringBuilder sql = new StringBuilder();
+
+            //----- 資料查詢 -----
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                //----- SQL 查詢語法 -----
+                sql.AppendLine(" UPDATE MK_Help");
+                sql.AppendLine(" SET Reback_Desc = @Reback_Desc");
+                sql.AppendLine("  , Update_Who = @Update_Who, Update_Time = GETDATE()");
+                sql.AppendLine(" WHERE (Data_ID = @Data_ID)");
+
+                //----- SQL 執行 -----
+                cmd.CommandText = sql.ToString();
+                cmd.Parameters.AddWithValue("Data_ID", instance.Data_ID);
+                cmd.Parameters.AddWithValue("Reback_Desc", instance.Reback_Desc);
+                cmd.Parameters.AddWithValue("Update_Who", instance.Update_Who);
+
+                //Execute
+                return dbConn.ExecuteSql(cmd, dbConn.DBS.PKEF, out ErrMsg);
+            }
+
+        }
+
+
+        /// <summary>
         /// [製物工單] 更新製物工單-結案(狀態更新是另一個function)
         /// </summary>
         /// <param name="instance"></param>
@@ -1729,7 +1778,7 @@ namespace Menu2000Data.Controllers
         /// </summary>
         /// <param name="compID"></param>
         /// <param name="dataID"></param>
-        /// <param name="customID">A/B/C/D</param>
+        /// <param name="customID">A/B/C/D/E</param>
         /// <param name="who"></param>
         /// <returns></returns>
         public bool Update_MKHelpStatus(string compID, string dataID, string customID, string who)

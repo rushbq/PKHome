@@ -252,6 +252,9 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         //回覆區填寫:回覆權限 && 處理中
         ph_ReplyForm.Visible = replyAuth && currSt.Equals("C");
 
+        //退件:主管權限 && 不為結案
+        ph_Inform.Visible = masterAuth && (currSt.Equals("B") || currSt.Equals("C"));
+
         #endregion
 
 
@@ -832,7 +835,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         #endregion
 
         /* [寄通知信]:執行單位 */
-        if (!doSendInformMail("A", guid, out ErrMsg))
+        if (!doSendInformMail("A", guid, "", out ErrMsg))
         {
             CustomExtension.AlertMsg("新需求通知信發送失敗.", Page_SearchUrl);
         }
@@ -840,7 +843,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         /* [寄通知信]:轉寄人員 */
         if (sendCC)
         {
-            if (!doSendInformMail("B", guid, out ErrMsg))
+            if (!doSendInformMail("B", guid, "", out ErrMsg))
             {
                 CustomExtension.AlertMsg("轉寄人員通知信發送失敗.", Page_SearchUrl);
             }
@@ -980,7 +983,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         else
         {
             /* [寄通知信]:處理人員 */
-            if (!doSendInformMail("C", Req_DataID, out ErrMsg))
+            if (!doSendInformMail("C", Req_DataID, "", out ErrMsg))
             {
                 CustomExtension.AlertMsg("處理人員通知信發送失敗.", thisPage);
             }
@@ -989,6 +992,110 @@ public partial class myMarketingHelp_Edit : SecurityCheck
             Response.Redirect(thisPage + "#replyComments");
         }
     }
+
+
+    /// <summary>
+    /// *** 自訂通知信 ***
+    /// </summary>
+    protected void btn_Inform_Click(object sender, EventArgs e)
+    {
+        string errTxt = "";
+
+        //[檢查] 有權限者才能編輯
+        if (!masterAuth)
+        {
+            CustomExtension.AlertMsg("無法執行。\\n頁面將轉回列表頁..", Page_SearchUrl);
+            return;
+        }
+
+        //取得欄位資料
+        string _id = hf_DataID.Value;
+        string _cont = val_MailCont.Text;
+
+        #region ** 欄位判斷 **
+        if (string.IsNullOrWhiteSpace(_id))
+        {
+            errTxt += "「資料編號空白」\\n";
+        }
+        if (string.IsNullOrWhiteSpace(_cont))
+        {
+            errTxt += "請填寫「內文」\\n";
+        }
+
+        #endregion
+
+        //顯示不符規則的警告
+        if (!string.IsNullOrEmpty(errTxt))
+        {
+            CustomExtension.AlertMsg(errTxt, "");
+            return;
+        }
+
+
+        #region ** 資料處理 **
+        //----- 宣告:資料參數 -----
+        Menu2000Repository _data = new Menu2000Repository();
+
+        try
+        {
+            #region 資料處理:基本資料
+
+            //----- 設定:資料欄位 -----
+
+            var data = new MKHelpItem
+            {
+                Data_ID = new Guid(Req_DataID),
+                Reback_Desc = _cont,
+                Update_Who = fn_Param.CurrentUser
+            };
+
+            //----- 方法:更新資料 -----
+            if (!_data.Update_MKHelpReBack(data, out ErrMsg))
+            {
+                this.ph_ErrMessage.Visible = true;
+                this.lt_ShowMsg.Text = "<b>退件失敗</b><p>{0}</p><p>{1}</p>".FormatThis("遇到無法排除的錯誤，請聯絡系統管理員。", ErrMsg);
+
+                CustomExtension.AlertMsg("退件失敗", "");
+                return;
+            }
+
+            //----- 方法:更新狀態 -----
+            if (!_data.Update_MKHelpStatus(Req_CompID, Req_DataID, "E", fn_Param.CurrentUser))
+            {
+                CustomExtension.AlertMsg("退件成功，但狀態更新時發生錯誤，請聯絡系統管理員", "");
+            }
+
+            #endregion
+
+
+            #region ### 通知信發送 ###
+
+            /* [寄通知信]:自訂通知(需求者) */
+            if (!doSendInformMail("E", _id, _cont.Replace("\r\n", "<br/>"), out ErrMsg))
+            {
+                CustomExtension.AlertMsg("狀態修改成功，但通知信發送失敗.", "");
+                return;
+            }
+
+            #endregion
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+        finally
+        {
+            _data = null;
+        }
+
+        #endregion
+
+
+        //導向列表頁
+        CustomExtension.AlertMsg("執行成功，將導至列表頁.", Page_SearchUrl);
+    }
+
 
     /// <summary>
     /// 結案
@@ -1048,7 +1155,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
 
 
         /* [寄通知信]:結案通知所有人 */
-        if (!doSendInformMail("D", Req_DataID, out ErrMsg))
+        if (!doSendInformMail("D", Req_DataID, "", out ErrMsg))
         {
             CustomExtension.AlertMsg("結案成功，通知信發送失敗.", Page_SearchUrl);
             return;
@@ -1210,7 +1317,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
             //Comp=SZ
             //加入條件:台灣行企,深圳行企
             _dept.Add(1, "314");
-            _dept.Add(2, "180");            
+            _dept.Add(2, "180");
         }
 
         //呼叫並回傳資料
@@ -1261,9 +1368,10 @@ public partial class myMarketingHelp_Edit : SecurityCheck
     /// </summary>
     /// <param name="sendType">A:新需求/B:轉寄通知/C:指派處理人員/D:結案</param>
     /// <param name="guid">資料編號</param>
+    /// <param name="cont">自訂內文</param>
     /// <param name="ErrMsg"></param>
     /// <returns></returns>
-    private bool doSendInformMail(string sendType, string guid, out string ErrMsg)
+    private bool doSendInformMail(string sendType, string guid, string cont, out string ErrMsg)
     {
         ErrMsg = "";
         bool doSend = true;
@@ -1290,6 +1398,11 @@ public partial class myMarketingHelp_Edit : SecurityCheck
             case "D":
                 //結案
                 mailSubject = "[製物工單][結案通知]";
+                break;
+
+            case "E":
+                //退件
+                mailSubject = "[製物工單][退件通知]";
                 break;
 
             default:
@@ -1323,7 +1436,7 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         mailSubject += "{0} ({1})".FormatThis(baseData.Req_Subject, baseData.TraceID);
 
         //[設定] 郵件內容
-        StringBuilder mailBoday = Get_MailContent(sendType, guid, baseData);
+        StringBuilder mailBoday = Get_MailContent(sendType, guid, cont, baseData);
 
         //[設定] 取得收件人
         ArrayList mailList = Get_MailList(sendType, guid, baseData.Req_Email);
@@ -1392,12 +1505,15 @@ public partial class myMarketingHelp_Edit : SecurityCheck
 
             case "D":
                 //結案
+                //固定收信人員
                 var dataD = _data.GetMKHelpReceiver(Req_CompID.Equals("TW") ? "15" : "25");
                 foreach (var item in dataD)
                 {
                     mailList.Add(item.Email);
                 }
                 dataD = null;
+
+                //轉寄人員
                 var dataD1 = _data.GetMKHelpCCList(dataID);
                 foreach (var item in dataD1)
                 {
@@ -1405,7 +1521,14 @@ public partial class myMarketingHelp_Edit : SecurityCheck
                 }
                 dataD1 = null;
 
-                //-需求者
+                //需求者
+                mailList.Add(reqEmail);
+
+                break;
+
+
+            case "E":
+                //退件,需求者
                 mailList.Add(reqEmail);
 
                 break;
@@ -1421,9 +1544,10 @@ public partial class myMarketingHelp_Edit : SecurityCheck
     /// </summary>
     /// <param name="sendType"></param>
     /// <param name="guid"></param>
+    /// <param name="cont">自訂內文</param>
     /// <param name="baseData"></param>
     /// <returns></returns>
-    private StringBuilder Get_MailContent(string sendType, string guid, MKHelpItem baseData)
+    private StringBuilder Get_MailContent(string sendType, string guid, string cont, MKHelpItem baseData)
     {
         //宣告
         StringBuilder html = new StringBuilder();
@@ -1446,24 +1570,30 @@ public partial class myMarketingHelp_Edit : SecurityCheck
         switch (sendType)
         {
             case "A":
-                msg = "目前有新的製物工單需求，請前往指派處理人員。";
+                msg = "<h3>目前有新的製物工單需求，請前往指派處理人員。</h3>";
                 pageUrl = editUrl;
                 break;
 
             case "B":
-                msg = "此信為製物工單轉寄通知。";
+                msg = "<h3>此信為製物工單轉寄通知。</h3>";
                 pageUrl = viewUrl;
                 break;
 
             case "C":
-                msg = "你已被指派處理此案件。";
+                msg = "<h3>你已被指派處理此案件。</h3>";
                 pageUrl = editUrl;
                 break;
 
             case "D":
-                msg = "此案件已完成。";
+                msg = "<h3>案件已完成。</h3>";
                 pageUrl = viewUrl;
                 break;
+
+            case "E":
+                msg = "<h3>你申請的案件已被退回，原因如下:</h3>" + cont;
+                pageUrl = viewUrl;
+                break;
+
 
             default:
                 msg = "";
