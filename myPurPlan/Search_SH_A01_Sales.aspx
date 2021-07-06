@@ -122,8 +122,6 @@
                             <th class="grey-bg lighten-3 right aligned">近N天用量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">全年平均<br />
                                 月用量(</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">深圳全年<br />
-                                平均月用量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">去年當季<br />
                                 平均用量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">可用週轉月</th>
@@ -132,9 +130,10 @@
                             <th class="grey-bg lighten-3 right aligned numFmt">內盒數量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">一箱數量</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">整箱材積</th>
-                            <th class="grey-bg lighten-3 right aligned numFmt">銷售MOQ</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">內銷MOQ</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">產銷訊息</th>
                             <th class="grey-bg lighten-3 right aligned numFmt">12倉庫存</th>
+                            <th class="grey-bg lighten-3 right aligned numFmt">供應商</th>
                         </tr>
                     </thead>
                 </table>
@@ -479,7 +478,6 @@
                          },
 
                          { data: "Qty_Year", className: "collapsing center aligned" },  /* 全年平均月用量<Qty_Year> */
-                         { data: "SZ_QtyOfYear", className: "collapsing center aligned" },  /* 深圳全年平均月用量<SZ_QtyOfYear> */
                          { data: "Qty_Season", className: "collapsing center aligned" },    /* 去年當季平均用量<Qty_Season> */
                          { data: "MonthTurn_A01", className: "collapsing center aligned" },   /* 可用週轉月<MonthTurn_A01> */
                          { data: "UsefulQty_A01", className: "collapsing center aligned" },   /* 可用量<UsefulQty_A01> */
@@ -487,7 +485,7 @@
                          { data: "InBox_Qty", className: "collapsing center aligned" }, /* 內盒數量<InBox_Qty> */
                          { data: "Qty_Packing", className: "collapsing center aligned" },   /* 一箱數量<Qty_Packing> */
                          { data: "OutBox_Cuft", className: "collapsing center aligned" },   /* 整箱材積<OutBox_Cuft> */
-                         { data: "MOQ", className: "collapsing center aligned" },   /* 銷售MOQ<MOQ> */
+                         { data: "MOQ", className: "collapsing center aligned" },   /* 內銷MOQ<MOQ> */
                          {
                              /* 產銷訊息 */
                              data: function (source, type, val) {
@@ -509,7 +507,8 @@
                                  return html;
                              }, className: "collapsing center aligned"
                          },
-                         { data: "StockQty_12", className: "collapsing center aligned" }  /* 庫存<StockQty_12> */
+                         { data: "StockQty_12", className: "collapsing center aligned" },  /* 庫存<StockQty_12> */
+                         { data: "Supplier", className: "collapsing left aligned" }   /* 供應商Supplier */
                      ],
                      //自訂欄位格式
                      "columnDefs": [
@@ -535,6 +534,11 @@
                      "initComplete": function () {
                          //移除loading
                          s_data.removeClass("loading");
+                     },
+                     fixedColumns: {
+                         /* 要凍結的窗格不可放要編輯的欄位 */
+                        leftColumns: 2,
+                        heightMatch: 'semiauto'
                      }
                  });
 

@@ -7827,130 +7827,151 @@ ORDER BY COPTD.TD003";
             {
                 //----- SQL 查詢語法 -----
                 string sql = @"
-;WITH TblBase AS (
-SELECT
-/* 表頭 */
-TE001, TE002
-, TE003 /* 變更版次 */
-, TE004 /* 變更日期 */
-, TE005 /* 整張結案 */
-, TE029 /* 確認碼 */
-, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
-, CMSMQ.MQ002 AS TE001Name
-, TE039
-, TE007, COPMA.MA002 AS TE007Name /* 客戶代號 */
-, TE010, CMSMB.MB002 AS TE010Name /* 新出貨廠別 */
-, TE006 /* 變更原因 */
-, TE011, TE111 /* 交易幣別 */
-, TE012, TE112 /* 匯率 */
-, TE017, TE117 /* 付款條件 */
+                ;WITH TblBase AS (
+                SELECT
+                /* 表頭 */
+                TE001, TE002
+                , TE003 /* 變更版次 */
+                , TE004 /* 變更日期 */
+                , TE005 /* 整張結案 */
+                , TE029 /* 確認碼 */
+                , RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+                , CMSMQ.MQ002 AS TE001Name
+                , TE039
+                , TE007, COPMA.MA002 AS TE007Name /* 客戶代號 */
+                , TE010, CMSMB.MB002 AS TE010Name /* 新出貨廠別 */
+                , TE006 /* 變更原因 */
+                , TE011, TE111 /* 交易幣別 */
+                , TE012, TE112 /* 匯率 */
+                , TE017, TE117 /* 付款條件 */
 
-, TE015, TE115 /* 客戶單號 */
-, TE016, TE116 /* 新價格條件 */
-, TE018, TE118 /* 課稅別 */
-, TE008, TE108, CMSME1.ME002 AS TE008Name, CMSME2.ME002 AS TE108Name /* 部門代號 */
-, TE009, TE109, CMSMV1.MV002 AS TE009Name, CMSMV2.MV002 AS TE109Name /* 業務人員 */
-, TE040, TE136 /* 營業稅率 */
-, TE049, TE143 /* 材積單位 */
-, TE013, TE014 /* 新送貨地址1_2 */
-, TE113, TE114 /* 原送貨地址1_2 */
+                , TE015, TE115 /* 客戶單號 */
+                , TE016, TE116 /* 新價格條件 */
+                , TE018, TE118 /* 課稅別 */
+                , TE008, TE108, CMSME1.ME002 AS TE008Name, CMSME2.ME002 AS TE108Name /* 部門代號 */
+                , TE009, TE109, CMSMV1.MV002 AS TE009Name, CMSMV2.MV002 AS TE109Name /* 業務人員 */
+                , TE040, TE136 /* 營業稅率 */
+                , TE049, TE143 /* 材積單位 */
+                , TE013, TE014 /* 新送貨地址1_2 */
+                , TE113, TE114 /* 原送貨地址1_2 */
 
-/* 表身-New */
-, (CASE WHEN TF105 = '' THEN '新增' ELSE '變更後' END) AS StatMark /* 文字標記 */
-, TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
-, TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
-, TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
-, TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
-, TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
-, INVMC1.MC003 AS NewStkPos /* 儲位 */
+                /* 表身-New */
+                , (CASE WHEN TF105 = '' THEN '新增' ELSE '變更後' END) AS StatMark /* 文字標記 */
+                , TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
+                , TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
+                , TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
+                , TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
+                , TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
+                , INVMC1.MC003 AS NewStkPos /* 儲位 */
 
-/* 表身-Old */
-, '(變更前)' AS OldStatMark
-, TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
-, TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
-, TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
-, TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
-, TF122, TF117 /* 原:專案代號,指定結案 */
-, TF123 /* 原已交數量 */
-, INVMC2.MC003 AS OldStkPos /* 原:儲位 */
+                /* 表身-Old */
+                , '(變更前)' AS OldStatMark
+                , TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
+                , TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
+                , TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
+                , TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
+                , TF122, TF117 /* 原:專案代號,指定結案 */
+                , TF123 /* 原已交數量 */
+                , INVMC2.MC003 AS OldStkPos /* 原:儲位 */
 
-/* 表尾 */
-, TE047, TE048 /* 正側嘜 */
-, TE141, TE142 /* 原:正側嘜 */
+                /* 表尾 */
+                , TE047 AS MicTxt1_New, TE048 AS MicTxt2_New /* 新:正側嘜文字 */
+                , TE141 AS MicTxt1_Old, TE142 AS MicTxt2_Old /* 原:正側嘜文字 */
+                /*
+                - TF015預交日 <> '' THEN 客戶代號+TE033嘜頭代號
+                - 單別=3301 AND 客代3開頭 THEN 'Z9883304'
+                - 其他='Z999'+單別
+                */
+                , (CASE
+                  WHEN COPTF.TF015 <> '' THEN ISNULL(COPTE.TE007 + COPTE.TE033, '')
+                  --單別=3304 & 客戶代號 3 開頭, 'Z988'+單別
+                  WHEN COPTE.TE001 = '3301' AND LEFT(COPTE.TE007, 1) = '3' THEN 'Z9883304'
+                  --其他單別='Z999'+單別
+                  ELSE 'Z999' + COPTE.TE001
+                 END) AS MarkPic_New  --'嘜頭圖示前置檔名+正(1)/側(2)+(於程式中加附檔名)=xxxx1.jpg'
 
-FROM [##dbName##]..COPTE
-	LEFT JOIN [##dbName##]..CMSMQ ON TE001 = MQ001
-	LEFT JOIN [##dbName##]..COPMA ON TE007 = MA001
-	LEFT JOIN [##dbName##]..CMSMB ON TE010 = CMSMB.MB001
-	LEFT JOIN [##dbName##]..CMSME AS CMSME1 ON TE008 = CMSME1.ME001 --部門名
-	LEFT JOIN [##dbName##]..CMSME AS CMSME2 ON TE108 = CMSME2.ME001
-	LEFT JOIN [##dbName##]..CMSMV AS CMSMV1 ON TE009 = CMSMV1.MV001 --人員名
-	LEFT JOIN [##dbName##]..CMSMV AS CMSMV2 ON TE109 = CMSMV2.MV001
-	LEFT JOIN [##dbName##]..COPTF ON TE001 = TF001 AND TE002 = TF002 AND TE003 = TF003
-	LEFT JOIN [##dbName##]..INVMC AS INVMC1 ON INVMC1.MC001 = TF005 AND INVMC1.MC002 = TF008
-	LEFT JOIN [##dbName##]..INVMC AS INVMC2 ON INVMC2.MC001 = TF105 AND INVMC2.MC002 = TF108
-WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = UPPER(@ErpID))
-)
-, TblCTE AS (
- SELECT 1 AS Lv
-	, StatMark, TF004 AS lineOrder
-	, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
-	, TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
-	, TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
-	, TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
-	, TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
-	, TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
-	, NewStkPos /* 儲位 */
-	, TF123
+                , (CASE
+                  WHEN COPTF.TF115 <> '' THEN ISNULL(COPTE.TE007 + COPTE.TE131, '')
+                  --單別=3304 & 客戶代號 3 開頭, 'Z988'+單別
+                  WHEN COPTE.TE001 = '3301' AND LEFT(COPTE.TE007, 1) = '3' THEN 'Z9883304'
+                  --其他單別='Z999'+單別
+                  ELSE 'Z999' + COPTE.TE001
+                 END) AS MarkPic_Old  --'嘜頭圖示前置檔名+正(1)/側(2)+(於程式中加附檔名)=xxxx1.jpg'
 
- FROM TblBase
+                FROM [##dbName##]..COPTE
+	                LEFT JOIN [##dbName##]..CMSMQ ON TE001 = MQ001
+	                LEFT JOIN [##dbName##]..COPMA ON TE007 = MA001
+	                LEFT JOIN [##dbName##]..CMSMB ON TE010 = CMSMB.MB001
+	                LEFT JOIN [##dbName##]..CMSME AS CMSME1 ON TE008 = CMSME1.ME001 --部門名
+	                LEFT JOIN [##dbName##]..CMSME AS CMSME2 ON TE108 = CMSME2.ME001
+	                LEFT JOIN [##dbName##]..CMSMV AS CMSMV1 ON TE009 = CMSMV1.MV001 --人員名
+	                LEFT JOIN [##dbName##]..CMSMV AS CMSMV2 ON TE109 = CMSMV2.MV001
+	                LEFT JOIN [##dbName##]..COPTF ON TE001 = TF001 AND TE002 = TF002 AND TE003 = TF003
+	                LEFT JOIN [##dbName##]..INVMC AS INVMC1 ON INVMC1.MC001 = TF005 AND INVMC1.MC002 = TF008
+	                LEFT JOIN [##dbName##]..INVMC AS INVMC2 ON INVMC2.MC001 = TF105 AND INVMC2.MC002 = TF108
+                WHERE (RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) = UPPER(@ErpID))
+                )
+                , TblCTE AS (
+                 SELECT 1 AS Lv
+	                , StatMark, TF004 AS lineOrder
+	                , RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+	                , TF004, TF005, TF006, TF007, TF016 /* 新序號,品號,品名,規格,客戶品號 */
+	                , TF009, TF020, TF010, TF012 /* 訂單數量,贈品量,單位,小單位 */
+	                , TF013, TF021, TF014, TF023 /* 訂單單價,折扣率,訂單金額,包裝方式 */
+	                , TF015, TF008, TF024, TF025 /* 預交日,交貨庫別,毛重,材積 */
+	                , TF022, TF017, TF018 /* 專案代號,指定結案,變更原因 */
+	                , NewStkPos /* 儲位 */
+	                , TF123
 
- UNION ALL
+                 FROM TblBase
 
- SELECT 2 AS Lv
-	, OldStatMark, TF004 AS lineOrder
-	, RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
-	, TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
-	, TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
-	, TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
-	, TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
-	, TF122, TF117, '' /* 原:專案代號,指定結案 */
-	, OldStkPos /* 原:儲位 */
-	, TF123
- FROM TblBase
-)
-SELECT TblCTE.*
-/* 表頭 */
-, TE001Name
-, TE001, TE002
-, TE003 /* 變更版次 */
-, TE004 /* 變更日期 */
-, TE005 /* 整張結案 */
-, TE029 /* 確認碼 */
-, (SELECT TOP 1 MA002 FROM [DSCSYS].dbo.DSCMA WHERE MA001 = TE039) AS CfmWho
+                 UNION ALL
 
-, TE007, TE007Name /* 客戶代號 */
-, TE010, TE010Name /* 新出貨廠別 */
-, TE006 /* 變更原因 */
-, TE011, TE111 /* 交易幣別 */
-, TE012, TE112 /* 匯率 */
-, TE017, TE117 /* 付款條件 */
+                 SELECT 2 AS Lv
+	                , OldStatMark, TF004 AS lineOrder
+	                , RTRIM(TE001) + RTRIM(TE002) + RTRIM(TE003) AS ErpID
+	                , TF104, TF105, TF106, TF107, TF116 /* 原:序號,品號,品名,規格,客戶品號 */
+	                , TF109, TF120, TF110, TF112 /* 原:訂單數量,贈品量,單位,小單位 */
+	                , TF113, TF121, TF114, TF125 /* 原:訂單單價,折扣率,訂單金額,包裝方式 */
+	                , TF115, TF108, TF126, TF127 /* 原:預交日,交貨庫別,毛重,材積 */
+	                , TF122, TF117, '' /* 原:專案代號,指定結案 */
+	                , OldStkPos /* 原:儲位 */
+	                , TF123
+                 FROM TblBase
+                )
+                SELECT TblCTE.*
+                /* 表頭 */
+                , TE001Name
+                , TE001, TE002
+                , TE003 /* 變更版次 */
+                , TE004 /* 變更日期 */
+                , TE005 /* 整張結案 */
+                , TE029 /* 確認碼 */
+                , (SELECT TOP 1 MA002 FROM [DSCSYS].dbo.DSCMA WHERE MA001 = TE039) AS CfmWho
 
-, TE015, TE115 /* 客戶單號 */
-, TE016, TE116 /* 新價格條件 */
-, TE018, TE118 /* 課稅別 */
-, TE008, TE108, TE008Name, TE108Name /* 部門代號 */
-, TE009, TE109, TE009Name, TE109Name /* 業務人員 */
-, TE040, TE136 /* 營業稅率 */
-, TE049, TE143 /* 材積單位 */
-, TE013, TE014 /* 新送貨地址1_2 */
-, TE113, TE114 /* 原送貨地址1_2 */
-/* 表尾 */
-, TE047, TE048 /* 正側嘜 */
-, TE141, TE142 /* 原:正側嘜 */
-FROM TblBase
- LEFT JOIN TblCTE ON TblBase.ErpID = TblCTE.ErpID AND TblBase.TF004 = TblCTE.lineOrder
-ORDER BY TblCTE.lineOrder, TblCTE.Lv";
+                , TE007, TE007Name /* 客戶代號 */
+                , TE010, TE010Name /* 新出貨廠別 */
+                , TE006 /* 變更原因 */
+                , TE011, TE111 /* 交易幣別 */
+                , TE012, TE112 /* 匯率 */
+                , TE017, TE117 /* 付款條件 */
+
+                , TE015, TE115 /* 客戶單號 */
+                , TE016, TE116 /* 新價格條件 */
+                , TE018, TE118 /* 課稅別 */
+                , TE008, TE108, TE008Name, TE108Name /* 部門代號 */
+                , TE009, TE109, TE009Name, TE109Name /* 業務人員 */
+                , TE040, TE136 /* 營業稅率 */
+                , TE049, TE143 /* 材積單位 */
+                , TE013, TE014 /* 新送貨地址1_2 */
+                , TE113, TE114 /* 原送貨地址1_2 */
+                /* 表尾 */
+                , MicTxt1_New, MicTxt2_New /* 新:正側嘜文字 */
+                , MicTxt1_Old, MicTxt2_Old /* 原:正側嘜文字 */
+                , MarkPic_New, MarkPic_Old /* 嘜頭圖片 */
+                FROM TblBase
+                 LEFT JOIN TblCTE ON TblBase.ErpID = TblCTE.ErpID AND TblBase.TF004 = TblCTE.lineOrder
+                ORDER BY TblCTE.lineOrder, TblCTE.Lv";
 
                 //## Replace DB Name ##
                 sql = sql.Replace("##dbName##", GetDBName(_dbs));
@@ -7958,7 +7979,6 @@ ORDER BY TblCTE.lineOrder, TblCTE.Lv";
                 //----- SQL 執行 -----
                 cmd.CommandText = sql.ToString();
                 cmd.Parameters.AddWithValue("ErpID", _ErpID);
-                //cmd.Parameters.AddWithValue("DBS", _dbs);
 
 
                 //----- 資料取得 -----

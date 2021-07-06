@@ -568,7 +568,7 @@
         <!-- Tips Start -->
         <div id="tipPage" class="ui modal">
             <div class="header">
-                說明文件
+                說明
             </div>
             <div class="content">
                 <div class="ui header">

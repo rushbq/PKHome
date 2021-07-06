@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.UI;
@@ -82,7 +83,8 @@ public partial class myOpcsRemark_PDF_Html_TW : System.Web.UI.Page
             lt_SO_TypeName.Text = query.Rows[0]["TE001Name"].ToString();
 
             //Cust
-            TE007.Text = query.Rows[0]["TE007"].ToString();
+            string _custID = query.Rows[0]["TE007"].ToString();
+            TE007.Text = _custID;
             TE007Name.Text = query.Rows[0]["TE007Name"].ToString();
             /* 課稅別 */
             TE018.Text = Get_TypeName("TAX", query.Rows[0]["TE018"].ToString());
@@ -121,13 +123,107 @@ public partial class myOpcsRemark_PDF_Html_TW : System.Web.UI.Page
             TE114.Text = query.Rows[0]["TE114"].ToString(); /* 原送貨地址1_2 */
 
             //footer
-            string micTxt1 = query.Rows[0]["TE047"].ToString();
-            string micTxt2 = query.Rows[0]["TE048"].ToString();
-            lt_MicTxt1.Text = micTxt1.Replace("\n", "<br>");
-            lt_MicTxt2.Text = micTxt2.Replace("\n", "<br>");
-            lt_OldMicTxt1.Text = query.Rows[0]["TE141"].ToString().Replace("\n", "<br>");
-            lt_OldMicTxt2.Text = query.Rows[0]["TE142"].ToString().Replace("\n", "<br>");
-            pl_MicTxt.Visible = !string.IsNullOrWhiteSpace(micTxt1) || !string.IsNullOrWhiteSpace(micTxt2);
+            //string micTxt1 = query.Rows[0]["TE047"].ToString();
+            //string micTxt2 = query.Rows[0]["TE048"].ToString();
+            //lt_MicTxt1.Text = micTxt1.Replace("\n", "<br>");
+            //lt_MicTxt2.Text = micTxt2.Replace("\n", "<br>");
+            //lt_OldMicTxt1.Text = query.Rows[0]["TE141"].ToString().Replace("\n", "<br>");
+            //lt_OldMicTxt2.Text = query.Rows[0]["TE142"].ToString().Replace("\n", "<br>");
+            //pl_MicTxt.Visible = !string.IsNullOrWhiteSpace(micTxt1) || !string.IsNullOrWhiteSpace(micTxt2);
+
+
+            //[嘜頭圖取得] 嘜頭圖路徑
+            string _url = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/{0}/EPS/"
+                .FormatThis(Req_DBS.Equals("TW") ? "prokit(II)" : "SHPK2");
+
+            #region - 嘜頭處理:New -
+
+            //** 嘜頭資料 **
+            string _MarkPic_New = query.Rows[0]["MarkPic_New"].ToString(); //依條件判斷的嘜頭圖片
+            string _MicTxt1_New = query.Rows[0]["MicTxt1_New"].ToString(); //訂單嘜頭文字, 正嘜
+            string _MicTxt2_New = query.Rows[0]["MicTxt2_New"].ToString(); //訂單嘜頭文字, 側嘜
+
+            //[嘜頭圖取得] 正嘜圖
+            string _filename1_New = _MarkPic_New + "1.jpg";
+            //[嘜頭圖取得] 側嘜圖
+            string _filename2_New = _MarkPic_New + "2.jpg";
+
+            //[嘜頭圖取得] 判斷圖檔是否存在, 不存在抓預設圖
+            string _chkFile1_New = checkFileExists(_url, _filename1_New);
+            string _chkMicFile1_New = checkStandardImg(Req_DBS, _chkFile1_New, _custID, "101", _MicTxt1_New);
+
+            string _chkFile2_New = checkFileExists(_url, _filename2_New);
+            string _chkMicFile2_New = checkStandardImg(Req_DBS, _chkFile2_New, _custID, "102", _MicTxt2_New);
+
+
+            //輸出正嘜文字
+            lt_MicTxt1_New.Text = _MicTxt1_New.Replace("\n", "<br>");
+            /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
+            if (checkTargetCust(_MicTxt1_New, _custID))
+            {
+                //輸出嘜頭圖片
+                lt_MicPic1_New.Text = !string.IsNullOrWhiteSpace(_chkMicFile1_New)
+                    ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile1_New)
+                    : "";
+            }
+
+            //輸出側嘜文字
+            lt_MicTxt2_New.Text = _MicTxt2_New.Replace("\n", "<br>");
+            /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
+            if (checkTargetCust(_MicTxt2_New, _custID))
+            {
+                //輸出嘜頭圖片
+                lt_MicPic2_New.Text = !string.IsNullOrWhiteSpace(_chkMicFile2_New)
+                    ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile2_New)
+                    : "";
+            }
+
+            #endregion
+
+
+            #region - 嘜頭處理:Old -
+
+            //** 嘜頭資料 **
+            string _MarkPic_Old = query.Rows[0]["MarkPic_Old"].ToString(); //依條件判斷的嘜頭圖片
+            string _MicTxt1_Old = query.Rows[0]["MicTxt1_Old"].ToString(); //訂單嘜頭文字, 正嘜
+            string _MicTxt2_Old = query.Rows[0]["MicTxt2_Old"].ToString(); //訂單嘜頭文字, 側嘜
+
+            //[嘜頭圖取得] 正嘜圖
+            string _filename1_Old = _MarkPic_Old + "1.jpg";
+            //[嘜頭圖取得] 側嘜圖
+            string _filename2_Old = _MarkPic_Old + "2.jpg";
+
+            //[嘜頭圖取得] 判斷圖檔是否存在, 不存在抓預設圖
+            string _chkFile1_Old = checkFileExists(_url, _filename1_Old);
+            string _chkMicFile1_Old = checkStandardImg(Req_DBS, _chkFile1_Old, _custID, "101", _MicTxt1_Old);
+
+            string _chkFile2_Old = checkFileExists(_url, _filename2_Old);
+            string _chkMicFile2_Old = checkStandardImg(Req_DBS, _chkFile2_Old, _custID, "102", _MicTxt2_Old);
+
+
+            //輸出正嘜文字
+            lt_MicTxt1_Old.Text = _MicTxt1_Old.Replace("\n", "<br>");
+            /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
+            if (checkTargetCust(_MicTxt1_Old, _custID))
+            {
+                //輸出嘜頭圖片
+                lt_MicPic1_Old.Text = !string.IsNullOrWhiteSpace(_chkMicFile1_Old)
+                    ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile1_Old)
+                    : "";
+            }
+
+            //輸出側嘜文字
+            lt_MicTxt2_Old.Text = _MicTxt2_Old.Replace("\n", "<br>");
+            /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
+            if (checkTargetCust(_MicTxt2_Old, _custID))
+            {
+                //輸出嘜頭圖片
+                lt_MicPic2_Old.Text = !string.IsNullOrWhiteSpace(_chkMicFile2_Old)
+                    ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile2_Old)
+                    : "";
+            }
+
+            #endregion
 
 
             //----- 資料整理:繫結 ----- 
@@ -198,6 +294,11 @@ public partial class myOpcsRemark_PDF_Html_TW : System.Web.UI.Page
 
     }
 
+    /// <summary>
+    /// 虛線
+    /// </summary>
+    /// <param name="_id"></param>
+    /// <returns></returns>
     protected string Get_StyleLine(string _id)
     {
         if (_id.Equals("1"))
@@ -213,6 +314,139 @@ public partial class myOpcsRemark_PDF_Html_TW : System.Web.UI.Page
 
     #endregion
 
+
+    #region -- 嘜頭Function --
+
+    /// <summary>
+    /// [嘜頭]指定客戶判斷
+    /// **有嘜頭文字,不顯示指定嘜頭圖**
+    /// </summary>
+    /// <param name="_micTxt">嘜頭文字</param>
+    /// <param name="_custID">客戶代號</param>
+    /// <returns></returns>
+    bool checkTargetCust(string _micTxt, string _custID)
+    {
+        //指定客戶:Steren, Teco 
+        switch (_custID)
+        {
+            case "1525501":
+            case "2002054001":
+                if (string.IsNullOrWhiteSpace(_micTxt))
+                {
+                    return true;
+                }
+                else
+                {
+                    //有字就不show圖
+                    return false;
+                }
+
+            default:
+                //其他
+                return true;
+        }
+    }
+
+
+    /// <summary>
+    /// [嘜頭]判斷檔案是否存在 (http)
+    /// </summary>
+    /// <param name="_url">資料夾路徑</param>
+    /// <param name="_fileName">檔名</param>
+    /// <returns></returns>
+    /// <remarks>
+    /// string _url = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/prokit(II)/EPS/"
+    /// string _filename = "Z99933011.jpg"
+    /// </remarks>
+    string checkFileExists(String _url, String _fileName)
+    {
+        if (string.IsNullOrWhiteSpace(_fileName))
+        {
+            return "";
+        }
+
+        string url = _url + _fileName;
+        // note : you may also need
+        // HttpURLConnection.setInstanceFollowRedirects(false)
+        HttpWebResponse response = null;
+        var request = (HttpWebRequest)WebRequest.Create(url);
+        request.Method = "HEAD";
+
+        try
+        {
+            response = (HttpWebResponse)request.GetResponse();
+
+            return url;
+        }
+        catch (WebException ex)
+        {
+            /* A WebException will be thrown if the status of the response is not `200 OK` */
+            return "";
+        }
+        finally
+        {
+            // Don't forget to close your response.
+            if (response != null)
+            {
+                response.Close();
+            }
+        }
+
+    }
+
+
+    /// <summary>
+    /// [嘜頭]自訂嘜頭圖:當指定客戶圖片檔不存在時,取得預設圖片;其他客戶直接使用預設圖
+    /// </summary>
+    /// <param name="_dbs">DBS</param>
+    /// <param name="imgUrl">圖檔完整路徑</param>
+    /// <param name="custID">客戶代號</param>
+    /// <param name="lastFileName">檔名尾數(目前僅需使用正101/側102)</param>
+    /// <param name="markDesc">正側嘜文字</param>
+    /// <returns></returns>
+    string checkStandardImg(string _dbs, string imgUrl, string custID, string lastFileName, string markDesc)
+    {
+        //指定資料夾
+        String frontFileName = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/Standard{0}/"
+            .FormatThis(_dbs.Equals("TW") ? "" : "-SH");
+        String fullFileName = "";
+
+        //指定客戶:Steren, Teco 
+        if (custID.Equals("1525501") || custID.Equals("2002054001"))
+        {
+            if (imgUrl.Equals(""))
+            {
+                fullFileName = frontFileName + custID + "-" + lastFileName + ".jpg";
+
+            }
+            else {
+                fullFileName = imgUrl;
+
+            }
+
+        }
+        else {
+            if (imgUrl.Equals("") && markDesc.Equals(""))
+            {
+                //無圖無字:帶預設圖(圖片有文字)
+                fullFileName = frontFileName + "STD" + lastFileName + "_txt.jpg";
+            }
+            else if (imgUrl.Equals(""))
+            {
+                //無圖有字:帶預設圖(圖片無文字)
+                fullFileName = frontFileName + "STD" + lastFileName + ".jpg";
+
+            }
+            else {
+                fullFileName = imgUrl;
+
+            }
+        }
+
+        return fullFileName;
+    }
+
+    #endregion
 
 
     #region -- 傳遞參數 --

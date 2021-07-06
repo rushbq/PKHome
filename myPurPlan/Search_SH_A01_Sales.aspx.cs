@@ -105,7 +105,6 @@ public partial class myPurPlan_Search_SH_A01_Sales : SecurityCheck
         _col.Add("RealPreSell", "實際預計銷");
         _col.Add("Qty_Days", "近N天用量");
         _col.Add("Qty_Year", "全年平均月用量");
-        _col.Add("SZ_QtyOfYear", "深圳全年平均月用量");
         _col.Add("Qty_Season", "去年當季平均用量");
         _col.Add("MonthTurn_A01", "可用週轉月");
         _col.Add("UsefulQty_A01", "可用量");
@@ -113,10 +112,10 @@ public partial class myPurPlan_Search_SH_A01_Sales : SecurityCheck
         _col.Add("InBox_Qty", "內盒數量");
         _col.Add("Qty_Packing", "一箱數量");
         _col.Add("OutBox_Cuft", "整箱材積");
-        _col.Add("MOQ", "銷售MOQ");
+        _col.Add("MOQ", "內銷MOQ");
         _col.Add("ProdMsg", "產銷訊息");
         _col.Add("StockQty_12", "庫存12");
-
+        _col.Add("Supplier", "供應商");
 
         //將指定的欄位,轉成陣列
         string[] selectedColumns = _col.Keys.ToArray();

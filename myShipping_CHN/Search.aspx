@@ -31,7 +31,10 @@
                 <asp:LinkButton ID="lbtn_Export1" runat="server" OnClick="lbtn_Export1_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">代發明細</span></asp:LinkButton>
                 <asp:LinkButton ID="lbtn_ShipExcel" runat="server" OnClick="lbtn_ShipExcel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">德邦匯出</span></asp:LinkButton>
                 <asp:LinkButton ID="lbtn_Excel" runat="server" OnClick="lbtn_Excel_Click" CssClass="item"><i class="file excel icon"></i><span class="mobile hidden">一般匯出</span></asp:LinkButton>
-
+                 <a class="item orange-text text-darken-3" id="tips">
+                    <i class="question circle icon"></i>
+                </a>
+                <a class="anchor" id="top"></a>
             </div>
         </div>
     </div>
@@ -278,6 +281,26 @@
         </asp:PlaceHolder>
         <!-- List Content End -->
     </div>
+            <!-- Tips Start -->
+        <div id="tipPage" class="ui modal">
+            <div class="header">
+                說明
+            </div>
+            <div class="content">
+                <div class="ui header">
+                    資料顯示條件
+                </div>
+                <ul class="ui list">
+                    <li>依單別、類別會有不同的條件，<a href="<%:fn_Param.WebUrl %>myShipping_CHN/tip/tip1.png" target="_blank">詳細請點此處</a>。</li>
+                </ul>
+            </div>
+            <div class="actions">
+                <div class="ui cancel button">
+                    關閉視窗
+                </div>
+            </div>
+        </div>
+        <!-- Tips End -->
     <!-- 內容 End -->
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="BottomContent" runat="Server">
@@ -293,6 +316,12 @@
                     e.preventDefault();
                 }
             });
+
+            //說明視窗(Modal)
+            $("#tips").click(function () {
+                $('#tipPage').modal('show');
+            });
+
 
             //Click:Search
             $("#doSearch").click(function () {

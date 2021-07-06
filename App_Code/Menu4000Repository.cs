@@ -2469,6 +2469,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 string mainSql = ""; //SQL主體
                 string columnSql = ""; //SQL欄位
                 string filterSQL = ""; //條件參數SQL
+                string TopfilterSQL = "";
                 List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
                 List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器(cnt)
                 DataTable myDT = new DataTable();
@@ -2539,6 +2540,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                                 */
                                 /* [篩選條件], 品號 */
                                 filterSQL += " AND (ModelNo IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "pModel"));
+                                TopfilterSQL += " AND (MC001 IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "pModel"));
 
 
                                 //SQL參數組成
@@ -2887,8 +2889,16 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                 #region >> [前置作業] SQL主體 <<
 
                 mainSql = @"
+;WITH Tbl_ProdStock AS (
+	SELECT RTRIM(MC001) AS mainModel
+	FROM [##DBName##].dbo.INVMC
+	WHERE INVMC.MC002 IN (##tarStock##) /* [指定條件] 單一庫別 */
+     ##topFilter##
+	GROUP BY MC001
+)
+
 /* 預計銷(訂單):TD016 = 結案碼, TD021 = 確認碼 */
-;WITH Tbl_PreSell AS (
+, Tbl_PreSell AS (
 	SELECT p.ModelNo
 	 , p.[12] AS PreSell_12, p.[A01] AS PreSell_A01
 	FROM (
@@ -2898,6 +2908,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01'))
+		/* 動態條件:品號 */
+		AND (TD004 IN (SELECT mainModel FROM Tbl_ProdStock))
 		GROUP BY TD004, TD007
 	) t 
 	PIVOT (
@@ -2912,6 +2924,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 	 , RTRIM(TD004) AS ModelNo
 	FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
 	WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD001 = '22C1')
+	/* 動態條件:品號 */
+	AND (TD004 IN (SELECT mainModel FROM Tbl_ProdStock))
 	GROUP BY TD004
 )
 
@@ -2926,6 +2940,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01')) AND (TD001 = '2262')
+		/* 動態條件:品號 */
+		AND (TD004 IN (SELECT mainModel FROM Tbl_ProdStock))
 		GROUP BY TD004, TD007
 	) t 
 	PIVOT (
@@ -2945,6 +2961,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('12', 'A01'))
+		/* 動態條件:品號 */
+		AND (TD004 IN (SELECT mainModel FROM Tbl_ProdStock))
 		GROUP BY TD004, TD007
 	) t 
 	PIVOT (
@@ -2964,6 +2982,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (TD016 = 'N') AND (TD018 = 'N') AND (TD007 IN ('12', 'A01'))
+		/* 動態條件:品號 */
+		AND (TD004 IN (SELECT mainModel FROM Tbl_ProdStock))
 		GROUP BY TD004, TD007
 	) t 
 	PIVOT (
@@ -2985,6 +3005,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		WHERE (A.TA013 <> 'V') AND (A.TA011 IN ('1', '2', '3'))
 		 /* [指定條件] 所有庫別 */
 		 AND (A.TA020 IN ('12', 'A01'))
+		 /* 動態條件:品號 */
+		 AND (TA006 IN (SELECT mainModel FROM Tbl_ProdStock))
 		GROUP BY TA006, TA020
 	) t 
 	PIVOT (
@@ -3002,6 +3024,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.LRPTB WITH(NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (TB008 IN ('12', 'A01'))
+		/* 動態條件:品號 */
+		AND (TB005 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(OutQty)
@@ -3018,6 +3042,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
+		/* 動態條件:品號 */
+		AND (MC001 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(StockQty)
@@ -3033,6 +3059,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
 		/* [指定條件] 所有庫別 */
 		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
+		/* 動態條件:品號 */
+		AND (MC001 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(StockQty)
@@ -3054,6 +3082,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111),'/', '')
 				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
 			)
+		 /* 動態條件:品號 */
+		 AND (LA001 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(sumQty)
@@ -3075,6 +3105,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
 				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
 			)
+		 /* 動態條件:品號 */
+		 AND (LA001 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(sumQty)
@@ -3096,6 +3128,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
 				AND REPLACE(CONVERT(VARCHAR(10), GETDATE() - 275, 111), '/', '')
 			)
+		 /* 動態條件:品號 */
+		 AND (LA001 IN (SELECT mainModel FROM Tbl_ProdStock))
 	) t 
 	PIVOT (
 		SUM(sumQty)
@@ -3118,7 +3152,9 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 	FROM [##DBName##].dbo.QMSTA WITH (NOLOCK)
 		INNER JOIN [##DBName##].dbo.PURTH WITH (NOLOCK) ON QMSTA.TA001 = PURTH.TH001 AND QMSTA.TA002 = PURTH.TH002 AND QMSTA.TA003 = PURTH.TH003
 	/* [指定條件] 單一庫別 */
-	WHERE (QMSTA.TA014 = 'N') AND (PURTH.TH030 = 'N') AND (PURTH.TH009 IN (##tarStock##))	 
+	WHERE (QMSTA.TA014 = 'N') AND (PURTH.TH030 = 'N') AND (PURTH.TH009 IN (##tarStock##))	
+	/* 動態條件:品號 */
+	AND (PURTH.TH004 IN (SELECT mainModel FROM Tbl_ProdStock)) 
 )
 
 , Tbl_PurCnt AS (
@@ -3131,6 +3167,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 	 AND (PURTG.TG003 BETWEEN 
 		REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111), '/', '') 
 		AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', ''))
+        /* 動態條件:品號 */
+        AND (PURTH.TH004 IN (SELECT mainModel FROM Tbl_ProdStock))
 	GROUP BY PURTH.TH004
 )
                     ";
@@ -3178,7 +3216,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 				ELSE
 					CONVERT(FLOAT,ROUND(
 						(StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) / Qty_Year
-					, 2))
+					, 1))
 				END) AS MonthTurn_A01
 
 			/* 可用週轉月<MonthTurn_12> 12 = (可用量 12 / 年平均月用量) */
@@ -3186,7 +3224,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 				ELSE
 					CONVERT(FLOAT,ROUND(
 						(StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) / Qty_Year
-					, 2))
+					, 1))
 				END) AS MonthTurn_12
 
 			/* 現有周轉月<NowMonthTurn_A01> ,依表指定A01 = ((庫存 - 預計銷) / 年平均月用量) */
@@ -3194,7 +3232,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 				ELSE
 					CONVERT(FLOAT,ROUND(
 						(StockQty_A01 - PreSell_A01) / Qty_Year
-					, 2))
+					, 1))
 				END) AS NowMonthTurn_A01
 
 			/* 現有周轉月<NowMonthTurn_12> ,依表指定合併 = (總庫存 - 總預計銷 - 預計領12) / 年平均月用量 */
@@ -3202,7 +3240,7 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 				ELSE
 					CONVERT(FLOAT,ROUND(
 						(StockQty_12 - (PreSell_A01 + PreSell_12) - PreGet_12) / Qty_Year
-					, 2))
+					, 1))
 				END) AS NowMonthTurn_12
 		FROM (
 			SELECT RTRIM(INVMB.MB001) AS ModelNo
@@ -3236,19 +3274,18 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 
 			 , CONVERT(INT, ISNULL(Tbl_VirPreSell.VirPreSell, 0)) AS VirPreSell /* 虛擬預計銷(ALL) */
 			 , CONVERT(INT, ISNULL(Tbl_PurCnt.CNT, 0)) AS CNT /* 進貨筆數加總(依指定天數)(依表指定A01/12) */
-			 , CONVERT(FLOAT, ROUND(ISNULL(SZInfo.QtyOfYear/12, 0), 0)) AS SZ_QtyOfYear /* 深圳全年平均月用量(除12)(歷史記錄) */
 			 , CONVERT(INT, INVMB.MB039) AS Min_Supply /* 最低補量 */
 			 , CONVERT(INT, INVMB.MB201) AS InBox_Qty /* 內盒數量 */
 			 , CONVERT(INT, INVMB.MB073) AS Qty_Packing /* 一箱數量 */
 			 , CONVERT(FLOAT, INVMB.MB071) AS OutBox_Cuft /* 整箱材積 */
-             , CONVERT(INT, ISNULL(INVMB.MB220, 0)) AS MOQ /* 銷售MOQ */
+             , CONVERT(INT, ISNULL(INVMB.MB223, 0)) AS MOQ /* 內銷MOQ */
 			 , RTRIM(INVMB.MB202) AS Sub_item /* 產銷訊息 */
-			 , PURMA.MA002 AS Supplier /* 供應商 */
+			 , RTRIM(PURMA.MA002) AS Supplier /* 供應商 */
 			 , RTRIM(PURMA.MA001) AS Supply_ID
-			FROM [##DBName##].dbo.INVMB WITH (NOLOCK) 
+			FROM Tbl_ProdStock
+			 INNER JOIN [##DBName##].dbo.INVMB WITH (NOLOCK) ON INVMB.MB001 = Tbl_ProdStock.mainModel /* 關聯已group後的品號 */
 			 INNER JOIN [##DBName##].dbo.PURMA ON INVMB.MB032 = PURMA.MA001
 			 INNER JOIN [##DBName##].dbo.INVMA ON INVMA.MA002 = INVMB.MB008
-			 INNER JOIN [##DBName##].dbo.INVMC ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 IN (##tarStock##) /* [指定條件] 單一庫別 */
 			 LEFT JOIN Tbl_Stock ON INVMB.MB001 = Tbl_Stock.ModelNo
 			 LEFT JOIN Tbl_SafeStock ON INVMB.MB001 = Tbl_SafeStock.ModelNo
 			 LEFT JOIN Tbl_PreIN ON INVMB.MB001 = Tbl_PreIN.ModelNo
@@ -3263,9 +3300,6 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 			 LEFT JOIN Tbl_WaitQty ON INVMB.MB001 = Tbl_WaitQty.ModelNo
 			 LEFT JOIN Tbl_PurCnt ON INVMB.MB001 = Tbl_PurCnt.ModelNo
 			 LEFT JOIN Tbl_PlanOut ON INVMB.MB001 = Tbl_PlanOut.ModelNo
- 
-			 /* 深圳資料庫用量欄位 */
-			 LEFT JOIN [PKHistory].dbo.SQ_SZ_YearQty AS SZInfo ON INVMB.MB001 = SZInfo.ModelNo COLLATE Chinese_Taiwan_Stroke_BIN
 
 			 /* 採購單資料 S (資料量大,不放在CTE) */
 			 LEFT JOIN (
@@ -3297,6 +3331,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 						FROM [##DBName##].dbo.PURTL Base WITH(NOLOCK)
 						 INNER JOIN [##DBName##].dbo.PURTM DT WITH(NOLOCK) ON Base.TL001 = DT.TM001 AND Base.TL002 = DT.TM002
 						WHERE (Base.TL006 = 'Y') AND (DT.TM015 = '')
+						/* 動態條件:品號 */
+						AND (DT.TM004 IN (SELECT mainModel FROM Tbl_ProdStock))
 					) AS ChkPrice
 					WHERE ChkPrice.myTbSeq = 1
 				) AS ChkTb_1
@@ -3325,6 +3361,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
 							INNER JOIN [##DBName##].dbo.PURTH DT WITH(NOLOCK) ON Base.TG001 = DT.TH001 AND Base.TG002 = DT.TH002
 						/* [指定條件] 單一庫別 */
 						WHERE (DT.TH009 IN (##tarStock##))
+						/* 動態條件:品號 */
+						AND (DT.TH004 IN (SELECT mainModel FROM Tbl_ProdStock))
 					) AS ChkDay
 					WHERE ChkDay.myTbSeq = 1
 				) AS ChkTb_2
@@ -3363,6 +3401,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     //欄位語法
                     sql.Append(columnSql);
 
+                    //Top filter
+                    sql.Replace("##topFilter##", TopfilterSQL);
                     //條件語法
                     sql.AppendLine(filterSQL);
 
@@ -3409,6 +3449,8 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                     //欄位語法
                     sql.Append(columnSql);
 
+                    //Top filter
+                    sql.Replace("##topFilter##", TopfilterSQL);
                     //條件語法
                     sql.AppendLine(filterSQL);
 
@@ -3516,7 +3558,6 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                         Qty_Season = item.Field<double>("Qty_Season"), /* 去年當季平均用量<Qty_Season> */
                         VirPreSell = item.Field<int>("VirPreSell"), /* 虛擬預計銷<VirPreSell> */
                         CNT = item.Field<int>("CNT"), /* 進貨筆數加總<CNT> */
-                        SZ_QtyOfYear = item.Field<double>("SZ_QtyOfYear"), /* 深圳全年平均月用量<SZ_QtyOfYear> */
                         Min_Supply = item.Field<int>("Min_Supply"), /* 最低補量<Min_Supply> */
                         InBox_Qty = item.Field<int>("InBox_Qty"), /* 內盒數量<InBox_Qty> */
                         Qty_Packing = item.Field<int>("Qty_Packing"), /* 一箱數量<Qty_Packing> */
@@ -3530,10 +3571,10 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
                         UsefulQty_12 = _UsefulQty_12, /* 可用量<UsefulQty_12> */
                         QTM_A01 = _QTM_A01, /* 擬定數量<QTM_A01> */
                         QTM_12 = _QTM_12, /* 擬定數量<QTM_12> */
-                        MonthTurn_A01 = Math.Round(item.Field<double>("MonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_A01> */
-                        MonthTurn_12 = Math.Round(item.Field<double>("MonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_12> */
-                        NowMonthTurn_A01 = Math.Round(item.Field<double>("NowMonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_A01> */
-                        NowMonthTurn_12 = Math.Round(item.Field<double>("NowMonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_12> */
+                        MonthTurn_A01 = Math.Round(item.Field<double>("MonthTurn_A01"), 1, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_A01> */
+                        MonthTurn_12 = Math.Round(item.Field<double>("MonthTurn_12"), 1, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_12> */
+                        NowMonthTurn_A01 = Math.Round(item.Field<double>("NowMonthTurn_A01"), 1, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_A01> */
+                        NowMonthTurn_12 = Math.Round(item.Field<double>("NowMonthTurn_12"), 1, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_12> */
                         QTM_Month = Math.Round(_QTM_Month, 2, MidpointRounding.AwayFromZero), /* 總擬定數可用周轉月<QTM_Month> */
                         RealPreSell = _RealPreSell, /* 實際預計銷<RealPreSell> */
                         RowIdx = item.Field<Int64>("RowIdx")
@@ -3560,1116 +3601,1116 @@ SET @DayOfYear = CONVERT(VARCHAR(8), DATEADD(DAY, -365, @CheckDay), 112)";
         }
 
 
-        /// <summary>
-        /// 訂貨計劃 - 深圳 (dbName記得改)
-        /// PS1:目前庫別只有A01, 故語法不作修正 (參考上海語法)
-        /// PS2:未來可能會移除此段, 故不優化及整理
-        /// </summary>
-        /// <param name="stockType">指定庫別(A/B/C),A=12, B=A01, C=合併倉</param>
-        /// <param name="search">search集合</param>
-        /// <param name="startRow">StartRow(從0開始)</param>
-        /// <param name="endRow">RecordsPerPage</param>
-        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
-        /// <param name="ErrMsg"></param>
-        /// <returns>DataTable</returns>
-        public IQueryable<PurPlanList> GetPurPlan_SZ(string stockType,
-            Dictionary<string, string> search
-            , int startRow, int endRow
-            , out int DataCnt, out string ErrMsg)
-        {
-            ErrMsg = "";
-
-            try
-            {
-                /* 開始/結束筆數計算 */
-                int cntStartRow = startRow + 1;
-                int cntEndRow = startRow + endRow;
-
-                //----- 宣告 -----
-                StringBuilder sqlDeclare = new StringBuilder();
-                StringBuilder sql = new StringBuilder(); //SQL語法容器
-                List<PurPlanList> dataList = new List<PurPlanList>(); //資料容器
-                string mainSql = ""; //SQL主體
-                string columnSql = ""; //SQL欄位
-                string filterSQL = ""; //條件參數SQL
-                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
-                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器(cnt)
-                DataTable myDT = new DataTable();
-                DataCnt = 0;    //資料總數
-
-                string dbName = "ProUnion"; //*** 資料庫 ***
-
-
-                sqlDeclare.AppendLine("DECLARE @nDays AS INT");
-                sqlDeclare.AppendLine("SET @nDays = @setDays");
-
-
-                #region >> [前置作業] 條件組合 <<
-
-                //庫別固定條件
-                string stockTarget = "";
-                string qtyCount_Days = "";
-                string qtyCount_Year = "";
-                string qtyCount_Season = "";
-
-
-                switch (stockType)
-                {
-                    case "A":
-                        //B01倉
-                        stockTarget = "'B01'";
-                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_12, 0)";
-                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_12, 0))";
-                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_12, 0))";
-                        break;
-
-                    case "B":
-                        //A01倉
-                        stockTarget = "'A01'";
-                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_A01, 0)";
-                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_A01, 0))";
-                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_A01, 0))";
-                        break;
-
-                    default:
-                        stockTarget = "'A01','B01'";
-                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_A01, 0) + ISNULL(TblQty_Days.Qty_12, 0)";
-                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_A01, 0) + ISNULL(TblQty_Year.Qty_12, 0))";
-                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_A01, 0) + ISNULL(TblQty_Season.Qty_12, 0))";
-                        break;
-                }
-
-
-                #region search filter 
-
-                if (search != null)
-                {
-                    //過濾空值
-                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
-
-                    //查詢內容
-                    foreach (var item in thisSearch)
-                    {
-                        switch (item.Key)
-                        {
-                            case "ModelNo":
-                                //拆解輸入字串(1PK-036S#GE-123#MT-810)
-                                string[] aryID = Regex.Split(item.Value, "#");
-                                ArrayList aryLst = new ArrayList(aryID);
-
-                                /*
-                                 GetSQLParam:SQL WHERE IN的方法  ,ex:UPPER(ModelNo) IN ({0})
-                                */
-                                /* [篩選條件], 品號 */
-                                filterSQL += " AND (ModelNo IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "pModel"));
-
-
-                                //SQL參數組成
-                                for (int row = 0; row < aryID.Count(); row++)
-                                {
-                                    sqlParamList.Add(new SqlParameter("@pModel" + row, aryID[row]));
-                                    sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryID[row]));
-                                }
-
-                                break;
-
-
-                            case "SupID":
-                                /* [篩選條件], 供應商ID */
-                                filterSQL += " AND (Supply_ID = @SupID)";
-
-                                //SQL參數組成
-                                sqlParamList.Add(new SqlParameter("@SupID", item.Value));
-                                sqlParamList_Cnt.Add(new SqlParameter("@SupID", item.Value));
-
-                                break;
-
-                            case "nDays":
-                                //SQL參數組成
-                                sqlParamList.Add(new SqlParameter("@setDays", item.Value));
-                                sqlParamList_Cnt.Add(new SqlParameter("@setDays", item.Value));
-
-                                break;
-
-                            case "CustomFilter":
-                                /* 指定範圍條件 */
-                                switch (stockType)
-                                {
-                                    case "A":
-                                        //12倉
-                                        #region --12範圍條件--
-                                        switch (item.Value)
-                                        {
-                                            case "A":
-                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
-                                                filterSQL += " AND ((StockQty_12 + PreIN_12 + PlanIN_12 - PreSell_12) < SafeQty_12)";
-                                                break;
-
-                                            case "B":
-                                                /* (B) 催貨量 < 0 */
-                                                filterSQL += " AND ((StockQty_12 - PreSell_12) < 0)";
-                                                break;
-
-                                            case "C":
-                                                /* (C) 安全存量不為0 */
-                                                filterSQL += " AND (SafeQty_12 <> 0)";
-                                                break;
-
-                                            case "D":
-                                                /* (D) 預計進 > 0 */
-                                                filterSQL += " AND (PreIN_12 > 0)";
-                                                break;
-
-                                            case "E":
-                                                /* (E) 計劃進 > 0 */
-                                                filterSQL += " AND (PlanIN_12 > 0)";
-                                                break;
-
-                                            case "F":
-                                                /* (F) 虛擬預計銷 > 0 */
-                                                filterSQL += " AND (VirPreSell > 0)";
-                                                break;
-
-                                            case "G":
-                                                /* (G) 近n天用量 > 0 */
-                                                filterSQL += " AND (Qty_Days > 0)";
-                                                break;
-
-                                            case "H":
-                                                /* (H) 近n天用量 = 0 */
-                                                filterSQL += " AND (Qty_Days = 0)";
-                                                break;
-
-                                            case "I":
-                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
-                                                break;
-
-                                            case "J":
-                                                /* (J) 安全存量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND (SafeQty_12 = 0) AND (UsefulQty > 0)";
-                                                break;
-
-
-                                            case "L":
-                                                /* (L) 可用量 12 > 0 */
-                                                filterSQL += " AND ((StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) > 0)";
-                                                break;
-
-                                            case "M":
-                                                /* 可用週轉月(M) ~ (S) */
-                                                filterSQL += "AND (MonthTurn_12 < 1)";
-                                                break;
-
-                                            case "N":
-                                                filterSQL += "AND (MonthTurn_12 < 2)";
-                                                break;
-
-                                            case "O":
-                                                filterSQL += "AND (MonthTurn_12 < 2.5)";
-                                                break;
-
-                                            case "P":
-                                                filterSQL += "AND (MonthTurn_12 < 3.5)";
-                                                break;
-
-                                            case "Q":
-                                                filterSQL += "AND (MonthTurn_12 > 6)";
-                                                break;
-
-                                            case "R":
-                                                filterSQL += "AND (MonthTurn_12 > 12)";
-                                                break;
-
-                                            case "S":
-                                                filterSQL += "AND (MonthTurn_12 > 24)";
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-
-                                        #endregion
-
-                                        break;
-
-                                    case "B":
-                                        //A01倉
-                                        #region --A01範圍條件--
-                                        switch (item.Value)
-                                        {
-                                            case "A":
-                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
-                                                filterSQL += " AND ((StockQty_A01 + PreIN_A01 + PlanIN_A01 - PreSell_A01) < SafeQty_A01)";
-                                                break;
-
-                                            case "B":
-                                                /* (B) 催貨量 < 0 */
-                                                filterSQL += " AND ((StockQty_A01 - PreSell_A01) < 0)";
-                                                break;
-
-                                            case "C":
-                                                /* (C) 安全存量不為0 */
-                                                filterSQL += " AND (SafeQty_A01 <> 0)";
-                                                break;
-
-                                            case "D":
-                                                /* (D) 預計進 > 0 */
-                                                filterSQL += " AND (PreIN_A01 > 0)";
-                                                break;
-
-                                            case "E":
-                                                /* (E) 計劃進 > 0 */
-                                                filterSQL += " AND (PlanIN_A01 > 0)";
-                                                break;
-
-                                            case "F":
-                                                /* (F) 虛擬預計銷 > 0 */
-                                                filterSQL += " AND (VirPreSell > 0)";
-                                                break;
-
-                                            case "G":
-                                                /* (G) 近n天用量 > 0 */
-                                                filterSQL += " AND (Qty_Days > 0)";
-                                                break;
-
-                                            case "H":
-                                                /* (H) 近n天用量 = 0 */
-                                                filterSQL += " AND (Qty_Days = 0)";
-                                                break;
-
-                                            case "I":
-                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
-                                                break;
-
-                                            case "J":
-                                                /* (J) 安全存量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND (SafeQty_A01 = 0) AND (UsefulQty > 0)";
-                                                break;
-
-                                            case "K":
-                                                /* (K) 可用量 A01 > 0 */
-                                                filterSQL += " AND ((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) > 0)";
-                                                break;
-
-                                            //case "L":
-                                            //    /* (L) 可用量 12 > 0 */
-                                            //    filterSQL += " AND ((StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) > 0)";
-                                            //    break;
-
-                                            case "M":
-                                                /* 可用週轉月(M) ~ (S) */
-                                                filterSQL += "AND (MonthTurn_A01 < 1)";
-                                                break;
-
-                                            case "N":
-                                                filterSQL += "AND (MonthTurn_A01 < 2)";
-                                                break;
-
-                                            case "O":
-                                                filterSQL += "AND (MonthTurn_A01 < 2.5)";
-                                                break;
-
-                                            case "P":
-                                                filterSQL += "AND (MonthTurn_A01 < 3.5)";
-                                                break;
-
-                                            case "Q":
-                                                filterSQL += "AND (MonthTurn_A01 > 6)";
-                                                break;
-
-                                            case "R":
-                                                filterSQL += "AND (MonthTurn_A01 > 12)";
-                                                break;
-
-                                            case "S":
-                                                filterSQL += "AND (MonthTurn_A01 > 24)";
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-
-                                        #endregion
-                                        break;
-
-                                    default:
-                                        //合併倉
-                                        #region --合併倉範圍條件--
-                                        switch (item.Value)
-                                        {
-                                            case "A":
-                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
-                                                filterSQL += " AND (((StockQty_A01 + PreIN_A01 + PlanIN_A01 - PreSell_A01) + (StockQty_12 + PreIN_12 + PlanIN_12 - PreSell_12)) < SafeQty_A01)";
-                                                break;
-
-                                            case "B":
-                                                /* (B) 催貨量 < 0 */
-                                                filterSQL += " AND (((StockQty_A01 - PreSell_A01) + (StockQty_12 - PreSell_12)) < 0)";
-                                                break;
-
-                                            case "C":
-                                                /* (C) 安全存量不為0 */
-                                                filterSQL += " AND ((SafeQty_A01 + SafeQty_12) <> 0)";
-                                                break;
-
-                                            case "D":
-                                                /* (D) 預計進 > 0 */
-                                                filterSQL += " AND ((PreIN_A01 + PreIN_12) > 0)";
-                                                break;
-
-                                            case "E":
-                                                /* (E) 計劃進 > 0 */
-                                                filterSQL += " AND ((PlanIN_A01 + PlanIN_12) > 0)";
-                                                break;
-
-                                            case "F":
-                                                /* (F) 虛擬預計銷 > 0 */
-                                                filterSQL += " AND (VirPreSell > 0)";
-                                                break;
-
-                                            case "G":
-                                                /* (G) 近n天用量 > 0 */
-                                                filterSQL += " AND (Qty_Days > 0)";
-                                                break;
-
-                                            case "H":
-                                                /* (H) 近n天用量 = 0 */
-                                                filterSQL += " AND (Qty_Days = 0)";
-                                                break;
-
-                                            case "I":
-                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
-                                                break;
-
-                                            case "J":
-                                                /* (J) 安全存量 = 0, 可用量 > 0 */
-                                                filterSQL += " AND ((SafeQty_A01 + SafeQty_12) = 0) AND (UsefulQty > 0)";
-                                                break;
-
-                                            //case "K":
-                                            //    /* (K) 可用量 A01 > 0 */
-                                            //    filterSQL += " AND ((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) > 0)";
-                                            //    break;
-
-                                            case "L":
-                                                /* (L) 可用量 > 0 */
-                                                filterSQL += " AND (((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) + (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12)) > 0)";
-                                                break;
-
-                                            case "M":
-                                                /* 可用週轉月(M) ~ (S) */
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 1)";
-                                                break;
-
-                                            case "N":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 2)";
-                                                break;
-
-                                            case "O":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 2.5)";
-                                                break;
-
-                                            case "P":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 3.5)";
-                                                break;
-
-                                            case "Q":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 6)";
-                                                break;
-
-                                            case "R":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 12)";
-                                                break;
-
-                                            case "S":
-                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 24)";
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-
-                                        #endregion
-                                        break;
-                                }
-
-
-                                break;
-
-                        }
-                    }
-                }
-                #endregion
-
-                #endregion
-
-
-                #region >> [前置作業] SQL主體 <<
-
-                mainSql = @"
-/* 預計銷(訂單):TD016 = 結案碼, TD021 = 確認碼 */
-;WITH Tbl_PreSell AS (
-	SELECT p.ModelNo
-	 , p.[12] AS PreSell_12, p.[A01] AS PreSell_A01
-	FROM (
-		SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS PreSell
-		 , RTRIM(TD004) AS ModelNo
-		 , TD007 AS StockType
-		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01'))
-		GROUP BY TD004, TD007
-	) t 
-	PIVOT (
-		SUM(PreSell)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 虛擬預計銷(訂單):TD016 = 結案碼, TD021 = 確認碼 */
-, Tbl_VirPreSell AS (
-	SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS VirPreSell
-	 , RTRIM(TD004) AS ModelNo
-	FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
-	WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD001 = '22C1')
-	GROUP BY TD004
-)
-
-/* 虛擬入(訂單):TD016 = 結案碼, TD021 = 確認碼 */
-, Tbl_VirIn AS (
-	SELECT p.ModelNo
-	 , p.[12] AS VirIn_12, p.[A01] AS VirIn_A01
-	FROM (
-		SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS VirIn
-		 , RTRIM(TD004) AS ModelNo
-		 , TD007 AS StockType
-		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01')) AND (TD001 = '2262')
-		GROUP BY TD004, TD007
-	) t 
-	PIVOT (
-		SUM(VirIn)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 預計進(採購單):TD016 = 結案碼, TD018 = 確認碼 */
-, Tbl_PreIN AS (
-	SELECT p.ModelNo
-	 , p.[12] AS PreIN_12, p.[A01] AS PreIN_A01
-	FROM (
-		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PreIN
-		 , RTRIM(TD004) AS ModelNo
-		 , TD007 AS StockType
-		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('12', 'A01'))
-		GROUP BY TD004, TD007
-	) t 
-	PIVOT (
-		SUM(PreIN)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 計劃進(採購單):TD016 = 結案碼, TD018 = 確認碼 */
-, Tbl_PlanIN AS (
-	SELECT p.ModelNo
-	 , p.[12] AS PlanIN_12, p.[A01] AS PlanIN_A01
-	FROM (
-		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PlanIN
-		 , RTRIM(TD004) AS ModelNo
-		 , TD007 AS StockType
-		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (TD016 = 'N') AND (TD018 = 'N') AND (TD007 IN ('12', 'A01'))
-		GROUP BY TD004, TD007
-	) t 
-	PIVOT (
-		SUM(PlanIN)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 預計領:TA013,確認碼 <> 'V', TA011,狀態碼 = 1,2,3 */
-, Tbl_PreGet AS (
-	SELECT p.ModelNo
-	 , p.[12] AS PreGet_12, p.[A01] AS PreGet_A01
-	FROM (
-		SELECT SUM(TB004 - TB005) AS PreGet
-		 , RTRIM(TA006) AS ModelNo
-		 , TA020 AS StockType
-		FROM [##DBName##].dbo.MOCTA AS A WITH(NOLOCK)
-		 INNER JOIN [##DBName##].dbo.MOCTB AS B WITH(NOLOCK) ON A.TA001 = B.TB001 AND A.TA002 = B.TB002 AND A.TA006 = B.TB003
-		WHERE (A.TA013 <> 'V') AND (A.TA011 IN ('1', '2', '3'))
-		 /* [指定條件] 所有庫別 */
-		 AND (A.TA020 IN ('12', 'A01'))
-		GROUP BY TA006, TA020
-	) t 
-	PIVOT (
-		SUM(PreGet)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 計劃領 */
-, Tbl_PlanOut AS (
-	SELECT p.ModelNo
-	 , p.[12] AS OutQty_12, p.[A01] AS OutQty_A01
-	FROM (
-		SELECT TB007 AS OutQty, RTRIM(TB005) AS ModelNo, TB008 AS StockType
-		FROM [##DBName##].dbo.LRPTB WITH(NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (TB008 IN ('12', 'A01'))
-	) t 
-	PIVOT (
-		SUM(OutQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* 庫存 */
-, Tbl_Stock AS (
-	SELECT p.ModelNo
-	 , p.[12] AS StockQty_12, p.[A01] AS StockQty_A01
-	FROM (
-		SELECT MC007 AS StockQty, RTRIM(MC001) AS ModelNo, MC002 AS StockType
-		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
-	) t 
-	PIVOT (
-		SUM(StockQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-/* 安全庫存 */
-, Tbl_SafeStock AS (
-	SELECT p.ModelNo
-	 , p.[12] AS SafeQty_12, p.[A01] AS SafeQty_A01
-	FROM (
-		SELECT MC004 AS StockQty, RTRIM(MC001) AS ModelNo, MC002 AS StockType
-		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
-	) t 
-	PIVOT (
-		SUM(StockQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* [欄位] - 近n天用量 (參數:nDays)(A01) */
-, TblQty_Days AS (
-	SELECT p.ModelNo
-	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
-	FROM (
-		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
-		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
-		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
-		 AND (
-			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111),'/', '')
-				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
-			)
-	) t 
-	PIVOT (
-		SUM(sumQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* [欄位] - 全年平均月用量 */
-, TblQty_Year AS (
-	SELECT p.ModelNo
-	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
-	FROM (
-		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
-		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
-		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
-		 AND (
-			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
-				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
-			)
-	) t 
-	PIVOT (
-		SUM(sumQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-/* [欄位] - 去年當季平均用量 */
-, TblQty_Season AS (
-	SELECT p.ModelNo
-	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
-	FROM (
-		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
-		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
-		/* [指定條件] 所有庫別 */
-		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
-		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
-		 AND (
-			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
-				AND REPLACE(CONVERT(VARCHAR(10), GETDATE() - 275, 111), '/', '')
-			)
-	) t 
-	PIVOT (
-		SUM(sumQty)
-		FOR StockType IN ([12], [A01])
-	) p
-)
-
-, Tbl_WaitQty AS (
-/*
-	[欄位] - 待驗收(TH007)(A01)
-	QMSTA 進貨檢驗單單頭檔
-	PURTH 進貨單單身檔
-	TA001, TH001 = 單別
-	TA002, TH002 = 單號
-	TA003, TH003 = 序號
-	TA014, TH030 = 確認碼
-	TH004 = 品號
-*/
-	SELECT RTRIM(PURTH.TH004) AS ModelNo, PURTH.TH007 AS WaitQty
-	FROM [##DBName##].dbo.QMSTA WITH (NOLOCK)
-		INNER JOIN [##DBName##].dbo.PURTH WITH (NOLOCK) ON QMSTA.TA001 = PURTH.TH001 AND QMSTA.TA002 = PURTH.TH002 AND QMSTA.TA003 = PURTH.TH003
-	/* [指定條件] 單一庫別 */
-	WHERE (QMSTA.TA014 = 'N') AND (PURTH.TH030 = 'N') AND (PURTH.TH009 IN (##tarStock##))	 
-)
-
-, Tbl_PurCnt AS (
-	/* 進貨筆數加總(依指定天數)(參數:nDays)(A01) */
-	SELECT RTRIM(PURTH.TH004) AS ModelNo, COUNT(*) AS CNT
-	FROM [##DBName##].dbo.PURTG WITH (NOLOCK)
-		INNER JOIN [##DBName##].dbo.PURTH WITH (NOLOCK) ON PURTG.TG001 = PURTH.TH001 AND PURTG.TG002 = PURTH.TH002
-	/* [指定條件] 單一庫別 */
-	WHERE (PURTH.TH009 IN (##tarStock##))
-	 AND (PURTG.TG003 BETWEEN 
-		REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111), '/', '') 
-		AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', ''))
-	GROUP BY PURTH.TH004
-)
-                    ";
-                //置入條件SQL
-                mainSql = mainSql.Replace("##tarStock##", stockTarget);
-                mainSql = mainSql.Replace("##DBName##", dbName);
-
-                #endregion
-
-
-                #region >> SQL欄位 <<
-                columnSql = @"
-	SELECT TblPrint.*
-		, RANK() OVER(ORDER BY TblPrint.ModelNo) AS RowIdx
-	FROM (
-		SELECT TblSection.* 
-			/* 催貨量 = 庫存 - 預計銷 */
-			, (StockQty_A01 - PreSell_A01) AS PushQty
-
-			/* 可用量 A01 = 庫存 + 預計進 - 預計銷 + 計劃進 */
-			, (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) AS UsefulQty_A01
-			/* 可用量 12 = 庫存 + 預計進 - 預計銷 + 計劃進 -預計領 - 計劃領 */
-			, (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) AS UsefulQty_12
-
-			/*
-			   擬定數量 = {
-				 SET X = (庫存 + 預計進 + 計劃進 - 預計銷)
-				 SET Y = ABS(安全存量 - X);
-				 IF X >= 安全存量 THEN 0
-				 ELSEIF Y > 最低補量 THEN ABS(Y)
-				 ELSE 最低補量
-				}
-			*/
-			, (CASE WHEN (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) >= SafeQty_A01 THEN 0
-				WHEN ABS(SafeQty_A01 - (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01)) <= Min_Supply THEN Min_Supply
-				ELSE ABS(SafeQty_A01 - (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01))
-				END) AS QTM_A01
-			, (CASE WHEN (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12) >= SafeQty_12 THEN 0
-				WHEN ABS(SafeQty_12 - (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12)) <= Min_Supply THEN Min_Supply
-				ELSE ABS(SafeQty_12 - (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12))
-				END) AS QTM_12
-
-			/* 可用週轉月<MonthTurn_A01> A01 = (可用量 A01 / 年平均月用量) */
-			, (CASE WHEN Qty_Year = 0 THEN 0
-				ELSE
-					CONVERT(FLOAT,ROUND(
-						(StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) / Qty_Year
-					, 2))
-				END) AS MonthTurn_A01
-
-			/* 可用週轉月<MonthTurn_12> 12 = (可用量 12 / 年平均月用量) */
-			, (CASE WHEN Qty_Year = 0 THEN 0
-				ELSE
-					CONVERT(FLOAT,ROUND(
-						(StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) / Qty_Year
-					, 2))
-				END) AS MonthTurn_12
-
-			/* 現有周轉月<NowMonthTurn_A01> ,依表指定A01 = ((庫存 - 預計銷) / 年平均月用量) */
-			, (CASE WHEN Qty_Year = 0 THEN 0
-				ELSE
-					CONVERT(FLOAT,ROUND(
-						(StockQty_A01 - PreSell_A01) / Qty_Year
-					, 2))
-				END) AS NowMonthTurn_A01
-
-			/* 現有周轉月<NowMonthTurn_12> ,依表指定合併 = (總庫存 - 總預計銷 - 預計領12) / 年平均月用量 */
-			, (CASE WHEN Qty_Year = 0 THEN 0
-				ELSE
-					CONVERT(FLOAT,ROUND(
-						(StockQty_12 - (PreSell_A01 + PreSell_12) - PreGet_12) / Qty_Year
-					, 2))
-				END) AS NowMonthTurn_12
-		FROM (
-			SELECT RTRIM(INVMB.MB001) AS ModelNo
-			 , INVMA.MA003 AS Item_Type /* 屬性 */
-			 , RTRIM(INVMB.MB002) AS ModelName /* 品名 */
-			 , ISNULL(REPLACE(INVMB.MB207, 'NULL', ''), '') AS ProdVol /* VOL */
-			 , ISNULL(REPLACE(INVMB.MB208, 'NULL', ''), '') AS ProdPage /* PAGE */
-			 , ISNULL(TblCheckPrice.Currency, '') AS Currency
- 			 , CONVERT(FLOAT, ISNULL(TblCheckPrice.checkPrice, 0)) AS checkPrice /* 核價單價 */
-			 , CONVERT(INT, ISNULL(Tbl_WaitQty.WaitQty, 0)) AS WaitQty /* 待驗收 */
-			 , CONVERT(INT, ISNULL(Tbl_Stock.StockQty_A01, 0)) AS StockQty_A01 /* 庫存 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_SafeStock.SafeQty_A01, 0)) AS SafeQty_A01 /* 安全存量 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_PreIN.PreIN_A01, 0)) AS PreIN_A01 /* 預計進 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_VirIn.VirIn_A01, 0)) AS VirIn_A01 /* 虛擬入 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_PlanIN.PlanIN_A01, 0)) AS PlanIN_A01 /* 計劃進 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_PreSell.PreSell_A01, 0)) AS PreSell_A01 /* 預計銷 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_PreGet.PreGet_A01, 0)) AS PreGet_A01 /* 預計領 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_PlanOut.OutQty_A01, 0)) AS PlanOut_A01 /* 計劃領 A01 */
-			 , CONVERT(INT, ISNULL(Tbl_Stock.StockQty_12, 0)) AS StockQty_12 /* 庫存 12 */
-			 , CONVERT(INT, ISNULL(Tbl_SafeStock.SafeQty_12, 0)) AS SafeQty_12 /* 安全存量 12 */
-			 , CONVERT(INT, ISNULL(Tbl_PreIN.PreIN_12, 0)) AS PreIN_12 /* 預計進 12 */
-			 , CONVERT(INT, ISNULL(Tbl_VirIn.VirIn_12, 0)) AS VirIn_12 /* 虛擬入 12 */
-			 , CONVERT(INT, ISNULL(Tbl_PlanIN.PlanIN_12, 0)) AS PlanIN_12 /* 計劃進 12 */
-			 , CONVERT(INT, ISNULL(Tbl_PreSell.PreSell_12, 0)) AS PreSell_12 /* 預計銷 12 */
-			 , CONVERT(INT, ISNULL(Tbl_PreGet.PreGet_12, 0)) AS PreGet_12 /* 預計領 12 */
-			 , CONVERT(INT, ISNULL(Tbl_PlanOut.OutQty_12, 0)) AS PlanOut_12 /* 計劃領 12 */
-             , CONVERT(FLOAT, ##qtyDay##) AS Qty_Days /* 近N天用量 (依表指定A01/12) */
-			 , CONVERT(FLOAT, ROUND(##qtyYear## / 12, 0)) AS Qty_Year /* 全年平均月用量(除12) (依表指定A01/12) */
-             , CONVERT(FLOAT, ROUND(##qtySeason## / 3, 0)) AS Qty_Season /* 去年當季平均用量(除3) (依表指定A01/12) */
-			 , CONVERT(INT, ISNULL(Tbl_VirPreSell.VirPreSell, 0)) AS VirPreSell /* 虛擬預計銷(ALL) */
-			 , CONVERT(INT, ISNULL(Tbl_PurCnt.CNT, 0)) AS CNT /* 進貨筆數加總(依指定天數)(依表指定A01/12) */
-			 , CONVERT(INT, INVMB.MB039) AS Min_Supply /* 最低補量 */
-			 , CONVERT(INT, INVMB.MB201) AS InBox_Qty /* 內盒數量 */
-			 , CONVERT(INT, INVMB.MB073) AS Qty_Packing /* 一箱數量 */
-			 , CONVERT(FLOAT, INVMB.MB071) AS OutBox_Cuft /* 整箱材積 */
-             , CONVERT(INT, ISNULL(INVMB.MB220, 0)) AS MOQ /* 銷售MOQ */
-			 , RTRIM(INVMB.MB202) AS Sub_item /* 產銷訊息 */
-			 , PURMA.MA002 AS Supplier /* 供應商 */
-			 , RTRIM(PURMA.MA001) AS Supply_ID
-			FROM [##DBName##].dbo.INVMB WITH (NOLOCK) 
-			 INNER JOIN [##DBName##].dbo.PURMA ON INVMB.MB032 = PURMA.MA001
-			 INNER JOIN [##DBName##].dbo.INVMA ON INVMA.MA002 = INVMB.MB008
-			 INNER JOIN [##DBName##].dbo.INVMC ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 IN (##tarStock##) /* [指定條件] 單一庫別 */
-			 LEFT JOIN Tbl_Stock ON INVMB.MB001 = Tbl_Stock.ModelNo
-			 LEFT JOIN Tbl_SafeStock ON INVMB.MB001 = Tbl_SafeStock.ModelNo
-			 LEFT JOIN Tbl_PreIN ON INVMB.MB001 = Tbl_PreIN.ModelNo
-			 LEFT JOIN Tbl_PlanIN ON INVMB.MB001 = Tbl_PlanIN.ModelNo
-			 LEFT JOIN Tbl_PreSell ON INVMB.MB001 = Tbl_PreSell.ModelNo
-			 LEFT JOIN Tbl_VirIn ON INVMB.MB001 = Tbl_VirIn.ModelNo
-			 LEFT JOIN Tbl_VirPreSell ON INVMB.MB001 = Tbl_VirPreSell.ModelNo
-			 LEFT JOIN Tbl_PreGet ON INVMB.MB001 = Tbl_PreGet.ModelNo
-			 LEFT JOIN TblQty_Days ON INVMB.MB001 = TblQty_Days.ModelNo
-			 LEFT JOIN TblQty_Year ON INVMB.MB001 = TblQty_Year.ModelNo
-			 LEFT JOIN TblQty_Season ON INVMB.MB001 = TblQty_Season.ModelNo
-			 LEFT JOIN Tbl_WaitQty ON INVMB.MB001 = Tbl_WaitQty.ModelNo
-			 LEFT JOIN Tbl_PurCnt ON INVMB.MB001 = Tbl_PurCnt.ModelNo
-			 LEFT JOIN Tbl_PlanOut ON INVMB.MB001 = Tbl_PlanOut.ModelNo
-
-			 /* 採購單資料 S (資料量大,不放在CTE) */
-			 LEFT JOIN (
-				SELECT
-				(CASE WHEN ChkTb_1.ModelNo IS NULL THEN ChkTb_2.ModelNo ELSE ChkTb_1.ModelNo END) AS ModelNo 
-				, (CASE WHEN ChkTb_1.checkPrice IS NULL THEN ChkTb_2.Price ELSE ChkTb_1.checkPrice END) AS checkPrice
-				, (CASE WHEN ChkTb_1.SupID IS NULL THEN ChkTb_2.SupID ELSE ChkTb_1.SupID END) AS SupID
-				, (CASE WHEN ChkTb_1.Currency IS NULL THEN ChkTb_2.Currency ELSE ChkTb_1.Currency END) AS Currency
-				FROM (
-					/*
-					採購核價單
-					[單頭]
-					TL004 廠商代號 (Group Key)
-					TL005 幣別
-					TL003 核價日期 (ORDER BY)
-
-					[單身]
-					TM004 品號 (Group Key)
-					TM010 單價
-					TM015 失效日 = '' (條件)
-					*/
-					SELECT ChkPrice.ModelNo, ChkPrice.checkPrice, ChkPrice.SupID, ChkPrice.Currency
-					FROM (
-						SELECT Base.TL004 AS SupID, Base.TL005 AS Currency, DT.TM004 AS ModelNo, ISNULL(DT.TM010, 0) AS checkPrice
-						, RANK() OVER (
-							PARTITION BY Base.TL004, DT.TM004
-							ORDER BY Base.TL003 DESC
-						) AS myTbSeq	
-						FROM [##DBName##].dbo.PURTL Base WITH(NOLOCK)
-						 INNER JOIN [##DBName##].dbo.PURTM DT WITH(NOLOCK) ON Base.TL001 = DT.TM001 AND Base.TL002 = DT.TM002
-						WHERE (Base.TL006 = 'Y') AND (DT.TM015 = '')
-					) AS ChkPrice
-					WHERE ChkPrice.myTbSeq = 1
-				) AS ChkTb_1
-				FULL OUTER JOIN
-				(
-					/*
-					最近採購單價格
-					[單頭]
-					TG005 供應商代號
-					TG007 幣別
-
-					[單身]
-					TH018 原幣單位進價
-					TH004 品號 (Group Key)
-					TH009 庫別 (條件)
-					TH014 驗收日期 (ORDER BY)
-					*/
-					SELECT ChkDay.ModelNo, ChkDay.Price, ChkDay.SupID, ChkDay.Currency
-					FROM (
-						SELECT Base.TG005 AS SupID, Base.TG007 AS Currency, DT.TH004 AS ModelNo, ISNULL(DT.TH018, 0) AS Price
-						, RANK() OVER (
-							PARTITION BY DT.TH004
-							ORDER BY DT.TH014 DESC, DT.TH001, DT.TH002 DESC
-						) AS myTbSeq	
-						FROM [##DBName##].dbo.PURTG Base WITH(NOLOCK)
-							INNER JOIN [##DBName##].dbo.PURTH DT WITH(NOLOCK) ON Base.TG001 = DT.TH001 AND Base.TG002 = DT.TH002
-						/* [指定條件] 單一庫別 */
-						WHERE (DT.TH009 IN (##tarStock##))
-					) AS ChkDay
-					WHERE ChkDay.myTbSeq = 1
-				) AS ChkTb_2
-				ON ChkTb_1.ModelNo = ChkTb_2.ModelNo
-			 ) AS TblCheckPrice ON TblCheckPrice.SupID = PURMA.MA001 and TblCheckPrice.ModelNo = INVMB.MB001
-			 /* 採購單資料 E */
-
-		) AS TblSection /* 算式欄位整理 */
-	) AS TblPrint /* 條件式&列數 */
-	WHERE (1=1)
-";
-                //置入條件SQL
-                columnSql = columnSql.Replace("##tarStock##", stockTarget);
-                columnSql = columnSql.Replace("##DBName##", dbName);
-                columnSql = columnSql.Replace("##qtyDay##", qtyCount_Days);
-                columnSql = columnSql.Replace("##qtyYear##", qtyCount_Year);
-                columnSql = columnSql.Replace("##qtySeason##", qtyCount_Season);
-
-                #endregion
-
-
-                #region >> 主要資料SQL查詢 <<
-
-                //----- 資料取得 -----
-                using (SqlCommand cmd = new SqlCommand())
-                {
-                    //----- SQL 查詢語法 -----
-                    //宣告語法
-                    sql.Append(sqlDeclare);
-
-                    //前置主體語法
-                    sql.Append(mainSql);
-
-                    sql.AppendLine("SELECT TblAll.* FROM (");
-
-                    //欄位語法
-                    sql.Append(columnSql);
-
-                    //條件語法
-                    sql.AppendLine(filterSQL);
-
-                    sql.AppendLine(") AS TblAll");
-                    sql.AppendLine(" WHERE (TblAll.RowIdx >= @startRow) AND (TblAll.RowIdx <= @endRow)");
-                    sql.AppendLine(" ORDER BY TblAll.RowIdx");
-
-
-                    //----- SQL 執行 -----
-                    cmd.CommandText = sql.ToString();
-                    cmd.Parameters.Clear();
-                    cmd.CommandTimeout = 360;   //單位:秒
-
-                    //----- SQL 固定參數 -----
-                    sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
-                    sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
-
-
-                    //加入參數陣列
-                    cmd.Parameters.AddRange(sqlParamList.ToArray());
-
-                    //Execute
-                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
-
-                }
-
-                #endregion
-
-
-                #region >> 資料筆數SQL查詢 <<
-                using (SqlCommand cmdCnt = new SqlCommand())
-                {
-                    //----- SQL 查詢語法 -----
-                    sql.Clear();
-
-                    //宣告語法
-                    sql.Append(sqlDeclare);
-
-                    //前置主體語法
-                    sql.Append(mainSql);
-
-                    sql.AppendLine("SELECT COUNT(*) AS TotalCnt FROM (");
-
-                    //欄位語法
-                    sql.Append(columnSql);
-
-                    //條件語法
-                    sql.AppendLine(filterSQL);
-
-                    sql.AppendLine(") AS TblAll");
-
-
-                    //----- SQL 執行 -----
-                    cmdCnt.CommandText = sql.ToString();
-                    cmdCnt.Parameters.Clear();
-                    cmdCnt.CommandTimeout = 360;   //單位:秒
-
-                    //----- SQL 條件參數 -----
-                    //加入參數陣列
-                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
-
-                    //Execute
-                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
-                    {
-                        //資料總筆數
-                        if (DTCnt.Rows.Count > 0)
-                        {
-                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
-                        }
-                    }
-
-                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
-                    cmdCnt.Parameters.Clear();
-                }
-                #endregion
-
-
-                /* 資料整理 */
-                //LinQ 查詢
-                var query = myDT.AsEnumerable();
-
-                //資料迴圈
-                foreach (var item in query)
-                {
-                    int _UsefulQty_A01 = item.Field<int>("UsefulQty_A01");
-                    int _UsefulQty_12 = item.Field<int>("UsefulQty_12");
-                    int _QTM_A01 = item.Field<int>("QTM_A01");
-                    int _QTM_12 = item.Field<int>("QTM_12");
-                    double _Qty_Year = item.Field<double>("Qty_Year");
-                    double _QTM_Month = 0;
-                    int _RealPreSell = 0;
-                    int _VirPreSell = item.Field<int>("VirPreSell");
-                    int _PreSell_12 = item.Field<int>("PreSell_12");
-                    int _PreSell_A01 = item.Field<int>("PreSell_A01");
-
-                    /*
-                        總擬定數可用周轉月<_QTM_Month> = ((可用量<UsefulQty_A01> + 擬定數量<QTM_A01>) / 年平均月用量<Qty_Year>)
-                        實際預計銷 = 預計銷 - 虛擬預計銷
-                    */
-                    switch (stockType)
-                    {
-                        case "A":
-                            //12倉
-                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_A01 + _QTM_A01) / _Qty_Year : 0;
-                            _RealPreSell = _PreSell_12 - _VirPreSell;
-                            break;
-
-                        case "B":
-                            //A01倉
-                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_12 + _QTM_12) / _Qty_Year : 0;
-                            _RealPreSell = _PreSell_A01 - _VirPreSell;
-                            break;
-
-                        default:
-                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_A01 + _QTM_A01 + _UsefulQty_12 + _QTM_12) / _Qty_Year : 0;
-                            _RealPreSell = (_PreSell_12 + _PreSell_A01) - _VirPreSell;
-                            break;
-                    }
-
-                    //加入項目
-                    var data = new PurPlanList
-                    {
-                        ModelNo = item.Field<string>("ModelNo"),
-                        Item_Type = item.Field<string>("Item_Type"),
-                        ModelName = item.Field<string>("ModelName"),
-                        ProdVol = item.Field<string>("ProdVol"),
-                        ProdPage = item.Field<string>("ProdPage"),
-                        Currency = item.Field<string>("Currency"), /* 核價幣別<Currency> */
-                        checkPrice = item.Field<double>("checkPrice"), /* 核價單價<checkPrice> */
-                        WaitQty = item.Field<int>("WaitQty"), /* 待驗收<WaitQty> */
-                        StockQty_A01 = item.Field<int>("StockQty_A01"), /* 庫存<StockQty_A01> */
-                        SafeQty_A01 = item.Field<int>("SafeQty_A01"), /* 安全存量<SafeQty_A01> */
-                        PreIN_A01 = item.Field<int>("PreIN_A01"), /* 預計進<PreIN_A01> */
-                        VirIn_A01 = item.Field<int>("VirIn_A01"), /* 虛擬入<VirIn_A01> */
-                        PlanIN_A01 = item.Field<int>("PlanIN_A01"), /* 計劃進<PlanIN_A01> */
-                        PreSell_A01 = _PreSell_A01, /* 預計銷<PreSell_A01> */
-                        PreGet_A01 = item.Field<int>("PreGet_A01"), /* 預計領<PreGet_A01> */
-                        PlanOut_A01 = item.Field<int>("PlanOut_A01"), /* 計劃領<PlanOut_A01> */
-                        StockQty_12 = item.Field<int>("StockQty_12"), /* 庫存<StockQty_12> */
-                        SafeQty_12 = item.Field<int>("SafeQty_12"), /* 安全存量<SafeQty_12> */
-                        PreIN_12 = item.Field<int>("PreIN_12"), /* 預計進<PreIN_12> */
-                        VirIn_12 = item.Field<int>("VirIn_12"), /* 虛擬入<VirIn_12> */
-                        PlanIN_12 = item.Field<int>("PlanIN_12"), /* 計劃進<PlanIN_12> */
-                        PreSell_12 = _PreSell_12, /* 預計銷<PreSell_12> */
-                        PreGet_12 = item.Field<int>("PreGet_12"), /* 預計領<PreGet_12> */
-                        PlanOut_12 = item.Field<int>("PlanOut_12"), /* 計劃領<PlanOut_12> */
-                        Qty_Days = item.Field<double>("Qty_Days"), /* 近N天用量<Qty_Days> */
-                        Qty_Year = _Qty_Year, /* 全年平均月用量<Qty_Year> */
-                        Qty_Season = item.Field<double>("Qty_Season"), /* 去年當季平均用量<Qty_Season> */
-                        VirPreSell = item.Field<int>("VirPreSell"), /* 虛擬預計銷<VirPreSell> */
-                        CNT = item.Field<int>("CNT"), /* 進貨筆數加總<CNT> */
-                        Min_Supply = item.Field<int>("Min_Supply"), /* 最低補量<Min_Supply> */
-                        InBox_Qty = item.Field<int>("InBox_Qty"), /* 內盒數量<InBox_Qty> */
-                        Qty_Packing = item.Field<int>("Qty_Packing"), /* 一箱數量<Qty_Packing> */
-                        OutBox_Cuft = item.Field<double>("OutBox_Cuft"), /* 整箱材積<OutBox_Cuft> */
-                        MOQ = item.Field<int>("MOQ"), /* 銷售MOQ<MOQ> */
-                        ProdMsg = item.Field<string>("Sub_item"), /* 產銷訊息<ProdMsg> */
-                        Supplier = item.Field<string>("Supplier"), /* 供應商Name<Supplier> */
-                        Supply_ID = item.Field<string>("Supply_ID"), /* 供應商ID<Supply_ID> */
-                        PushQty = item.Field<int>("PushQty"), /* 催貨量<PushQty> */
-                        UsefulQty_A01 = _UsefulQty_A01, /* 可用量<UsefulQty_A01> */
-                        UsefulQty_12 = _UsefulQty_12, /* 可用量<UsefulQty_12> */
-                        QTM_A01 = _QTM_A01, /* 擬定數量<QTM_A01> */
-                        QTM_12 = _QTM_12, /* 擬定數量<QTM_12> */
-                        MonthTurn_A01 = Math.Round(item.Field<double>("MonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_A01> */
-                        MonthTurn_12 = Math.Round(item.Field<double>("MonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_12> */
-                        NowMonthTurn_A01 = Math.Round(item.Field<double>("NowMonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_A01> */
-                        NowMonthTurn_12 = Math.Round(item.Field<double>("NowMonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_12> */
-                        QTM_Month = Math.Round(_QTM_Month, 2, MidpointRounding.AwayFromZero), /* 總擬定數可用周轉月<QTM_Month> */
-                        RealPreSell = _RealPreSell, /* 實際預計銷<RealPreSell> */
-                        RowIdx = item.Field<Int64>("RowIdx")
-                    };
-
-
-                    //將項目加入至集合
-                    dataList.Add(data);
-
-                }
-
-                //回傳集合
-                return dataList.AsQueryable();
-
-
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
-            }
-        }
+//        /// <summary>
+//        /// 訂貨計劃 - 深圳 (dbName記得改)
+//        /// PS1:目前庫別只有A01, 故語法不作修正 (參考上海語法)
+//        /// PS2:未來可能會移除此段, 故不優化及整理
+//        /// </summary>
+//        /// <param name="stockType">指定庫別(A/B/C),A=12, B=A01, C=合併倉</param>
+//        /// <param name="search">search集合</param>
+//        /// <param name="startRow">StartRow(從0開始)</param>
+//        /// <param name="endRow">RecordsPerPage</param>
+//        /// <param name="DataCnt">傳址參數(資料總筆數)</param>
+//        /// <param name="ErrMsg"></param>
+//        /// <returns>DataTable</returns>
+//        public IQueryable<PurPlanList> GetPurPlan_SZ(string stockType,
+//            Dictionary<string, string> search
+//            , int startRow, int endRow
+//            , out int DataCnt, out string ErrMsg)
+//        {
+//            ErrMsg = "";
+
+//            try
+//            {
+//                /* 開始/結束筆數計算 */
+//                int cntStartRow = startRow + 1;
+//                int cntEndRow = startRow + endRow;
+
+//                //----- 宣告 -----
+//                StringBuilder sqlDeclare = new StringBuilder();
+//                StringBuilder sql = new StringBuilder(); //SQL語法容器
+//                List<PurPlanList> dataList = new List<PurPlanList>(); //資料容器
+//                string mainSql = ""; //SQL主體
+//                string columnSql = ""; //SQL欄位
+//                string filterSQL = ""; //條件參數SQL
+//                List<SqlParameter> sqlParamList = new List<SqlParameter>(); //SQL參數容器
+//                List<SqlParameter> sqlParamList_Cnt = new List<SqlParameter>(); //SQL參數容器(cnt)
+//                DataTable myDT = new DataTable();
+//                DataCnt = 0;    //資料總數
+
+//                string dbName = "ProUnion"; //*** 資料庫 ***
+
+
+//                sqlDeclare.AppendLine("DECLARE @nDays AS INT");
+//                sqlDeclare.AppendLine("SET @nDays = @setDays");
+
+
+//                #region >> [前置作業] 條件組合 <<
+
+//                //庫別固定條件
+//                string stockTarget = "";
+//                string qtyCount_Days = "";
+//                string qtyCount_Year = "";
+//                string qtyCount_Season = "";
+
+
+//                switch (stockType)
+//                {
+//                    case "A":
+//                        //B01倉
+//                        stockTarget = "'B01'";
+//                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_12, 0)";
+//                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_12, 0))";
+//                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_12, 0))";
+//                        break;
+
+//                    case "B":
+//                        //A01倉
+//                        stockTarget = "'A01'";
+//                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_A01, 0)";
+//                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_A01, 0))";
+//                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_A01, 0))";
+//                        break;
+
+//                    default:
+//                        stockTarget = "'A01','B01'";
+//                        qtyCount_Days = "ISNULL(TblQty_Days.Qty_A01, 0) + ISNULL(TblQty_Days.Qty_12, 0)";
+//                        qtyCount_Year = "(ISNULL(TblQty_Year.Qty_A01, 0) + ISNULL(TblQty_Year.Qty_12, 0))";
+//                        qtyCount_Season = "(ISNULL(TblQty_Season.Qty_A01, 0) + ISNULL(TblQty_Season.Qty_12, 0))";
+//                        break;
+//                }
+
+
+//                #region search filter 
+
+//                if (search != null)
+//                {
+//                    //過濾空值
+//                    var thisSearch = search.Where(fld => !string.IsNullOrWhiteSpace(fld.Value));
+
+//                    //查詢內容
+//                    foreach (var item in thisSearch)
+//                    {
+//                        switch (item.Key)
+//                        {
+//                            case "ModelNo":
+//                                //拆解輸入字串(1PK-036S#GE-123#MT-810)
+//                                string[] aryID = Regex.Split(item.Value, "#");
+//                                ArrayList aryLst = new ArrayList(aryID);
+
+//                                /*
+//                                 GetSQLParam:SQL WHERE IN的方法  ,ex:UPPER(ModelNo) IN ({0})
+//                                */
+//                                /* [篩選條件], 品號 */
+//                                filterSQL += " AND (ModelNo IN ({0}))".FormatThis(CustomExtension.GetSQLParam(aryLst, "pModel"));
+
+
+//                                //SQL參數組成
+//                                for (int row = 0; row < aryID.Count(); row++)
+//                                {
+//                                    sqlParamList.Add(new SqlParameter("@pModel" + row, aryID[row]));
+//                                    sqlParamList_Cnt.Add(new SqlParameter("@pModel" + row, aryID[row]));
+//                                }
+
+//                                break;
+
+
+//                            case "SupID":
+//                                /* [篩選條件], 供應商ID */
+//                                filterSQL += " AND (Supply_ID = @SupID)";
+
+//                                //SQL參數組成
+//                                sqlParamList.Add(new SqlParameter("@SupID", item.Value));
+//                                sqlParamList_Cnt.Add(new SqlParameter("@SupID", item.Value));
+
+//                                break;
+
+//                            case "nDays":
+//                                //SQL參數組成
+//                                sqlParamList.Add(new SqlParameter("@setDays", item.Value));
+//                                sqlParamList_Cnt.Add(new SqlParameter("@setDays", item.Value));
+
+//                                break;
+
+//                            case "CustomFilter":
+//                                /* 指定範圍條件 */
+//                                switch (stockType)
+//                                {
+//                                    case "A":
+//                                        //12倉
+//                                        #region --12範圍條件--
+//                                        switch (item.Value)
+//                                        {
+//                                            case "A":
+//                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
+//                                                filterSQL += " AND ((StockQty_12 + PreIN_12 + PlanIN_12 - PreSell_12) < SafeQty_12)";
+//                                                break;
+
+//                                            case "B":
+//                                                /* (B) 催貨量 < 0 */
+//                                                filterSQL += " AND ((StockQty_12 - PreSell_12) < 0)";
+//                                                break;
+
+//                                            case "C":
+//                                                /* (C) 安全存量不為0 */
+//                                                filterSQL += " AND (SafeQty_12 <> 0)";
+//                                                break;
+
+//                                            case "D":
+//                                                /* (D) 預計進 > 0 */
+//                                                filterSQL += " AND (PreIN_12 > 0)";
+//                                                break;
+
+//                                            case "E":
+//                                                /* (E) 計劃進 > 0 */
+//                                                filterSQL += " AND (PlanIN_12 > 0)";
+//                                                break;
+
+//                                            case "F":
+//                                                /* (F) 虛擬預計銷 > 0 */
+//                                                filterSQL += " AND (VirPreSell > 0)";
+//                                                break;
+
+//                                            case "G":
+//                                                /* (G) 近n天用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days > 0)";
+//                                                break;
+
+//                                            case "H":
+//                                                /* (H) 近n天用量 = 0 */
+//                                                filterSQL += " AND (Qty_Days = 0)";
+//                                                break;
+
+//                                            case "I":
+//                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+//                                            case "J":
+//                                                /* (J) 安全存量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND (SafeQty_12 = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+
+//                                            case "L":
+//                                                /* (L) 可用量 12 > 0 */
+//                                                filterSQL += " AND ((StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) > 0)";
+//                                                break;
+
+//                                            case "M":
+//                                                /* 可用週轉月(M) ~ (S) */
+//                                                filterSQL += "AND (MonthTurn_12 < 1)";
+//                                                break;
+
+//                                            case "N":
+//                                                filterSQL += "AND (MonthTurn_12 < 2)";
+//                                                break;
+
+//                                            case "O":
+//                                                filterSQL += "AND (MonthTurn_12 < 2.5)";
+//                                                break;
+
+//                                            case "P":
+//                                                filterSQL += "AND (MonthTurn_12 < 3.5)";
+//                                                break;
+
+//                                            case "Q":
+//                                                filterSQL += "AND (MonthTurn_12 > 6)";
+//                                                break;
+
+//                                            case "R":
+//                                                filterSQL += "AND (MonthTurn_12 > 12)";
+//                                                break;
+
+//                                            case "S":
+//                                                filterSQL += "AND (MonthTurn_12 > 24)";
+//                                                break;
+
+//                                            default:
+//                                                break;
+//                                        }
+
+//                                        #endregion
+
+//                                        break;
+
+//                                    case "B":
+//                                        //A01倉
+//                                        #region --A01範圍條件--
+//                                        switch (item.Value)
+//                                        {
+//                                            case "A":
+//                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
+//                                                filterSQL += " AND ((StockQty_A01 + PreIN_A01 + PlanIN_A01 - PreSell_A01) < SafeQty_A01)";
+//                                                break;
+
+//                                            case "B":
+//                                                /* (B) 催貨量 < 0 */
+//                                                filterSQL += " AND ((StockQty_A01 - PreSell_A01) < 0)";
+//                                                break;
+
+//                                            case "C":
+//                                                /* (C) 安全存量不為0 */
+//                                                filterSQL += " AND (SafeQty_A01 <> 0)";
+//                                                break;
+
+//                                            case "D":
+//                                                /* (D) 預計進 > 0 */
+//                                                filterSQL += " AND (PreIN_A01 > 0)";
+//                                                break;
+
+//                                            case "E":
+//                                                /* (E) 計劃進 > 0 */
+//                                                filterSQL += " AND (PlanIN_A01 > 0)";
+//                                                break;
+
+//                                            case "F":
+//                                                /* (F) 虛擬預計銷 > 0 */
+//                                                filterSQL += " AND (VirPreSell > 0)";
+//                                                break;
+
+//                                            case "G":
+//                                                /* (G) 近n天用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days > 0)";
+//                                                break;
+
+//                                            case "H":
+//                                                /* (H) 近n天用量 = 0 */
+//                                                filterSQL += " AND (Qty_Days = 0)";
+//                                                break;
+
+//                                            case "I":
+//                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+//                                            case "J":
+//                                                /* (J) 安全存量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND (SafeQty_A01 = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+//                                            case "K":
+//                                                /* (K) 可用量 A01 > 0 */
+//                                                filterSQL += " AND ((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) > 0)";
+//                                                break;
+
+//                                            //case "L":
+//                                            //    /* (L) 可用量 12 > 0 */
+//                                            //    filterSQL += " AND ((StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) > 0)";
+//                                            //    break;
+
+//                                            case "M":
+//                                                /* 可用週轉月(M) ~ (S) */
+//                                                filterSQL += "AND (MonthTurn_A01 < 1)";
+//                                                break;
+
+//                                            case "N":
+//                                                filterSQL += "AND (MonthTurn_A01 < 2)";
+//                                                break;
+
+//                                            case "O":
+//                                                filterSQL += "AND (MonthTurn_A01 < 2.5)";
+//                                                break;
+
+//                                            case "P":
+//                                                filterSQL += "AND (MonthTurn_A01 < 3.5)";
+//                                                break;
+
+//                                            case "Q":
+//                                                filterSQL += "AND (MonthTurn_A01 > 6)";
+//                                                break;
+
+//                                            case "R":
+//                                                filterSQL += "AND (MonthTurn_A01 > 12)";
+//                                                break;
+
+//                                            case "S":
+//                                                filterSQL += "AND (MonthTurn_A01 > 24)";
+//                                                break;
+
+//                                            default:
+//                                                break;
+//                                        }
+
+//                                        #endregion
+//                                        break;
+
+//                                    default:
+//                                        //合併倉
+//                                        #region --合併倉範圍條件--
+//                                        switch (item.Value)
+//                                        {
+//                                            case "A":
+//                                                /* (A) 是否有擬定數量 = (庫存 + 預計進 + 計劃進 - 預計銷) < 安全存量 */
+//                                                filterSQL += " AND (((StockQty_A01 + PreIN_A01 + PlanIN_A01 - PreSell_A01) + (StockQty_12 + PreIN_12 + PlanIN_12 - PreSell_12)) < SafeQty_A01)";
+//                                                break;
+
+//                                            case "B":
+//                                                /* (B) 催貨量 < 0 */
+//                                                filterSQL += " AND (((StockQty_A01 - PreSell_A01) + (StockQty_12 - PreSell_12)) < 0)";
+//                                                break;
+
+//                                            case "C":
+//                                                /* (C) 安全存量不為0 */
+//                                                filterSQL += " AND ((SafeQty_A01 + SafeQty_12) <> 0)";
+//                                                break;
+
+//                                            case "D":
+//                                                /* (D) 預計進 > 0 */
+//                                                filterSQL += " AND ((PreIN_A01 + PreIN_12) > 0)";
+//                                                break;
+
+//                                            case "E":
+//                                                /* (E) 計劃進 > 0 */
+//                                                filterSQL += " AND ((PlanIN_A01 + PlanIN_12) > 0)";
+//                                                break;
+
+//                                            case "F":
+//                                                /* (F) 虛擬預計銷 > 0 */
+//                                                filterSQL += " AND (VirPreSell > 0)";
+//                                                break;
+
+//                                            case "G":
+//                                                /* (G) 近n天用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days > 0)";
+//                                                break;
+
+//                                            case "H":
+//                                                /* (H) 近n天用量 = 0 */
+//                                                filterSQL += " AND (Qty_Days = 0)";
+//                                                break;
+
+//                                            case "I":
+//                                                /* (I) 近n天用量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND (Qty_Days = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+//                                            case "J":
+//                                                /* (J) 安全存量 = 0, 可用量 > 0 */
+//                                                filterSQL += " AND ((SafeQty_A01 + SafeQty_12) = 0) AND (UsefulQty > 0)";
+//                                                break;
+
+//                                            //case "K":
+//                                            //    /* (K) 可用量 A01 > 0 */
+//                                            //    filterSQL += " AND ((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) > 0)";
+//                                            //    break;
+
+//                                            case "L":
+//                                                /* (L) 可用量 > 0 */
+//                                                filterSQL += " AND (((StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) + (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12)) > 0)";
+//                                                break;
+
+//                                            case "M":
+//                                                /* 可用週轉月(M) ~ (S) */
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 1)";
+//                                                break;
+
+//                                            case "N":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 2)";
+//                                                break;
+
+//                                            case "O":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 2.5)";
+//                                                break;
+
+//                                            case "P":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) < 3.5)";
+//                                                break;
+
+//                                            case "Q":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 6)";
+//                                                break;
+
+//                                            case "R":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 12)";
+//                                                break;
+
+//                                            case "S":
+//                                                filterSQL += "AND ((MonthTurn_A01 + MonthTurn_12) > 24)";
+//                                                break;
+
+//                                            default:
+//                                                break;
+//                                        }
+
+//                                        #endregion
+//                                        break;
+//                                }
+
+
+//                                break;
+
+//                        }
+//                    }
+//                }
+//                #endregion
+
+//                #endregion
+
+
+//                #region >> [前置作業] SQL主體 <<
+
+//                mainSql = @"
+///* 預計銷(訂單):TD016 = 結案碼, TD021 = 確認碼 */
+//;WITH Tbl_PreSell AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS PreSell_12, p.[A01] AS PreSell_A01
+//	FROM (
+//		SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS PreSell
+//		 , RTRIM(TD004) AS ModelNo
+//		 , TD007 AS StockType
+//		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01'))
+//		GROUP BY TD004, TD007
+//	) t 
+//	PIVOT (
+//		SUM(PreSell)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 虛擬預計銷(訂單):TD016 = 結案碼, TD021 = 確認碼 */
+//, Tbl_VirPreSell AS (
+//	SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS VirPreSell
+//	 , RTRIM(TD004) AS ModelNo
+//	FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
+//	WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD001 = '22C1')
+//	GROUP BY TD004
+//)
+
+///* 虛擬入(訂單):TD016 = 結案碼, TD021 = 確認碼 */
+//, Tbl_VirIn AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS VirIn_12, p.[A01] AS VirIn_A01
+//	FROM (
+//		SELECT ISNULL(SUM(TD008 - TD009 + TD024 - TD025), 0) AS VirIn
+//		 , RTRIM(TD004) AS ModelNo
+//		 , TD007 AS StockType
+//		FROM [##DBName##].dbo.COPTD WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (TD016 = 'N') AND (TD021 = 'Y') AND (TD007 IN ('12', 'A01')) AND (TD001 = '2262')
+//		GROUP BY TD004, TD007
+//	) t 
+//	PIVOT (
+//		SUM(VirIn)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 預計進(採購單):TD016 = 結案碼, TD018 = 確認碼 */
+//, Tbl_PreIN AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS PreIN_12, p.[A01] AS PreIN_A01
+//	FROM (
+//		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PreIN
+//		 , RTRIM(TD004) AS ModelNo
+//		 , TD007 AS StockType
+//		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (TD016 = 'N') AND (TD018 = 'Y') AND (TD007 IN ('12', 'A01'))
+//		GROUP BY TD004, TD007
+//	) t 
+//	PIVOT (
+//		SUM(PreIN)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 計劃進(採購單):TD016 = 結案碼, TD018 = 確認碼 */
+//, Tbl_PlanIN AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS PlanIN_12, p.[A01] AS PlanIN_A01
+//	FROM (
+//		SELECT ISNULL(SUM(TD008 - TD015), 0) AS PlanIN
+//		 , RTRIM(TD004) AS ModelNo
+//		 , TD007 AS StockType
+//		FROM [##DBName##].dbo.PURTD WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (TD016 = 'N') AND (TD018 = 'N') AND (TD007 IN ('12', 'A01'))
+//		GROUP BY TD004, TD007
+//	) t 
+//	PIVOT (
+//		SUM(PlanIN)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 預計領:TA013,確認碼 <> 'V', TA011,狀態碼 = 1,2,3 */
+//, Tbl_PreGet AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS PreGet_12, p.[A01] AS PreGet_A01
+//	FROM (
+//		SELECT SUM(TB004 - TB005) AS PreGet
+//		 , RTRIM(TA006) AS ModelNo
+//		 , TA020 AS StockType
+//		FROM [##DBName##].dbo.MOCTA AS A WITH(NOLOCK)
+//		 INNER JOIN [##DBName##].dbo.MOCTB AS B WITH(NOLOCK) ON A.TA001 = B.TB001 AND A.TA002 = B.TB002 AND A.TA006 = B.TB003
+//		WHERE (A.TA013 <> 'V') AND (A.TA011 IN ('1', '2', '3'))
+//		 /* [指定條件] 所有庫別 */
+//		 AND (A.TA020 IN ('12', 'A01'))
+//		GROUP BY TA006, TA020
+//	) t 
+//	PIVOT (
+//		SUM(PreGet)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 計劃領 */
+//, Tbl_PlanOut AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS OutQty_12, p.[A01] AS OutQty_A01
+//	FROM (
+//		SELECT TB007 AS OutQty, RTRIM(TB005) AS ModelNo, TB008 AS StockType
+//		FROM [##DBName##].dbo.LRPTB WITH(NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (TB008 IN ('12', 'A01'))
+//	) t 
+//	PIVOT (
+//		SUM(OutQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* 庫存 */
+//, Tbl_Stock AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS StockQty_12, p.[A01] AS StockQty_A01
+//	FROM (
+//		SELECT MC007 AS StockQty, RTRIM(MC001) AS ModelNo, MC002 AS StockType
+//		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
+//	) t 
+//	PIVOT (
+//		SUM(StockQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+///* 安全庫存 */
+//, Tbl_SafeStock AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS SafeQty_12, p.[A01] AS SafeQty_A01
+//	FROM (
+//		SELECT MC004 AS StockQty, RTRIM(MC001) AS ModelNo, MC002 AS StockType
+//		FROM [##DBName##].dbo.INVMC WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (MC002 IN ('12', 'A01')) AND (MC001 <> '')
+//	) t 
+//	PIVOT (
+//		SUM(StockQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* [欄位] - 近n天用量 (參數:nDays)(A01) */
+//, TblQty_Days AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
+//	FROM (
+//		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
+//		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
+//		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
+//		 AND (
+//			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111),'/', '')
+//				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
+//			)
+//	) t 
+//	PIVOT (
+//		SUM(sumQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* [欄位] - 全年平均月用量 */
+//, TblQty_Year AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
+//	FROM (
+//		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
+//		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
+//		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
+//		 AND (
+//			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
+//				AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', '')
+//			)
+//	) t 
+//	PIVOT (
+//		SUM(sumQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+///* [欄位] - 去年當季平均用量 */
+//, TblQty_Season AS (
+//	SELECT p.ModelNo
+//	 , p.[12] AS Qty_12, p.[A01] AS Qty_A01
+//	FROM (
+//		SELECT LA011 AS sumQty, RTRIM(LA001) AS ModelNo, LA009 AS StockType
+//		FROM [##DBName##].dbo.INVLA WITH (NOLOCK)
+//		/* [指定條件] 所有庫別 */
+//		WHERE (LA005 = '-1') AND (LA009 IN ('12', 'A01'))
+//		 AND (LA006 IN ('2341','2342','2343','2345','23B1','23B2','23B3','23B4','23B6'))
+//		 AND (
+//			LA004 BETWEEN REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - 365, GETDATE()), 111), '/', '')
+//				AND REPLACE(CONVERT(VARCHAR(10), GETDATE() - 275, 111), '/', '')
+//			)
+//	) t 
+//	PIVOT (
+//		SUM(sumQty)
+//		FOR StockType IN ([12], [A01])
+//	) p
+//)
+
+//, Tbl_WaitQty AS (
+///*
+//	[欄位] - 待驗收(TH007)(A01)
+//	QMSTA 進貨檢驗單單頭檔
+//	PURTH 進貨單單身檔
+//	TA001, TH001 = 單別
+//	TA002, TH002 = 單號
+//	TA003, TH003 = 序號
+//	TA014, TH030 = 確認碼
+//	TH004 = 品號
+//*/
+//	SELECT RTRIM(PURTH.TH004) AS ModelNo, PURTH.TH007 AS WaitQty
+//	FROM [##DBName##].dbo.QMSTA WITH (NOLOCK)
+//		INNER JOIN [##DBName##].dbo.PURTH WITH (NOLOCK) ON QMSTA.TA001 = PURTH.TH001 AND QMSTA.TA002 = PURTH.TH002 AND QMSTA.TA003 = PURTH.TH003
+//	/* [指定條件] 單一庫別 */
+//	WHERE (QMSTA.TA014 = 'N') AND (PURTH.TH030 = 'N') AND (PURTH.TH009 IN (##tarStock##))	 
+//)
+
+//, Tbl_PurCnt AS (
+//	/* 進貨筆數加總(依指定天數)(參數:nDays)(A01) */
+//	SELECT RTRIM(PURTH.TH004) AS ModelNo, COUNT(*) AS CNT
+//	FROM [##DBName##].dbo.PURTG WITH (NOLOCK)
+//		INNER JOIN [##DBName##].dbo.PURTH WITH (NOLOCK) ON PURTG.TG001 = PURTH.TH001 AND PURTG.TG002 = PURTH.TH002
+//	/* [指定條件] 單一庫別 */
+//	WHERE (PURTH.TH009 IN (##tarStock##))
+//	 AND (PURTG.TG003 BETWEEN 
+//		REPLACE(CONVERT(VARCHAR(10), DATEADD(day, - @nDays, GETDATE()), 111), '/', '') 
+//		AND REPLACE(CONVERT(VARCHAR(10), DATEADD(day, 0, GETDATE()), 111), '/', ''))
+//	GROUP BY PURTH.TH004
+//)
+//                    ";
+//                //置入條件SQL
+//                mainSql = mainSql.Replace("##tarStock##", stockTarget);
+//                mainSql = mainSql.Replace("##DBName##", dbName);
+
+//                #endregion
+
+
+//                #region >> SQL欄位 <<
+//                columnSql = @"
+//	SELECT TblPrint.*
+//		, RANK() OVER(ORDER BY TblPrint.ModelNo) AS RowIdx
+//	FROM (
+//		SELECT TblSection.* 
+//			/* 催貨量 = 庫存 - 預計銷 */
+//			, (StockQty_A01 - PreSell_A01) AS PushQty
+
+//			/* 可用量 A01 = 庫存 + 預計進 - 預計銷 + 計劃進 */
+//			, (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) AS UsefulQty_A01
+//			/* 可用量 12 = 庫存 + 預計進 - 預計銷 + 計劃進 -預計領 - 計劃領 */
+//			, (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) AS UsefulQty_12
+
+//			/*
+//			   擬定數量 = {
+//				 SET X = (庫存 + 預計進 + 計劃進 - 預計銷)
+//				 SET Y = ABS(安全存量 - X);
+//				 IF X >= 安全存量 THEN 0
+//				 ELSEIF Y > 最低補量 THEN ABS(Y)
+//				 ELSE 最低補量
+//				}
+//			*/
+//			, (CASE WHEN (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) >= SafeQty_A01 THEN 0
+//				WHEN ABS(SafeQty_A01 - (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01)) <= Min_Supply THEN Min_Supply
+//				ELSE ABS(SafeQty_A01 - (StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01))
+//				END) AS QTM_A01
+//			, (CASE WHEN (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12) >= SafeQty_12 THEN 0
+//				WHEN ABS(SafeQty_12 - (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12)) <= Min_Supply THEN Min_Supply
+//				ELSE ABS(SafeQty_12 - (StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12))
+//				END) AS QTM_12
+
+//			/* 可用週轉月<MonthTurn_A01> A01 = (可用量 A01 / 年平均月用量) */
+//			, (CASE WHEN Qty_Year = 0 THEN 0
+//				ELSE
+//					CONVERT(FLOAT,ROUND(
+//						(StockQty_A01 + PreIN_A01 - PreSell_A01 + PlanIN_A01) / Qty_Year
+//					, 2))
+//				END) AS MonthTurn_A01
+
+//			/* 可用週轉月<MonthTurn_12> 12 = (可用量 12 / 年平均月用量) */
+//			, (CASE WHEN Qty_Year = 0 THEN 0
+//				ELSE
+//					CONVERT(FLOAT,ROUND(
+//						(StockQty_12 + PreIN_12 - PreSell_12 + PlanIN_12 - PreGet_12 - PlanOut_12) / Qty_Year
+//					, 2))
+//				END) AS MonthTurn_12
+
+//			/* 現有周轉月<NowMonthTurn_A01> ,依表指定A01 = ((庫存 - 預計銷) / 年平均月用量) */
+//			, (CASE WHEN Qty_Year = 0 THEN 0
+//				ELSE
+//					CONVERT(FLOAT,ROUND(
+//						(StockQty_A01 - PreSell_A01) / Qty_Year
+//					, 2))
+//				END) AS NowMonthTurn_A01
+
+//			/* 現有周轉月<NowMonthTurn_12> ,依表指定合併 = (總庫存 - 總預計銷 - 預計領12) / 年平均月用量 */
+//			, (CASE WHEN Qty_Year = 0 THEN 0
+//				ELSE
+//					CONVERT(FLOAT,ROUND(
+//						(StockQty_12 - (PreSell_A01 + PreSell_12) - PreGet_12) / Qty_Year
+//					, 2))
+//				END) AS NowMonthTurn_12
+//		FROM (
+//			SELECT RTRIM(INVMB.MB001) AS ModelNo
+//			 , INVMA.MA003 AS Item_Type /* 屬性 */
+//			 , RTRIM(INVMB.MB002) AS ModelName /* 品名 */
+//			 , ISNULL(REPLACE(INVMB.MB207, 'NULL', ''), '') AS ProdVol /* VOL */
+//			 , ISNULL(REPLACE(INVMB.MB208, 'NULL', ''), '') AS ProdPage /* PAGE */
+//			 , ISNULL(TblCheckPrice.Currency, '') AS Currency
+// 			 , CONVERT(FLOAT, ISNULL(TblCheckPrice.checkPrice, 0)) AS checkPrice /* 核價單價 */
+//			 , CONVERT(INT, ISNULL(Tbl_WaitQty.WaitQty, 0)) AS WaitQty /* 待驗收 */
+//			 , CONVERT(INT, ISNULL(Tbl_Stock.StockQty_A01, 0)) AS StockQty_A01 /* 庫存 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_SafeStock.SafeQty_A01, 0)) AS SafeQty_A01 /* 安全存量 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreIN.PreIN_A01, 0)) AS PreIN_A01 /* 預計進 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_VirIn.VirIn_A01, 0)) AS VirIn_A01 /* 虛擬入 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_PlanIN.PlanIN_A01, 0)) AS PlanIN_A01 /* 計劃進 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreSell.PreSell_A01, 0)) AS PreSell_A01 /* 預計銷 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreGet.PreGet_A01, 0)) AS PreGet_A01 /* 預計領 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_PlanOut.OutQty_A01, 0)) AS PlanOut_A01 /* 計劃領 A01 */
+//			 , CONVERT(INT, ISNULL(Tbl_Stock.StockQty_12, 0)) AS StockQty_12 /* 庫存 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_SafeStock.SafeQty_12, 0)) AS SafeQty_12 /* 安全存量 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreIN.PreIN_12, 0)) AS PreIN_12 /* 預計進 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_VirIn.VirIn_12, 0)) AS VirIn_12 /* 虛擬入 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_PlanIN.PlanIN_12, 0)) AS PlanIN_12 /* 計劃進 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreSell.PreSell_12, 0)) AS PreSell_12 /* 預計銷 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_PreGet.PreGet_12, 0)) AS PreGet_12 /* 預計領 12 */
+//			 , CONVERT(INT, ISNULL(Tbl_PlanOut.OutQty_12, 0)) AS PlanOut_12 /* 計劃領 12 */
+//             , CONVERT(FLOAT, ##qtyDay##) AS Qty_Days /* 近N天用量 (依表指定A01/12) */
+//			 , CONVERT(FLOAT, ROUND(##qtyYear## / 12, 0)) AS Qty_Year /* 全年平均月用量(除12) (依表指定A01/12) */
+//             , CONVERT(FLOAT, ROUND(##qtySeason## / 3, 0)) AS Qty_Season /* 去年當季平均用量(除3) (依表指定A01/12) */
+//			 , CONVERT(INT, ISNULL(Tbl_VirPreSell.VirPreSell, 0)) AS VirPreSell /* 虛擬預計銷(ALL) */
+//			 , CONVERT(INT, ISNULL(Tbl_PurCnt.CNT, 0)) AS CNT /* 進貨筆數加總(依指定天數)(依表指定A01/12) */
+//			 , CONVERT(INT, INVMB.MB039) AS Min_Supply /* 最低補量 */
+//			 , CONVERT(INT, INVMB.MB201) AS InBox_Qty /* 內盒數量 */
+//			 , CONVERT(INT, INVMB.MB073) AS Qty_Packing /* 一箱數量 */
+//			 , CONVERT(FLOAT, INVMB.MB071) AS OutBox_Cuft /* 整箱材積 */
+//             , CONVERT(INT, ISNULL(INVMB.MB220, 0)) AS MOQ /* 銷售MOQ */
+//			 , RTRIM(INVMB.MB202) AS Sub_item /* 產銷訊息 */
+//			 , PURMA.MA002 AS Supplier /* 供應商 */
+//			 , RTRIM(PURMA.MA001) AS Supply_ID
+//			FROM [##DBName##].dbo.INVMB WITH (NOLOCK) 
+//			 INNER JOIN [##DBName##].dbo.PURMA ON INVMB.MB032 = PURMA.MA001
+//			 INNER JOIN [##DBName##].dbo.INVMA ON INVMA.MA002 = INVMB.MB008
+//			 INNER JOIN [##DBName##].dbo.INVMC ON INVMB.MB001 = INVMC.MC001 AND INVMC.MC002 IN (##tarStock##) /* [指定條件] 單一庫別 */
+//			 LEFT JOIN Tbl_Stock ON INVMB.MB001 = Tbl_Stock.ModelNo
+//			 LEFT JOIN Tbl_SafeStock ON INVMB.MB001 = Tbl_SafeStock.ModelNo
+//			 LEFT JOIN Tbl_PreIN ON INVMB.MB001 = Tbl_PreIN.ModelNo
+//			 LEFT JOIN Tbl_PlanIN ON INVMB.MB001 = Tbl_PlanIN.ModelNo
+//			 LEFT JOIN Tbl_PreSell ON INVMB.MB001 = Tbl_PreSell.ModelNo
+//			 LEFT JOIN Tbl_VirIn ON INVMB.MB001 = Tbl_VirIn.ModelNo
+//			 LEFT JOIN Tbl_VirPreSell ON INVMB.MB001 = Tbl_VirPreSell.ModelNo
+//			 LEFT JOIN Tbl_PreGet ON INVMB.MB001 = Tbl_PreGet.ModelNo
+//			 LEFT JOIN TblQty_Days ON INVMB.MB001 = TblQty_Days.ModelNo
+//			 LEFT JOIN TblQty_Year ON INVMB.MB001 = TblQty_Year.ModelNo
+//			 LEFT JOIN TblQty_Season ON INVMB.MB001 = TblQty_Season.ModelNo
+//			 LEFT JOIN Tbl_WaitQty ON INVMB.MB001 = Tbl_WaitQty.ModelNo
+//			 LEFT JOIN Tbl_PurCnt ON INVMB.MB001 = Tbl_PurCnt.ModelNo
+//			 LEFT JOIN Tbl_PlanOut ON INVMB.MB001 = Tbl_PlanOut.ModelNo
+
+//			 /* 採購單資料 S (資料量大,不放在CTE) */
+//			 LEFT JOIN (
+//				SELECT
+//				(CASE WHEN ChkTb_1.ModelNo IS NULL THEN ChkTb_2.ModelNo ELSE ChkTb_1.ModelNo END) AS ModelNo 
+//				, (CASE WHEN ChkTb_1.checkPrice IS NULL THEN ChkTb_2.Price ELSE ChkTb_1.checkPrice END) AS checkPrice
+//				, (CASE WHEN ChkTb_1.SupID IS NULL THEN ChkTb_2.SupID ELSE ChkTb_1.SupID END) AS SupID
+//				, (CASE WHEN ChkTb_1.Currency IS NULL THEN ChkTb_2.Currency ELSE ChkTb_1.Currency END) AS Currency
+//				FROM (
+//					/*
+//					採購核價單
+//					[單頭]
+//					TL004 廠商代號 (Group Key)
+//					TL005 幣別
+//					TL003 核價日期 (ORDER BY)
+
+//					[單身]
+//					TM004 品號 (Group Key)
+//					TM010 單價
+//					TM015 失效日 = '' (條件)
+//					*/
+//					SELECT ChkPrice.ModelNo, ChkPrice.checkPrice, ChkPrice.SupID, ChkPrice.Currency
+//					FROM (
+//						SELECT Base.TL004 AS SupID, Base.TL005 AS Currency, DT.TM004 AS ModelNo, ISNULL(DT.TM010, 0) AS checkPrice
+//						, RANK() OVER (
+//							PARTITION BY Base.TL004, DT.TM004
+//							ORDER BY Base.TL003 DESC
+//						) AS myTbSeq	
+//						FROM [##DBName##].dbo.PURTL Base WITH(NOLOCK)
+//						 INNER JOIN [##DBName##].dbo.PURTM DT WITH(NOLOCK) ON Base.TL001 = DT.TM001 AND Base.TL002 = DT.TM002
+//						WHERE (Base.TL006 = 'Y') AND (DT.TM015 = '')
+//					) AS ChkPrice
+//					WHERE ChkPrice.myTbSeq = 1
+//				) AS ChkTb_1
+//				FULL OUTER JOIN
+//				(
+//					/*
+//					最近採購單價格
+//					[單頭]
+//					TG005 供應商代號
+//					TG007 幣別
+
+//					[單身]
+//					TH018 原幣單位進價
+//					TH004 品號 (Group Key)
+//					TH009 庫別 (條件)
+//					TH014 驗收日期 (ORDER BY)
+//					*/
+//					SELECT ChkDay.ModelNo, ChkDay.Price, ChkDay.SupID, ChkDay.Currency
+//					FROM (
+//						SELECT Base.TG005 AS SupID, Base.TG007 AS Currency, DT.TH004 AS ModelNo, ISNULL(DT.TH018, 0) AS Price
+//						, RANK() OVER (
+//							PARTITION BY DT.TH004
+//							ORDER BY DT.TH014 DESC, DT.TH001, DT.TH002 DESC
+//						) AS myTbSeq	
+//						FROM [##DBName##].dbo.PURTG Base WITH(NOLOCK)
+//							INNER JOIN [##DBName##].dbo.PURTH DT WITH(NOLOCK) ON Base.TG001 = DT.TH001 AND Base.TG002 = DT.TH002
+//						/* [指定條件] 單一庫別 */
+//						WHERE (DT.TH009 IN (##tarStock##))
+//					) AS ChkDay
+//					WHERE ChkDay.myTbSeq = 1
+//				) AS ChkTb_2
+//				ON ChkTb_1.ModelNo = ChkTb_2.ModelNo
+//			 ) AS TblCheckPrice ON TblCheckPrice.SupID = PURMA.MA001 and TblCheckPrice.ModelNo = INVMB.MB001
+//			 /* 採購單資料 E */
+
+//		) AS TblSection /* 算式欄位整理 */
+//	) AS TblPrint /* 條件式&列數 */
+//	WHERE (1=1)
+//";
+//                //置入條件SQL
+//                columnSql = columnSql.Replace("##tarStock##", stockTarget);
+//                columnSql = columnSql.Replace("##DBName##", dbName);
+//                columnSql = columnSql.Replace("##qtyDay##", qtyCount_Days);
+//                columnSql = columnSql.Replace("##qtyYear##", qtyCount_Year);
+//                columnSql = columnSql.Replace("##qtySeason##", qtyCount_Season);
+
+//                #endregion
+
+
+//                #region >> 主要資料SQL查詢 <<
+
+//                //----- 資料取得 -----
+//                using (SqlCommand cmd = new SqlCommand())
+//                {
+//                    //----- SQL 查詢語法 -----
+//                    //宣告語法
+//                    sql.Append(sqlDeclare);
+
+//                    //前置主體語法
+//                    sql.Append(mainSql);
+
+//                    sql.AppendLine("SELECT TblAll.* FROM (");
+
+//                    //欄位語法
+//                    sql.Append(columnSql);
+
+//                    //條件語法
+//                    sql.AppendLine(filterSQL);
+
+//                    sql.AppendLine(") AS TblAll");
+//                    sql.AppendLine(" WHERE (TblAll.RowIdx >= @startRow) AND (TblAll.RowIdx <= @endRow)");
+//                    sql.AppendLine(" ORDER BY TblAll.RowIdx");
+
+
+//                    //----- SQL 執行 -----
+//                    cmd.CommandText = sql.ToString();
+//                    cmd.Parameters.Clear();
+//                    cmd.CommandTimeout = 360;   //單位:秒
+
+//                    //----- SQL 固定參數 -----
+//                    sqlParamList.Add(new SqlParameter("@startRow", cntStartRow));
+//                    sqlParamList.Add(new SqlParameter("@endRow", cntEndRow));
+
+
+//                    //加入參數陣列
+//                    cmd.Parameters.AddRange(sqlParamList.ToArray());
+
+//                    //Execute
+//                    myDT = dbConn.LookupDT(cmd, out ErrMsg);
+
+//                }
+
+//                #endregion
+
+
+//                #region >> 資料筆數SQL查詢 <<
+//                using (SqlCommand cmdCnt = new SqlCommand())
+//                {
+//                    //----- SQL 查詢語法 -----
+//                    sql.Clear();
+
+//                    //宣告語法
+//                    sql.Append(sqlDeclare);
+
+//                    //前置主體語法
+//                    sql.Append(mainSql);
+
+//                    sql.AppendLine("SELECT COUNT(*) AS TotalCnt FROM (");
+
+//                    //欄位語法
+//                    sql.Append(columnSql);
+
+//                    //條件語法
+//                    sql.AppendLine(filterSQL);
+
+//                    sql.AppendLine(") AS TblAll");
+
+
+//                    //----- SQL 執行 -----
+//                    cmdCnt.CommandText = sql.ToString();
+//                    cmdCnt.Parameters.Clear();
+//                    cmdCnt.CommandTimeout = 360;   //單位:秒
+
+//                    //----- SQL 條件參數 -----
+//                    //加入參數陣列
+//                    cmdCnt.Parameters.AddRange(sqlParamList_Cnt.ToArray());
+
+//                    //Execute
+//                    using (DataTable DTCnt = dbConn.LookupDT(cmdCnt, out ErrMsg))
+//                    {
+//                        //資料總筆數
+//                        if (DTCnt.Rows.Count > 0)
+//                        {
+//                            DataCnt = Convert.ToInt32(DTCnt.Rows[0]["TotalCnt"]);
+//                        }
+//                    }
+
+//                    //*** 在SqlParameterCollection同個循環內不可有重複的SqlParam,必須清除才能繼續使用. ***
+//                    cmdCnt.Parameters.Clear();
+//                }
+//                #endregion
+
+
+//                /* 資料整理 */
+//                //LinQ 查詢
+//                var query = myDT.AsEnumerable();
+
+//                //資料迴圈
+//                foreach (var item in query)
+//                {
+//                    int _UsefulQty_A01 = item.Field<int>("UsefulQty_A01");
+//                    int _UsefulQty_12 = item.Field<int>("UsefulQty_12");
+//                    int _QTM_A01 = item.Field<int>("QTM_A01");
+//                    int _QTM_12 = item.Field<int>("QTM_12");
+//                    double _Qty_Year = item.Field<double>("Qty_Year");
+//                    double _QTM_Month = 0;
+//                    int _RealPreSell = 0;
+//                    int _VirPreSell = item.Field<int>("VirPreSell");
+//                    int _PreSell_12 = item.Field<int>("PreSell_12");
+//                    int _PreSell_A01 = item.Field<int>("PreSell_A01");
+
+//                    /*
+//                        總擬定數可用周轉月<_QTM_Month> = ((可用量<UsefulQty_A01> + 擬定數量<QTM_A01>) / 年平均月用量<Qty_Year>)
+//                        實際預計銷 = 預計銷 - 虛擬預計銷
+//                    */
+//                    switch (stockType)
+//                    {
+//                        case "A":
+//                            //12倉
+//                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_A01 + _QTM_A01) / _Qty_Year : 0;
+//                            _RealPreSell = _PreSell_12 - _VirPreSell;
+//                            break;
+
+//                        case "B":
+//                            //A01倉
+//                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_12 + _QTM_12) / _Qty_Year : 0;
+//                            _RealPreSell = _PreSell_A01 - _VirPreSell;
+//                            break;
+
+//                        default:
+//                            _QTM_Month = _Qty_Year > 0 ? (_UsefulQty_A01 + _QTM_A01 + _UsefulQty_12 + _QTM_12) / _Qty_Year : 0;
+//                            _RealPreSell = (_PreSell_12 + _PreSell_A01) - _VirPreSell;
+//                            break;
+//                    }
+
+//                    //加入項目
+//                    var data = new PurPlanList
+//                    {
+//                        ModelNo = item.Field<string>("ModelNo"),
+//                        Item_Type = item.Field<string>("Item_Type"),
+//                        ModelName = item.Field<string>("ModelName"),
+//                        ProdVol = item.Field<string>("ProdVol"),
+//                        ProdPage = item.Field<string>("ProdPage"),
+//                        Currency = item.Field<string>("Currency"), /* 核價幣別<Currency> */
+//                        checkPrice = item.Field<double>("checkPrice"), /* 核價單價<checkPrice> */
+//                        WaitQty = item.Field<int>("WaitQty"), /* 待驗收<WaitQty> */
+//                        StockQty_A01 = item.Field<int>("StockQty_A01"), /* 庫存<StockQty_A01> */
+//                        SafeQty_A01 = item.Field<int>("SafeQty_A01"), /* 安全存量<SafeQty_A01> */
+//                        PreIN_A01 = item.Field<int>("PreIN_A01"), /* 預計進<PreIN_A01> */
+//                        VirIn_A01 = item.Field<int>("VirIn_A01"), /* 虛擬入<VirIn_A01> */
+//                        PlanIN_A01 = item.Field<int>("PlanIN_A01"), /* 計劃進<PlanIN_A01> */
+//                        PreSell_A01 = _PreSell_A01, /* 預計銷<PreSell_A01> */
+//                        PreGet_A01 = item.Field<int>("PreGet_A01"), /* 預計領<PreGet_A01> */
+//                        PlanOut_A01 = item.Field<int>("PlanOut_A01"), /* 計劃領<PlanOut_A01> */
+//                        StockQty_12 = item.Field<int>("StockQty_12"), /* 庫存<StockQty_12> */
+//                        SafeQty_12 = item.Field<int>("SafeQty_12"), /* 安全存量<SafeQty_12> */
+//                        PreIN_12 = item.Field<int>("PreIN_12"), /* 預計進<PreIN_12> */
+//                        VirIn_12 = item.Field<int>("VirIn_12"), /* 虛擬入<VirIn_12> */
+//                        PlanIN_12 = item.Field<int>("PlanIN_12"), /* 計劃進<PlanIN_12> */
+//                        PreSell_12 = _PreSell_12, /* 預計銷<PreSell_12> */
+//                        PreGet_12 = item.Field<int>("PreGet_12"), /* 預計領<PreGet_12> */
+//                        PlanOut_12 = item.Field<int>("PlanOut_12"), /* 計劃領<PlanOut_12> */
+//                        Qty_Days = item.Field<double>("Qty_Days"), /* 近N天用量<Qty_Days> */
+//                        Qty_Year = _Qty_Year, /* 全年平均月用量<Qty_Year> */
+//                        Qty_Season = item.Field<double>("Qty_Season"), /* 去年當季平均用量<Qty_Season> */
+//                        VirPreSell = item.Field<int>("VirPreSell"), /* 虛擬預計銷<VirPreSell> */
+//                        CNT = item.Field<int>("CNT"), /* 進貨筆數加總<CNT> */
+//                        Min_Supply = item.Field<int>("Min_Supply"), /* 最低補量<Min_Supply> */
+//                        InBox_Qty = item.Field<int>("InBox_Qty"), /* 內盒數量<InBox_Qty> */
+//                        Qty_Packing = item.Field<int>("Qty_Packing"), /* 一箱數量<Qty_Packing> */
+//                        OutBox_Cuft = item.Field<double>("OutBox_Cuft"), /* 整箱材積<OutBox_Cuft> */
+//                        MOQ = item.Field<int>("MOQ"), /* 銷售MOQ<MOQ> */
+//                        ProdMsg = item.Field<string>("Sub_item"), /* 產銷訊息<ProdMsg> */
+//                        Supplier = item.Field<string>("Supplier"), /* 供應商Name<Supplier> */
+//                        Supply_ID = item.Field<string>("Supply_ID"), /* 供應商ID<Supply_ID> */
+//                        PushQty = item.Field<int>("PushQty"), /* 催貨量<PushQty> */
+//                        UsefulQty_A01 = _UsefulQty_A01, /* 可用量<UsefulQty_A01> */
+//                        UsefulQty_12 = _UsefulQty_12, /* 可用量<UsefulQty_12> */
+//                        QTM_A01 = _QTM_A01, /* 擬定數量<QTM_A01> */
+//                        QTM_12 = _QTM_12, /* 擬定數量<QTM_12> */
+//                        MonthTurn_A01 = Math.Round(item.Field<double>("MonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_A01> */
+//                        MonthTurn_12 = Math.Round(item.Field<double>("MonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 可用週轉月<MonthTurn_12> */
+//                        NowMonthTurn_A01 = Math.Round(item.Field<double>("NowMonthTurn_A01"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_A01> */
+//                        NowMonthTurn_12 = Math.Round(item.Field<double>("NowMonthTurn_12"), 2, MidpointRounding.AwayFromZero), /* 現有周轉月<NowMonthTurn_12> */
+//                        QTM_Month = Math.Round(_QTM_Month, 2, MidpointRounding.AwayFromZero), /* 總擬定數可用周轉月<QTM_Month> */
+//                        RealPreSell = _RealPreSell, /* 實際預計銷<RealPreSell> */
+//                        RowIdx = item.Field<Int64>("RowIdx")
+//                    };
+
+
+//                    //將項目加入至集合
+//                    dataList.Add(data);
+
+//                }
+
+//                //回傳集合
+//                return dataList.AsQueryable();
+
+
+//            }
+//            catch (Exception ex)
+//            {
+
+//                throw new Exception(ex.Message.ToString() + "_Error:_" + ErrMsg);
+//            }
+//        }
 
         #endregion *** 訂貨計劃 E ***
 

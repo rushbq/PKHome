@@ -25,10 +25,10 @@
                 <!-- 表頭 -->
                 <thead>
                     <tr>
-                        <td width="240" height="40" colspan="4">接單日期：
+                        <td width="240" height="40" colspan="4">訂單日期：
                             <asp:Literal ID="lt_OrderDate" runat="server"></asp:Literal>
                         </td>
-                        <td width="380" colspan="7">核單日期：
+                        <td width="380" colspan="7">單據日期：
                             <asp:Literal ID="lt_CheckDate" runat="server"></asp:Literal>
                         </td>
                         <td width="278" colspan="3">訂單編號：

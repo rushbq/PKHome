@@ -310,13 +310,19 @@
                         <tr>
                             <td style="width: 10%;"></td>
                             <td style="width: 30%;">
-                                <asp:Literal ID="lt_MicTxt1" runat="server"></asp:Literal>
+                                <asp:Literal ID="lt_MicTxt1_New" runat="server"></asp:Literal>
+                                <div style="text-align: center">
+                                    <asp:Literal ID="lt_MicPic1_New" runat="server"></asp:Literal>
+                                </div>
                             </td>
                             <td style="width: 10%;"></td>
 
                             <td style="width: 10%;"></td>
                             <td style="width: 30%;">
-                                <asp:Literal ID="lt_MicTxt2" runat="server"></asp:Literal>
+                                <asp:Literal ID="lt_MicTxt2_New" runat="server"></asp:Literal>
+                                <div style="text-align: center">
+                                    <asp:Literal ID="lt_MicPic2_New" runat="server"></asp:Literal>
+                                </div>
                             </td>
                             <td style="width: 10%;"></td>
                         </tr>
@@ -330,13 +336,19 @@
                         <tr>
                             <td style="width: 10%;"></td>
                             <td style="width: 30%;">
-                                <asp:Literal ID="lt_OldMicTxt1" runat="server"></asp:Literal>
+                                <asp:Literal ID="lt_MicTxt1_Old" runat="server"></asp:Literal>
+                                <div style="text-align: center">
+                                    <asp:Literal ID="lt_MicPic1_Old" runat="server"></asp:Literal>
+                                </div>
                             </td>
                             <td style="width: 10%;"></td>
 
                             <td style="width: 10%;"></td>
                             <td style="width: 30%;">
-                                <asp:Literal ID="lt_OldMicTxt2" runat="server"></asp:Literal>
+                                <asp:Literal ID="lt_MicTxt2_Old" runat="server"></asp:Literal>
+                                <div style="text-align: center">
+                                    <asp:Literal ID="lt_MicPic2_Old" runat="server"></asp:Literal>
+                                </div>
                             </td>
                             <td style="width: 10%;"></td>
                         </tr>

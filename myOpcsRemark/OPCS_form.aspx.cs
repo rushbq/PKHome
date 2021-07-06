@@ -69,10 +69,12 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
         lt_TradeCurrency.Text = query.Rows[0]["TradeCurrency"].ToString();
         lt_OrderRemark.Text = query.Rows[0]["OrderRemark"].ToString().Replace("\n", "<br>");
 
+        #region - 嘜頭處理 -
+
         //** 嘜頭資料 **
-        string _MarkPic = query.Rows[0]["MarkPic"].ToString();
-        string _MicTxt1 = query.Rows[0]["MicTxt1"].ToString(); //訂單嘜頭文字
-        string _MicTxt2 = query.Rows[0]["MicTxt2"].ToString(); //訂單嘜頭文字
+        string _MarkPic = query.Rows[0]["MarkPic"].ToString(); //依條件判斷的嘜頭圖片
+        string _MicTxt1 = query.Rows[0]["MicTxt1"].ToString(); //訂單嘜頭文字,TC054,正嘜
+        string _MicTxt2 = query.Rows[0]["MicTxt2"].ToString(); //訂單嘜頭文字,TC055,側嘜
 
         //[嘜頭圖取得] 嘜頭圖路徑
         string _url = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/{0}/EPS/"
@@ -90,25 +92,29 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
         string _chkMicFile2 = checkStandardImg(Req_DBS, _chkFile2, _custID, "102", _MicTxt2);
 
 
-        //輸出正嘜
+        //輸出正嘜文字
         lt_MicTxt1.Text = _MicTxt1.Replace("\n", "<br>");
-        /* 指定客戶,有嘜頭文字,不帶嘜頭圖 */
+        /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
         if (checkTargetCust(_MicTxt1, _custID))
         {
+            //輸出嘜頭圖片
             lt_MicPic1.Text = !string.IsNullOrWhiteSpace(_chkMicFile1)
                 ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile1)
                 : "";
         }
 
-        //輸出側嘜
+        //輸出側嘜文字
         lt_MicTxt2.Text = _MicTxt2.Replace("\n", "<br>");
-        /* 指定客戶,有嘜頭文字,不帶嘜頭圖 */
+        /* 判斷:指定客戶,有嘜頭文字,不帶嘜頭圖 */
         if (checkTargetCust(_MicTxt2, _custID))
         {
+            //輸出嘜頭圖片
             lt_MicPic2.Text = !string.IsNullOrWhiteSpace(_chkMicFile2)
                 ? "<img src=\"{0}\" alt=\"Pic1\" width=\"270\" align=\"middle\">".FormatThis(_chkMicFile2)
                 : "";
         }
+
+        #endregion
 
 
         //----- 資料整理:繫結 ----- 
@@ -131,8 +137,10 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
     }
 
+    #region -- 嘜頭Function --
+
     /// <summary>
-    /// 指定客戶判斷
+    /// [嘜頭]指定客戶判斷
     /// **有嘜頭文字,不顯示指定嘜頭圖**
     /// </summary>
     /// <param name="_micTxt">嘜頭文字</param>
@@ -163,7 +171,7 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
 
     /// <summary>
-    /// 判斷檔案是否存在 (http)
+    /// [嘜頭]判斷檔案是否存在 (http)
     /// </summary>
     /// <param name="_url">資料夾路徑</param>
     /// <param name="_fileName">檔名</param>
@@ -210,7 +218,7 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
 
     /// <summary>
-    /// 自訂嘜頭圖:當指定客戶圖片檔不存在時,取得預設圖片,其他客戶直接使用預設圖
+    /// [嘜頭]自訂嘜頭圖:當指定客戶圖片檔不存在時,取得預設圖片;其他客戶直接使用預設圖
     /// </summary>
     /// <param name="_dbs">DBS</param>
     /// <param name="imgUrl">圖檔完整路徑</param>
@@ -220,6 +228,7 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
     /// <returns></returns>
     string checkStandardImg(string _dbs, string imgUrl, string custID, string lastFileName, string markDesc)
     {
+        //指定資料夾
         String frontFileName = "http://ref.prokits.com.tw/ERP_Files/Cust_Mark/Standard{0}/"
             .FormatThis(_dbs.Equals("TW") ? "" : "-SH");
         String fullFileName = "";
@@ -258,6 +267,9 @@ public partial class myOpcsRemark_OPCS_form : System.Web.UI.Page
 
         return fullFileName;
     }
+
+    #endregion
+
 
     #region -- 傳遞參數 --
     /// <summary>

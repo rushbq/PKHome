@@ -10,6 +10,8 @@ using ShipFreight_CN.Models;
 
 /*
   [發貨維護]-ShipFreight_CN
+  [出貨明細表](內銷)
+    -myShipping_CHN
 */
 namespace ShipFreight_CN.Controllers
 {
@@ -1137,6 +1139,10 @@ WHERE (setYear = @paramYear) AND (setMonth = @paramMonth)
         /// <param name="traceID">trace id</param>
         /// <param name="_type">A=電商, B=經銷商</param>
         /// <returns></returns>
+        /// <remarks>
+        /// Excel格式欄位變更，有兩處要修改:
+        /// GetExcel_DT、GetExcel_Html
+        /// </remarks>
         public IQueryable<ShipImportDataDT> GetExcel_DT(string filePath, string sheetName, string traceID, string _type)
         {
             try
@@ -1172,11 +1178,11 @@ WHERE (setYear = @paramYear) AND (setMonth = @paramMonth)
                     else
                     {
                         //經銷商
-                        myErpID = val[35]; //銷貨單別-單號
+                        myErpID = val[34]; //銷貨單別-單號
                         myShipNo = val[4]; //物流單號
                         myShipDate = val[6].ToString().ToDateString("yyyy/MM/dd");
                         //myQty = Convert.ToInt32(val[20]);
-                        myPrice = Convert.ToDouble(val[40]);
+                        myPrice = Convert.ToDouble(val[39]);
                     }
 
                     #endregion
